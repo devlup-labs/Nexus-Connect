@@ -1,7 +1,14 @@
-import express from "express";
-import dotenv from "dotenv";
-import path from "path";
+import express from 'express';
+import dotenv from 'dotenv';
+import path from 'path';
+
+import cookieParser from "cookie-parser";
+import cors from "cors";
+
 import { connectDB } from "./lib/db.js";
+import authRoutes from "./routes/auth.route.js";
+import messageRoutes from "./routes/message.route.js";
+
 
 dotenv.config();
 
@@ -10,17 +17,28 @@ const _dirname = path.resolve();
 
 const PORT = process.env.PORT || 3000;
 
-app.get("/health", (req, res) => {
-  //DO NOT REMOVE THIS ENDPOINT
+app.use(express.json({ limit: "5mb" }));
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
+
+app.get("/health", (req, res) => {  //DO NOT REMOVE THIS ENDPOINT
   res.status(200).json({ msg: "api is up and running" });
 });
 
-//This is for deploying the frontend
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(_dirname, "../frontend/dist")));
+app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRoutes);
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(_dirname, "../frontend/dist/index.html"));
+//This is for deploying the frontend
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(_dirname, '../frontend/dist')));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(_dirname, '../frontend/dist/index.html'));
   });
 }
 
