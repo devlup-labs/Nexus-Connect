@@ -1,4 +1,5 @@
 import Dock from './components/Dock.jsx'
+import StreamPanel from './Components/StreamPanel.jsx'
 
 function App() {
 
@@ -6,6 +7,7 @@ function App() {
   return (
     <>
       <Dock/>
+      <StreamPanel/>
     </>
   )
 }
