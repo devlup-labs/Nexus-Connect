@@ -8,52 +8,43 @@ const Login = () => {
   const [password, setPassword] = useState('');
 
   return (
-    <div className="desktop-view-container" style={{ backgroundImage: `url(${nebulaBg})` }}>
-      <div className="horizontal-login-box">
+    <div 
+      className="desktop-fullscreen-bg" 
+      style={{ backgroundImage: `url(${nebulaBg})` }}
+    >
+      <div className="center-login-card">
+        <h2>LOGIN</h2>
         
-        {/* Left Side: Branding/Identity */}
-        <div className="side-panel-info">
-          <div className="logo-area">
-            <h1>NEXUS</h1>
-            <p>CONNECTING THE FUTURE</p>
+        <form onSubmit={(e) => e.preventDefault()}>
+          <div className="input-container">
+            <input 
+              type="text" 
+              placeholder="Username" 
+              value={username} 
+              onChange={(e) => setUsername(e.target.value)} 
+              required 
+            />
+            <FiUser className="input-icon" />
           </div>
-        </div>
-
-        {/* Right Side: Login Interaction */}
-        <div className="side-panel-form">
-          <h2>LOGIN</h2>
-          <form onSubmit={(e) => e.preventDefault()}>
-            <div className="desktop-input-group">
-              <input 
-                type="text" 
-                placeholder="Username" 
-                value={username} 
-                onChange={(e) => setUsername(e.target.value)} 
-                required 
-              />
-              <FiUser className="input-icon" />
-            </div>
-            
-            <div className="desktop-input-group">
-              <input 
-                type="password" 
-                placeholder="Password" 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                required 
-              />
-              <FiLock className="input-icon" />
-            </div>
-
-            <button type="submit" className="desktop-signin-btn">Sign In</button>
-          </form>
-
-          <div className="desktop-links-row">
-            <span>Forgot Password?</span>
-            <span>Create Account</span>
+          
+          <div className="input-container">
+            <input 
+              type="password" 
+              placeholder="Password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              required 
+            />
+            <FiLock className="input-icon" />
           </div>
-        </div>
 
+          <button type="submit" className="login-submit-btn">Sign In</button>
+        </form>
+
+        <div className="bottom-links-container">
+          <span>Forgot Password?</span>
+          <span>Create Account</span>
+        </div>
       </div>
     </div>
   );
