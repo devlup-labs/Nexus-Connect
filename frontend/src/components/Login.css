@@ -1,116 +1,89 @@
 /* src/components/Login.css */
-.desktop-container {
+.login-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  /* Dark nebula background for the entire screen */
-  background: radial-gradient(circle at 50% 50%, #1a0033, #050010);
-  font-family: 'Segoe UI', sans-serif;
+  /* Using your attached nebula image */
+  background: url('../assets/background.jpg') no-repeat center center/cover;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.horizontal-card {
-  display: flex; /* This creates the horizontal side-by-side layout */
-  width: 950px; /* Specific desktop width */
-  height: 550px;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(25px);
-  border-radius: 24px;
+.glass-card {
+  background: rgba(255, 255, 255, 0.05); /* Very transparent */
+  backdrop-filter: blur(15px); /* The frosty glass effect */
+  border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  overflow: hidden; /* Keeps the children inside the rounded corners */
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
-}
-
-/* Left Panel: The Visual Identity */
-.brand-section {
-  flex: 1.2; /* Takes up slightly more space than the form */
-  background: linear-gradient(135deg, rgba(75, 0, 130, 0.5), rgba(15, 0, 41, 0.8));
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  position: relative;
-}
-
-.brand-section h1 {
-  font-size: 4rem;
-  letter-spacing: 10px;
-  margin-bottom: 0;
-  font-weight: 200;
-}
-
-.brand-section p {
-  opacity: 0.6;
-  letter-spacing: 2px;
-}
-
-/* Right Panel: The Form Area */
-.form-section {
-  flex: 1; /* Form area */
-  padding: 60px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.form-section h2 {
-  color: white;
-  font-size: 2rem;
-  font-weight: 300;
-  letter-spacing: 4px;
-  margin-bottom: 40px;
+  padding: 50px 40px;
+  width: 350px;
   text-align: center;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
 }
 
-.input-group {
+h2 {
+  color: white;
+  font-weight: 300;
+  letter-spacing: 5px;
+  margin-bottom: 40px;
+  font-size: 2rem;
+}
+
+.input-field {
   position: relative;
   margin-bottom: 25px;
 }
 
-.input-group input {
+.input-field input {
   width: 100%;
-  padding: 18px 50px 18px 25px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 50px; /* Pill shape from your UI */
+  padding: 15px 50px 15px 20px; /* Space on right for icon */
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50px; /* The pill shape from your image */
   color: white;
   outline: none;
   font-size: 1rem;
+  box-sizing: border-box;
 }
 
-.input-icon {
+.input-field input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.field-icon {
   position: absolute;
-  right: 22px; /* Position icons on the right as per UI */
+  right: 20px; /* Aligned to the right as per UI */
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.6);
   font-size: 1.2rem;
 }
 
-.login-button {
-  width: 100%;
-  padding: 15px;
-  margin-top: 20px;
+.signin-btn {
+  width: 60%; /* Smaller width like the image */
+  padding: 12px;
+  margin-top: 10px;
   background: transparent;
-  border: 1px solid white;
+  border: 1.5px solid white; /* Thin outline style */
   color: white;
-  border-radius: 50px;
-  font-weight: 600;
+  border-radius: 2px; /* Slightly rectangular button like the image */
+  font-size: 1.1rem;
   cursor: pointer;
   transition: 0.3s;
 }
 
-.login-button:hover {
+.signin-btn:hover {
   background: white;
   color: #1a0033;
 }
 
-.links {
+.footer-links {
   display: flex;
   justify-content: space-between;
   margin-top: 30px;
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.footer-links span {
+  cursor: pointer;
 }

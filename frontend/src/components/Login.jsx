@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import './Login.css';
-//cndaklvnsanbv
-import { FiUser, FiLock } from 'react-icons/fi';
+import { FiUser, FiLock } from 'react-icons/fi'; // Feather icons match your UI perfectly
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -9,52 +8,44 @@ const Login = () => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    console.log("Desktop Login Data:", { username, password });
+    console.log("Login Data:", { username, password });
   };
 
   return (
-    <div className="desktop-container">
-      <div className="horizontal-card">
-        {/* Left Side: Branding / Background Texture */}
-        <div className="brand-section">
-          <h1>NEXUS</h1>
-          <p>The Future of Connectivity</p>
-          <div className="nebula-accent"></div>
-        </div>
-
-        {/* Right Side: The Glassmorphism Form */}
-        <div className="form-section">
-          <h2>LOGIN</h2>
-          <form onSubmit={handleLogin}>
-            <div className="input-group">
-              <input 
-                type="text" 
-                placeholder="Username" 
-                value={username} 
-                onChange={(e) => setUsername(e.target.value)} 
-                required 
-              />
-              <FiUser className="input-icon" />
-            </div>
-            
-            <div className="input-group">
-              <input 
-                type="password" 
-                placeholder="Password" 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                required 
-              />
-              <FiLock className="input-icon" />
-            </div>
-
-            <button type="submit" className="login-button">Sign In</button>
-          </form>
-
-          <div className="links">
-            <span>Forgot Password?</span>
-            <span>Create Account</span>
+    <div className="login-wrapper">
+      <div className="glass-card">
+        <h2>LOGIN</h2>
+        <form onSubmit={handleLogin}>
+          {/* Username Field */}
+          <div className="input-field">
+            <input 
+              type="text" 
+              placeholder="Username" 
+              value={username} 
+              onChange={(e) => setUsername(e.target.value)} 
+              required 
+            />
+            <FiUser className="field-icon" />
           </div>
+          
+          {/* Password Field */}
+          <div className="input-field">
+            <input 
+              type="password" 
+              placeholder="Password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              required 
+            />
+            <FiLock className="field-icon" />
+          </div>
+
+          <button type="submit" className="signin-btn">Sign In</button>
+        </form>
+
+        <div className="footer-links">
+          <span>Forgot Password?</span>
+          <span>Create Account</span>
         </div>
       </div>
     </div>
