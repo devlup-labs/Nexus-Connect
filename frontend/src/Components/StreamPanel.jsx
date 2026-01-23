@@ -56,7 +56,7 @@ const StreamPanel = () => {
         {
             id: 7,
             type: 'text',
-            userName: 'Alex Chen',
+            userName: 'Stephen Hawking',
             userAvatar: 'AC',
             title: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mabala vindilinun ut ceritus umleothoc main.',
             timestamp: '3 minutes ago'
@@ -198,36 +198,33 @@ const StreamPanel = () => {
     ];
 
     return (
-        <div className="app-container">
-            {/* Stream Panel */}
-            <div className="stream-panel">
-                <div className="stream-header">
-                    <h2 className="stream-title">Stream</h2>
-                    <div className="header-actions">
-                        <button className="icon-button">
-                            <AppWindow size={18} />
-                        </button>
-                        <button className="icon-button">
-                            <MoreHorizontal size={18} />
-                        </button>
-                    </div>
+        <div className="stream-panel">
+            <div className="stream-header">
+                <h2 className="stream-title">Stream</h2>
+                <div className="header-actions">
+                    <button className="icon-button">
+                        <AppWindow size={18} />
+                    </button>
+                    <button className="icon-button">
+                        <MoreHorizontal size={18} />
+                    </button>
                 </div>
-                <div className="stream-divider"></div>
-                <div className="stream-feed-masonry">
-                    <div className="feed-column">
-                        {leftColumnItems.map((item) => (
-                            <React.Fragment key={item.id}>
-                                {renderCard(item)}
-                            </React.Fragment>
-                        ))}
-                    </div>
-                    <div className="feed-column">
-                        {rightColumnItems.map((item) => (
-                            <React.Fragment key={item.id}>
-                                {renderCard(item)}
-                            </React.Fragment>
-                        ))}
-                    </div>
+            </div>
+            <div className="stream-divider"></div>
+            <div className="stream-feed-masonry">
+                <div className="feed-column">
+                    {leftColumnItems.map((item) => (
+                        <React.Fragment key={item.id}>
+                            {renderCard(item)}
+                        </React.Fragment>
+                    ))}
+                </div>
+                <div className="feed-column">
+                    {rightColumnItems.map((item) => (
+                        <React.Fragment key={item.id}>
+                            {renderCard(item)}
+                        </React.Fragment>
+                    ))}
                 </div>
             </div>
         </div>
