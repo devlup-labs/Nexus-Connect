@@ -1,5 +1,5 @@
 /* src/components/Login.css */
-.login-page-container {
+.desktop-page-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -7,78 +7,100 @@
   width: 100vw;
   background-size: cover;
   background-position: center;
-  background-repeat: no-repeat;
   font-family: 'Segoe UI', sans-serif;
 }
 
-.glass-login-card {
-  background: rgba(255, 255, 255, 0.05); /* High transparency */
-  backdrop-filter: blur(15px); /* Frosty glass effect */
-  -webkit-backdrop-filter: blur(15px);
-  border-radius: 20px;
+.horizontal-glass-card {
+  display: flex; /* This creates the side-by-side desktop layout */
+  width: 900px; /* Wider width for desktop */
+  height: 500px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 50px 40px;
-  width: 350px;
-  text-align: center;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 }
 
-h2 {
+/* Left Branding Side */
+.branding-panel {
+  flex: 1; /* Takes half the space */
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
   color: white;
-  font-weight: 300;
-  letter-spacing: 5px;
+}
+
+.branding-panel h1 {
+  font-size: 3.5rem;
+  letter-spacing: 8px;
+  margin: 0;
+  font-weight: 200;
+}
+
+/* Right Form Side */
+.form-panel {
+  flex: 1.2; /* Gives slightly more room to the form */
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.form-panel h2 {
+  color: white;
+  letter-spacing: 4px;
   margin-bottom: 40px;
-  font-size: 2rem;
+  text-align: center;
 }
 
 .input-row {
   position: relative;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
 }
 
 .input-row input {
   width: 100%;
-  padding: 15px 50px 15px 20px;
+  padding: 18px 50px 18px 25px;
   background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50px; /* Pill shape */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50px; /* Pill shape from your UI */
   color: white;
   outline: none;
-  font-size: 1rem;
-  box-sizing: border-box;
 }
 
 .row-icon {
   position: absolute;
-  right: 20px; /* Icon on the right side */
+  right: 25px; /* Icon on the right side as requested */
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.sign-in-btn {
+.desktop-btn {
   width: 100%;
-  padding: 12px;
-  margin-top: 20px;
+  padding: 15px;
   background: transparent;
-  border: 2px solid white;
+  border: 1px solid white;
   color: white;
-  font-weight: bold;
-  border-radius: 5px;
+  border-radius: 50px;
+  font-weight: 600;
   cursor: pointer;
   transition: 0.3s;
 }
 
-.sign-in-btn:hover {
+.desktop-btn:hover {
   background: white;
-  color: #220044;
+  color: #1a0033;
 }
 
-.bottom-links {
+.desktop-footer {
   display: flex;
   justify-content: space-between;
   margin-top: 30px;
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.4);
 }
