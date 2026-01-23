@@ -1,4 +1,4 @@
-import Dock from './components/Dock.jsx'
+import Dock from './Components/Dock.jsx'
 import StreamPanel from './Components/StreamPanel.jsx'
 
 function App() {
