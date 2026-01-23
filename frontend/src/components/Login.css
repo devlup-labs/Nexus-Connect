@@ -1,89 +1,126 @@
 /* src/components/Login.css */
-.login-wrapper {
+.desktop-view-container {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  /* Using your attached nebula image */
-  background: url('../assets/background.jpg') no-repeat center center/cover;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  width: 100vw;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+  font-family: 'Segoe UI', sans-serif;
 }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.05); /* Very transparent */
-  backdrop-filter: blur(15px); /* The frosty glass effect */
-  border-radius: 20px;
+/* The horizontal card is much wider for desktop (900px+) */
+.horizontal-login-box {
+  display: flex; 
+  flex-direction: row; /* FORCES DESKTOP HORIZONTAL LAYOUT */
+  width: 950px; 
+  height: 550px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 30px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 50px 40px;
-  width: 350px;
-  text-align: center;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
 }
 
-h2 {
+/* Left Section: Branding */
+.side-panel-info {
+  flex: 1.2;
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logo-area h1 {
   color: white;
+  font-size: 4.5rem;
+  letter-spacing: 15px;
+  margin: 0;
+  font-weight: 100;
+}
+
+.logo-area p {
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 5px;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* Right Section: Form */
+.side-panel-form {
+  flex: 1;
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.side-panel-form h2 {
+  color: white;
+  text-align: center;
+  font-size: 2rem;
   font-weight: 300;
   letter-spacing: 5px;
-  margin-bottom: 40px;
-  font-size: 2rem;
+  margin-bottom: 50px;
 }
 
-.input-field {
+.desktop-input-group {
   position: relative;
-  margin-bottom: 25px;
+  margin-bottom: 30px;
 }
 
-.input-field input {
+.desktop-input-group input {
   width: 100%;
-  padding: 15px 50px 15px 20px; /* Space on right for icon */
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50px; /* The pill shape from your image */
+  padding: 18px 25px;
+  padding-right: 60px; /* Space for icons on the right */
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
   color: white;
+  font-size: 1.1rem;
   outline: none;
-  font-size: 1rem;
   box-sizing: border-box;
 }
 
-.input-field input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.field-icon {
+.input-icon {
   position: absolute;
-  right: 20px; /* Aligned to the right as per UI */
+  right: 25px;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1.4rem;
 }
 
-.signin-btn {
-  width: 60%; /* Smaller width like the image */
-  padding: 12px;
-  margin-top: 10px;
+.desktop-signin-btn {
+  width: 100%;
+  padding: 15px;
+  margin-top: 20px;
   background: transparent;
-  border: 1.5px solid white; /* Thin outline style */
+  border: 1.5px solid white;
   color: white;
-  border-radius: 2px; /* Slightly rectangular button like the image */
+  border-radius: 12px;
+  font-weight: 600;
   font-size: 1.1rem;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.3s ease;
 }
 
-.signin-btn:hover {
+.desktop-signin-btn:hover {
   background: white;
   color: #1a0033;
+  transform: translateY(-2px);
 }
 
-.footer-links {
+.desktop-links-row {
   display: flex;
   justify-content: space-between;
-  margin-top: 30px;
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.footer-links span {
-  cursor: pointer;
+  margin-top: 40px;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.4);
 }
