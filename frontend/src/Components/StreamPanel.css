@@ -9,6 +9,7 @@
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .app-container {
@@ -72,9 +73,9 @@ body {
 
 /* Stream Panel - Transparent Container */
 .stream-panel {
-    width: 95%;
+    width: 420px;
     max-width: 420px;
-    height: 92vh;
+    height: 100%;
     background: transparent;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -85,6 +86,7 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 /* Stream Header */
@@ -144,7 +146,7 @@ body {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 10px 4px 20px 4px;
+    padding: 10px 4px 100px 4px;
     position: relative;
     z-index: 2;
     display: flex;
