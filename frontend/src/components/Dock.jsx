@@ -15,7 +15,7 @@ function Dock() {
 
   return (
     <div className="fixed left-6 top-1/2 -translate-y-1/2 z-50">
-      <div className="flex flex-col gap-2 bg-white/10 backdrop-blur-2xl px-3 py-5 rounded-3xl shadow-2xl border border-white/20" style={{ backdropFilter: 'blur(40px) saturate(180%)' }}>
+      <div className="flex flex-col gap-2 bg-white/10 backdrop-blur-2xl px-3 py-5 rounded-xl shadow-2xl border border-white/20" style={{ backdropFilter: 'blur(40px) saturate(180%)' }}>
         {dockItems.map((item, index) => (
           <div key={index} className="relative">
             <div
