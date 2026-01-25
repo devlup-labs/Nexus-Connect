@@ -1,0 +1,94 @@
+/* Container for the full page background */
+.signup-container {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* Replacing your nebula image with a similar gradient */
+  background: radial-gradient(circle at center, #4b0082, #000000);
+  font-family: 'Arial', sans-serif;
+}
+
+/* The Glassmorphism Card */
+.signup-glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 40px;
+  width: 350px;
+  text-align: center;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+h1 {
+  color: #ffffff;
+  letter-spacing: 2px;
+  margin-bottom: 30px;
+  font-weight: 400;
+}
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Input Styling */
+.input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px 15px;
+  padding-right: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 25px;
+  color: white;
+  outline: none;
+}
+
+.input-group input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.icon {
+  position: absolute;
+  right: 15px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Button Styling */
+.create-btn {
+  margin-top: 10px;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid #ffffff;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: 0.3s;
+}
+
+.create-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.footer-text {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  margin-top: 20px;
+}
+
+.sign-in-link {
+  color: #ffffff;
+  cursor: pointer;
+  text-decoration: underline;
+}
