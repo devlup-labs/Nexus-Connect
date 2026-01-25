@@ -1,38 +1,45 @@
-import React from 'react';
-import './signup.css';
+import React, { useState } from 'react';
+import './Signup.css';
+import bgImg from "../assets/bg.png.png";
+import { MdEmail, MdPerson, MdLock } from 'react-icons/md';
 
 const Signup = () => {
   return (
-    <div className="signup-container">
-      <div className="signup-glass-card">
+    <div 
+      className="signup-container" 
+      style={{ backgroundImage: `url(${bgImg})` }}
+    >
+      <div className="signup-box">
         <h1>SIGN UP</h1>
         
         <form className="signup-form">
           <div className="input-group">
-            <input type="email" placeholder="Email" required />
-            <span className="icon">✉</span>
-          </div>
-          
-          <div className="input-group">
-            <input type="text" placeholder="Username" required />
-            <span className="icon">👤</span>
-          </div>
-          
-          <div className="input-group">
-            <input type="password" placeholder="Password" required />
-            <span className="icon">🔒</span>
-          </div>
-          
-          <div className="input-group">
-            <input type="password" placeholder="Confirm Password" required />
-            <span className="icon">🔒</span>
+            <input type="email" placeholder="Email" />
+            <MdEmail className="icon" />
           </div>
 
-          <button type="submit" className="create-btn">Create Account</button>
+          <div className="input-group">
+            <input type="text" placeholder="Username" />
+            <MdPerson className="icon" />
+          </div>
+
+          <div className="input-group">
+            <input type="password" placeholder="Password" />
+            <MdLock className="icon" />
+          </div>
+
+          <div className="input-group">
+            <input type="password" placeholder="Confirm Password" />
+            <MdLock className="icon" />
+          </div>
+
+          <button type="submit" className="create-btn">
+            Create Account
+          </button>
         </form>
 
-        <p className="footer-text">
-          Already have an account? <span className="sign-in-link">Sign In</span>
+        <p className="signin-text">
+          Already have an account? <a href="#">Sign In</a>
         </p>
       </div>
     </div>
