@@ -1,45 +1,41 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Mail, User, Lock } from 'lucide-react';
 import './Signup.css';
-import bgImg from "../assets/bg.png.png";
-import { MdEmail, MdPerson, MdLock } from 'react-icons/md';
 
 const Signup = () => {
   return (
-    <div 
-      className="signup-container" 
-      style={{ backgroundImage: `url(${bgImg})` }}
-    >
-      <div className="signup-box">
-        <h1>SIGN UP</h1>
-        
-        <form className="signup-form">
-          <div className="input-group">
-            <input type="email" placeholder="Email" />
-            <MdEmail className="icon" />
+    <div className="signup-page">
+      <div className="auth-card-nexus">
+        <h1 className="nexus-title">SIGN UP</h1>
+
+        <form className="auth-form" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="input-group-nexus">
+            <input type="email" placeholder="Email" required />
+            <Mail size={18} className="input-icon" />
           </div>
 
-          <div className="input-group">
-            <input type="text" placeholder="Username" />
-            <MdPerson className="icon" />
+          <div className="input-group-nexus">
+            <input type="text" placeholder="Username" required />
+            <User size={18} className="input-icon" />
           </div>
 
-          <div className="input-group">
-            <input type="password" placeholder="Password" />
-            <MdLock className="icon" />
+          <div className="input-group-nexus">
+            <input type="password" placeholder="Password" required />
+            <Lock size={18} className="input-icon" />
           </div>
 
-          <div className="input-group">
-            <input type="password" placeholder="Confirm Password" />
-            <MdLock className="icon" />
+          <div className="input-group-nexus">
+            <input type="password" placeholder="Confirm Password" required />
+            <Lock size={18} className="input-icon" />
           </div>
 
-          <button type="submit" className="create-btn">
+          <button type="submit" className="nexus-btn">
             Create Account
           </button>
         </form>
 
-        <p className="signin-text">
-          Already have an account? <a href="#">Sign In</a>
+        <p className="footer-text">
+          Already have an account? <span className="teal-link">Sign In</span>
         </p>
       </div>
     </div>
