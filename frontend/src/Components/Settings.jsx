@@ -19,15 +19,15 @@ function SettingsPanel() {
       <div
         className="w-full h-full rounded-2xl flex flex-col"
         style={{
-          backdropFilter: 'blur(22px)',
-          background: 'rgba(220,220,220,0.28)',
+          background: 'transparent',
+          backdropFilter: 'none',
           border: '1px solid rgba(180,180,180,0.45)',
           boxShadow: '0 20px 50px rgba(0,0,0,0.25)',
         }}
       >
         {/* HEADER */}
         <div style={{ padding: '24px 32px 12px' }}>
-          <h2 style={{ fontSize: '24px', fontWeight: 500, color: '#1f2937' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 500, color: 'white' }}>
             Settings
           </h2>
         </div>
@@ -43,7 +43,7 @@ function SettingsPanel() {
         >
           {/* PROFILE SETTINGS */}
           <section>
-            <h3 style={{ fontSize: '20px', marginBottom: '20px', color: '#1f2937' }}>
+            <h3 style={{ fontSize: '20px', marginBottom: '20px', color: 'white' }}>
               Profile Settings
             </h3>
 
@@ -104,7 +104,7 @@ function SettingsPanel() {
 
           {/* GENERAL SETTINGS */}
           <section className="flex flex-col" style={{ rowGap: '18px' }}>
-            <h3 style={{ fontSize: '20px', color: '#1f2937' }}>
+            <h3 style={{ fontSize: '20px', color: 'white' }}>
               General Settings
             </h3>
 
