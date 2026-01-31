@@ -1,6 +1,8 @@
-import Dock from './components/Dock.jsx'
+import Dock from './Components/Dock.jsx'
 import ChatContainer from './Components/ChatContainer.jsx'
 import StreamPanel from './Components/StreamPanel.jsx'
+import SettingsPanel from './Components/Settings.jsx'
+import CallLogPanel from './Components/CallLog.jsx'
 
 function App() {
   return (
@@ -28,7 +30,9 @@ function App() {
 
       <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '12px', height: '100vh', marginLeft: '100px' }}>
         <StreamPanel />
-        <ChatContainer />
+        {/* <ChatContainer /> */}
+        {/* <SettingsPanel /> */}
+        <CallLogPanel />
       </div>
     </div>
   )
