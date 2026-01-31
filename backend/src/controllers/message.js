@@ -94,7 +94,13 @@ export const getChatPartners = async (req, res) => {
 
     const chatPartners = await User.find({ _id: { $in: chatPartnerIds } }).select("-password");
 
-    res.status(200).json(chatPartners);
+    //don't show archived users
+    const user = await User.findById(loggedInUserId);
+    const filteredChatPartners = chatPartners.filter(
+      (partner) => !user.archivedUsers.some((id) => id.toString() === partner._id.toString())
+    );
+
+    res.status(200).json(filteredChatPartners);
   } catch (error) {
     console.error("Error in getChatPartners: ", error.message);
     res.status(500).json({ error: "Internal server error" });
