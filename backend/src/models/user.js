@@ -20,6 +20,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    archivedUsers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true }
 );

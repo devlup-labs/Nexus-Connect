@@ -8,6 +8,7 @@ import cors from "cors";
 import { connectDB } from "./lib/db.js";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
+import userRoutes from "./routes/user.route.js";
 
 
 dotenv.config();
@@ -21,7 +22,7 @@ app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.CLIENT_URL,
     credentials: true,
   })
 );
@@ -32,6 +33,7 @@ app.get("/health", (req, res) => {  //DO NOT REMOVE THIS ENDPOINT
 
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/users", userRoutes);
 
 //This is for deploying the frontend
 if (process.env.NODE_ENV === 'production') {
