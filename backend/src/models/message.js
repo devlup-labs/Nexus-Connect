@@ -20,6 +20,16 @@ const messageSchema = new mongoose.Schema(
     image: {
       type: String,
     },
+    isEdited: {
+      type: Boolean,
+      default: false,
+    },
+    deletedBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true }
 );
