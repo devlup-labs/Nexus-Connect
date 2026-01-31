@@ -231,7 +231,7 @@ function SettingsPanel() {
 
 /* ---------- SMALL COMPONENTS ---------- */
 
-function Field({ text, small }) {
+export function Field({ text, small }) {
   return (
     <div
       style={{
@@ -304,4 +304,4 @@ function Toggle({ label, value, onChange }) {
   );
 }
 
-export default SettingsPanel
+export default SettingsPanel;
