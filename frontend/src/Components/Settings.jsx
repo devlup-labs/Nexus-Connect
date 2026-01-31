@@ -19,9 +19,9 @@ function SettingsPanel() {
       <div
         className="w-full h-full rounded-2xl flex flex-col"
         style={{
-          background: 'transparent',
-          backdropFilter: 'none',
-          border: '1px solid rgba(180,180,180,0.45)',
+          background : 'rgba(255, 255, 255, 0.03)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
           boxShadow: '0 20px 50px rgba(0,0,0,0.25)',
         }}
       >
@@ -49,15 +49,30 @@ function SettingsPanel() {
 
             <div style={{ display: 'flex', gap: '32px' }}>
               {/* Avatar */}
-              <div style={{ position: 'relative' }}>
-                <div
-                  style={{
+              <div style={{ position: 'relative',
                     width: '112px',
                     height: '112px',
                     borderRadius: '50%',
-                    background: 'rgba(200,200,200,0.5)',
+                    background: 'linear-gradient(135deg, rgba(48, 251, 230, 0.3), rgba(138, 43, 226, 0.3))',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '10px',
+                    fontWeight: '600',
+                    color: 'rgba(255, 255, 255, 0.95)',
+                    flexShrink: '0',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
                   }}
-                />
+              >
+                <span style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '500',
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)'
+                }}>TB</span>
+                <div/>
+                
                 <button
                   style={{
                     position: 'absolute',
@@ -222,11 +237,11 @@ function Field({ text, small }) {
       style={{
         padding: small ? '10px 14px' : '10px 16px',
         borderRadius: '10px',
-        background: 'rgba(210,210,210,0.42)',
+        background: 'radial-gradient(circle at 60% 40%, transparent 20%, rgba(0, 0, 0, 0.5))',
         border: '1px solid rgba(180,180,180,0.5)',
         fontSize: small ? '14px' : '15px',
         lineHeight: '1.45',
-        color: '#1f2937',
+        color: 'white',
       }}
     >
       {text}
@@ -240,15 +255,15 @@ function SettingRow({ label, children, right }) {
       style={{
         padding: '14px 18px',
         borderRadius: '14px',
-        background: 'rgba(210,210,210,0.4)',
+        background: 'radial-gradient(circle at 60% 40%, transparent 20%, rgba(0, 0, 0, 0.5))',
         border: '1px solid rgba(180,180,180,0.45)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
       }}
     >
-      <span style={{ fontSize: '16px', color: '#1f2937' }}>{label}</span>
-      {children ?? <span style={{ color: '#4b5563' }}>{right}</span>}
+      <span style={{ fontSize: '16px', color: 'white' }}>{label}</span>
+      {children ?? <span style={{ color: 'white' }}>{right}</span>}
     </div>
   );
 }
@@ -256,7 +271,7 @@ function SettingRow({ label, children, right }) {
 function Toggle({ label, value, onChange }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-      <span style={{ fontSize: '14px', color: '#374151' }}>{label}</span>
+      <span style={{ fontSize: '14px', color: 'white' }}>{label}</span>
       <button
         onClick={() => onChange(!value)}
         style={{
