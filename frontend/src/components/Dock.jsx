@@ -1,4 +1,4 @@
-import { Home, MessageSquare, Users, Archive, Settings } from 'lucide-react';
+import { Home, MessageSquare, Users, Phone, Settings } from 'lucide-react';
 import { useState } from 'react';
 
 function Dock() {
@@ -9,7 +9,7 @@ function Dock() {
     { icon: Home, label: 'Home' },
     { icon: MessageSquare, label: 'Messages' },
     { icon: Users, label: 'User' },
-    { icon: Archive, label: 'Archive' },
+    { icon: Phone, label: 'Phone' },
     { icon: Settings, label: 'Settings' },
   ];
 

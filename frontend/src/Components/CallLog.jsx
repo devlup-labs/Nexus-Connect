@@ -94,7 +94,7 @@ function CallLogPanel() {
 
   return (
     <div
-      className="w-175 h-screen"
+      className="w-220 h-screen"
       style={{ padding: "24px", boxSizing: "border-box" }}
     >
       <div
