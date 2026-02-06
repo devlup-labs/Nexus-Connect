@@ -12,52 +12,64 @@ function SettingsPanel() {
 
   return (
     <div
-      className="w-175 h-screen"
-      style={{ padding: '24px', boxSizing: 'border-box' }}
+      className="w-screen h-screen flex flex-col"
+      style={{ boxSizing: 'border-box' }}
     >
-      {/* GLASS PANEL */}
+      {/* HEADER */}
+      <div style={{ padding: '1.5rem 1.5rem 1.25rem 1.5rem' }}>
+        <h2 style={{ 
+          fontSize: '1.75rem', 
+          fontWeight: 500, 
+          color: 'rgba(255, 255, 255, 0.9)',
+          letterSpacing: '0.5px',
+          fontFamily: "'Inter', sans-serif",
+        }}>
+          Settings
+        </h2>
+      </div>
+
+      {/* CONTENT */}
       <div
-        className="w-full h-full rounded-2xl flex flex-col"
+        className="flex-1 flex flex-col"
         style={{
-          background : 'rgba(255, 255, 255, 0.03)',
-          backdropFilter: 'blur(20px) saturate(180%)',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.25)',
+          padding: '0 1.5rem 6.25rem 1.5rem',
+          rowGap: '0.75rem',
+          overflowY: 'auto',
         }}
       >
-        {/* HEADER */}
-        <div style={{ padding: '24px 32px 12px' }}>
-          <h2 style={{ fontSize: '24px', fontWeight: 500, color: 'white' }}>
-            Settings
-          </h2>
-        </div>
-
-        {/* CONTENT */}
-        <div
-          className="flex-1 flex flex-col"
-          style={{
-            padding: '24px 32px',
-            rowGap: '48px',
-            overflowY: 'auto',
-          }}
-        >
           {/* PROFILE SETTINGS */}
-          <section>
-            <h3 style={{ fontSize: '20px', marginBottom: '20px', color: 'white' }}>
+          <section
+            style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              backdropFilter: 'blur(20px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: '0.875rem',
+              padding: '1.25rem',
+              isolation: 'isolate',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <h3 style={{ 
+              fontSize: '1.125rem', 
+              marginBottom: '1.25rem', 
+              color: 'rgba(255, 255, 255, 0.9)',
+              fontWeight: 500,
+            }}>
               Profile Settings
             </h3>
 
-            <div style={{ display: 'flex', gap: '32px' }}>
+            <div style={{ display: 'flex', gap: '1.25rem' }}>
               {/* Avatar */}
               <div style={{ position: 'relative',
-                    width: '112px',
-                    height: '112px',
+                    width: '5rem',
+                    height: '5rem',
                     borderRadius: '50%',
                     background: 'linear-gradient(135deg, rgba(48, 251, 230, 0.3), rgba(138, 43, 226, 0.3))',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '10px',
+                    fontSize: '0.625rem',
                     fontWeight: '600',
                     color: 'rgba(255, 255, 255, 0.95)',
                     flexShrink: '0',
@@ -66,7 +78,7 @@ function SettingsPanel() {
                   }}
               >
                 <span style={{
-                  fontSize: '1.5rem',
+                  fontSize: '1.75rem',
                   fontWeight: '500',
                   color: 'rgba(255, 255, 255, 0.9)',
                   textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)'
@@ -76,25 +88,27 @@ function SettingsPanel() {
                 <button
                   style={{
                     position: 'absolute',
-                    bottom: '6px',
-                    right: '6px',
-                    width: '36px',
-                    height: '36px',
+                    bottom: '0px',
+                    right: '0px',
+                    width: '1.75rem',
+                    height: '1.75rem',
                     borderRadius: '50%',
-                    background: 'rgba(220,220,220,0.85)',
-                    border: '1px solid rgba(180,180,180,0.6)',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
+                    color: 'rgba(255, 255, 255, 0.95)',
                   }}
                 >
-                  <Edit2 size={16} />
+                  <Edit2 size={14} />
                 </button>
               </div>
 
               {/* Fields */}
-              <div className="flex-1 flex flex-col" style={{ rowGap: '16px' }}>
+              <div className="flex-1 flex flex-col" style={{ rowGap: '0.625rem' }}>
                 <Field text="Alex Chen" />
                 <Field
                   text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod something a mind."
@@ -102,13 +116,17 @@ function SettingsPanel() {
                 />
                 <button
                   style={{
-                    marginTop: '6px',
-                    padding: '10px',
-                    borderRadius: '12px',
-                    background: 'rgba(200,200,200,0.65)',
-                    border: '1px solid rgba(170,170,170,0.5)',
+                    marginTop: '0.25rem',
+                    padding: '0.5rem 0.875rem',
+                    borderRadius: '0.625rem',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
                     cursor: 'pointer',
                     fontWeight: 500,
+                    fontSize: '0.9375rem',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    transition: 'all 0.3s ease',
                   }}
                 >
                   Edit Profile
@@ -118,8 +136,26 @@ function SettingsPanel() {
           </section>
 
           {/* GENERAL SETTINGS */}
-          <section className="flex flex-col" style={{ rowGap: '18px' }}>
-            <h3 style={{ fontSize: '20px', color: 'white' }}>
+          <section 
+            className="flex flex-col" 
+            style={{ 
+              rowGap: '0.875rem',
+              background: 'rgba(255, 255, 255, 0.03)',
+              backdropFilter: 'blur(20px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: '0.875rem',
+              padding: '1.25rem',
+              isolation: 'isolate',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <h3 style={{ 
+              fontSize: '1.125rem', 
+              color: 'rgba(255, 255, 255, 0.9)',
+              fontWeight: 500,
+              marginBottom: '0.375rem',
+            }}>
               General Settings
             </h3>
 
@@ -127,9 +163,10 @@ function SettingsPanel() {
               <div
                 style={{
                   display: 'flex',
-                  background: 'rgba(180,180,180,0.4)',
+                  background: 'rgba(255, 255, 255, 0.1)',
                   borderRadius: '999px',
-                  padding: '4px',
+                  padding: '0.1875rem',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
                 }}
               >
                 {['Dark', 'Light'].map((t) => (
@@ -137,14 +174,16 @@ function SettingsPanel() {
                     key={t}
                     onClick={() => setTheme(t.toLowerCase())}
                     style={{
-                      padding: '6px 16px',
+                      padding: '0.375rem 0.875rem',
                       borderRadius: '999px',
                       background:
-                        theme === t.toLowerCase() ? '#1f2937' : 'transparent',
+                        theme === t.toLowerCase() ? 'rgba(48, 251, 230, 0.2)' : 'transparent',
                       color:
-                        theme === t.toLowerCase() ? '#ffffff' : '#374151',
-                      border: 'none',
+                        theme === t.toLowerCase() ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.6)',
+                      border: theme === t.toLowerCase() ? '1px solid rgba(48, 251, 230, 0.3)' : 'none',
                       cursor: 'pointer',
+                      fontSize: '0.9375rem',
+                      fontWeight: 500,
                     }}
                   >
                     {t}
@@ -154,7 +193,7 @@ function SettingsPanel() {
             </SettingRow>
 
             <SettingRow label="Notifications">
-              <div style={{ display: 'flex', gap: '20px' }}>
+              <div style={{ display: 'flex', gap: '1.25rem' }}>
                 <Toggle label="Sounds" value={sounds} onChange={setSounds} />
                 <Toggle label="Banners" value={banners} onChange={setBanners} />
               </div>
@@ -168,16 +207,21 @@ function SettingsPanel() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    padding: '6px 10px',
-                    borderRadius: '8px',
-                    background: 'rgba(200,200,200,0.6)',
-                    border: '1px solid rgba(170,170,170,0.5)',
+                    gap: '0.375rem',
+                    padding: '0.375rem 0.75rem',
+                    borderRadius: '0.5rem',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
                     cursor: 'pointer',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontSize: '0.9375rem',
+                    fontWeight: 500,
+                    transition: 'all 0.3s ease',
                   }}
                 >
                   {language}
-                  <ChevronDown size={16} />
+                  <ChevronDown size={14} />
                 </button>
 
                 {langOpen && (
@@ -186,11 +230,12 @@ function SettingsPanel() {
                       position: 'absolute',
                       right: 0,
                       top: '110%',
-                      minWidth: '140px',
-                      background: 'rgba(230,230,230,0.95)',
-                      border: '1px solid rgba(180,180,180,0.5)',
-                      borderRadius: '10px',
-                      boxShadow: '0 12px 30px rgba(0,0,0,0.2)',
+                      minWidth: '8.75rem',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      backdropFilter: 'blur(20px) saturate(180%)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '0.625rem',
+                      boxShadow: '0 12px 30px rgba(0,0,0,0.3)',
                       overflow: 'hidden',
                       zIndex: 10,
                     }}
@@ -203,13 +248,25 @@ function SettingsPanel() {
                           setLangOpen(false);
                         }}
                         style={{
-                          padding: '10px 14px',
+                          padding: '0.625rem 0.875rem',
                           cursor: 'pointer',
-                          fontSize: '14px',
+                          fontSize: '0.9375rem',
                           background:
                             language === l
-                              ? 'rgba(31,41,55,0.1)'
+                              ? 'rgba(48, 251, 230, 0.15)'
                               : 'transparent',
+                          color: 'rgba(255, 255, 255, 0.9)',
+                          transition: 'all 0.2s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (language !== l) {
+                            e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (language !== l) {
+                            e.target.style.background = 'transparent';
+                          }
                         }}
                       >
                         {l}
@@ -222,12 +279,43 @@ function SettingsPanel() {
 
             <SettingRow label="Privacy & Security" right="Menu" />
             <SettingRow label="Storage & Data" right="Menu" />
+
+            {/* LOGOUT BUTTON */}
+            <button
+              onClick={() => {
+                // Add logout logic here
+                console.log('Logging out...');
+              }}
+              style={{
+                marginTop: '0.5rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '0.75rem',
+                background: 'rgba(255, 59, 48, 0.15)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 59, 48, 0.3)',
+                cursor: 'pointer',
+                fontWeight: 500,
+                fontSize: '0.9375rem',
+                color: 'rgba(255, 99, 88, 0.95)',
+                transition: 'all 0.3s ease',
+                width: '100%',
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(255, 59, 48, 0.25)';
+                e.target.style.borderColor = 'rgba(255, 59, 48, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'rgba(255, 59, 48, 0.15)';
+                e.target.style.borderColor = 'rgba(255, 59, 48, 0.3)';
+              }}
+            >
+              Logout
+            </button>
           </section>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
 /* ---------- SMALL COMPONENTS ---------- */
 
@@ -235,13 +323,14 @@ export function Field({ text, small }) {
   return (
     <div
       style={{
-        padding: small ? '10px 14px' : '10px 16px',
-        borderRadius: '10px',
-        background: 'radial-gradient(circle at 60% 40%, transparent 20%, rgba(0, 0, 0, 0.5))',
-        border: '1px solid rgba(180,180,180,0.5)',
-        fontSize: small ? '14px' : '15px',
-        lineHeight: '1.45',
-        color: 'white',
+        padding: small ? '0.5rem 0.75rem' : '0.625rem 0.875rem',
+        borderRadius: '0.625rem',
+        background: 'rgba(0, 0, 0, 0.3)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        fontSize: small ? '0.875rem' : '0.9375rem',
+        lineHeight: '1.5',
+        color: 'rgba(255, 255, 255, 0.85)',
+        textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
       }}
     >
       {text}
@@ -253,50 +342,74 @@ function SettingRow({ label, children, right }) {
   return (
     <div
       style={{
-        padding: '14px 18px',
-        borderRadius: '14px',
-        background: 'radial-gradient(circle at 60% 40%, transparent 20%, rgba(0, 0, 0, 0.5))',
-        border: '1px solid rgba(180,180,180,0.45)',
+        padding: '0.75rem 0.875rem',
+        borderRadius: '0.75rem',
+        background: 'rgba(0, 0, 0, 0.2)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
       }}
     >
-      <span style={{ fontSize: '16px', color: 'white' }}>{label}</span>
-      {children ?? <span style={{ color: 'white' }}>{right}</span>}
+      <span style={{ 
+        fontSize: '0.9375rem', 
+        color: 'rgba(255, 255, 255, 0.85)',
+        fontWeight: 500,
+      }}>
+        {label}
+      </span>
+      {children ?? (
+        <span style={{ 
+          color: 'rgba(255, 255, 255, 0.6)',
+          fontSize: '0.9375rem',
+        }}>
+          {right}
+        </span>
+      )}
     </div>
   );
 }
 
 function Toggle({ label, value, onChange }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-      <span style={{ fontSize: '14px', color: 'white' }}>{label}</span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <span style={{ 
+        fontSize: '0.9375rem', 
+        color: 'rgba(255, 255, 255, 0.85)',
+      }}>
+        {label}
+      </span>
       <button
         onClick={() => onChange(!value)}
         style={{
-          width: '40px',
-          height: '22px',
+          width: '2.375rem',
+          height: '1.25rem',
           borderRadius: '999px',
           background: value
-            ? 'rgba(31,41,55,0.95)'
-            : 'rgba(160,160,160,0.5)',
+            ? 'rgba(48, 251, 230, 0.3)'
+            : 'rgba(255, 255, 255, 0.15)',
+          border: value 
+            ? '1px solid rgba(48, 251, 230, 0.4)'
+            : '1px solid rgba(255, 255, 255, 0.2)',
           position: 'relative',
-          border: 'none',
           cursor: 'pointer',
+          transition: 'all 0.3s ease',
         }}
       >
         <div
           style={{
-            width: '18px',
-            height: '18px',
-            background: '#ffffff',
+            width: '1rem',
+            height: '1rem',
+            background: value 
+              ? 'rgba(48, 251, 230, 0.9)' 
+              : 'rgba(255, 255, 255, 0.8)',
             borderRadius: '50%',
             position: 'absolute',
-            top: '2px',
-            left: '2px',
-            transform: value ? 'translateX(18px)' : 'translateX(0)',
+            top: '1px',
+            left: '1px',
+            transform: value ? 'translateX(1.125rem)' : 'translateX(0)',
             transition: 'transform 0.25s ease',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
           }}
         />
       </button>
