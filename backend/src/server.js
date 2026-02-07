@@ -1,0 +1,50 @@
+import express from 'express';
+import dotenv from 'dotenv';
+import path from 'path';
+
+import cookieParser from "cookie-parser";
+import cors from "cors";
+
+import { connectDB } from "./lib/db.js";
+import authRoutes from "./routes/auth.route.js";
+import messageRoutes from "./routes/message.route.js";
+import userRoutes from "./routes/user.route.js";
+
+
+dotenv.config();
+
+const app = express();
+const _dirname = path.resolve();
+
+const PORT = process.env.PORT || 3000;
+
+app.use(express.json({ limit: "5mb" }));
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL,
+    credentials: true,
+  })
+);
+
+app.get("/health", (req, res) => {  //DO NOT REMOVE THIS ENDPOINT
+  res.status(200).json({ msg: "api is up and running" });
+});
+
+app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/users", userRoutes);
+
+//This is for deploying the frontend
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(_dirname, '../frontend/dist')));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(_dirname, '../frontend/dist/index.html'));
+  });
+}
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+  connectDB();
+});
