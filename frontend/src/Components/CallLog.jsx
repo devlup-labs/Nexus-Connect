@@ -1,6 +1,5 @@
-import { Search, MoreVertical, Phone, Video, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { Search, MoreVertical, Phone, Video, ArrowDownLeft, ArrowUpRight, X } from "lucide-react";
 import { useState } from "react";
-import { Field } from "./Settings";
 
 function CallLogPanel() {
   const [hoveredIcon, setHoveredIcon] = useState(null);
@@ -8,8 +7,10 @@ function CallLogPanel() {
   const [hoveredCall, setHoveredCall] = useState(null);
   const [hoveredAction, setHoveredAction] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
+  
+  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Call log data
   const callLogs = [
     {
       id: 1,
@@ -83,33 +84,42 @@ function CallLogPanel() {
     },
   ];
 
-  // Filter function
   const getFilteredCalls = () => {
-    if (activeFilter === "all") {
-      return callLogs;
-    } else if (activeFilter === "missed") {
-      return callLogs.filter(call => call.status === "missed");
-    } else if (activeFilter === "incoming") {
-      return callLogs.filter(call => call.type === "incoming");
-    } else if (activeFilter === "outgoing") {
-      return callLogs.filter(call => call.type === "outgoing");
-    } else if (activeFilter === "voice") {
-      return callLogs.filter(call => call.callType === "voice");
-    } else if (activeFilter === "video") {
-      return callLogs.filter(call => call.callType === "video");
+    let calls = callLogs;
+
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      const cleanedQuery = searchQuery.replace(/\D/g, ""); 
+
+      calls = calls.filter((call) => {
+        const nameMatch = call.name.toLowerCase().includes(lowerQuery);
+        const cleanedNumber = call.number.replace(/\D/g, "");
+        const numberMatch = cleanedQuery.length > 0 && cleanedNumber.includes(cleanedQuery);
+
+        return nameMatch || numberMatch;
+      });
     }
-    return callLogs;
+
+    if (activeFilter === "all") return calls;
+    if (activeFilter === "missed") return calls.filter(call => call.status === "missed");
+    if (activeFilter === "incoming") return calls.filter(call => call.type === "incoming");
+    if (activeFilter === "outgoing") return calls.filter(call => call.type === "outgoing");
+    if (activeFilter === "voice") return calls.filter(call => call.callType === "voice");
+    if (activeFilter === "video") return calls.filter(call => call.callType === "video");
+    
+    return calls;
   };
 
   const filteredCalls = getFilteredCalls();
 
   return (
     <div
-      className="w-full h-screen flex flex-col"
+      className="w-full h-full flex flex-col"
       style={{ 
         boxSizing: "border-box",
         paddingRight: "24px", 
-        paddingBottom: "24px"
+        paddingBottom: "32px",
+        fontFamily: "'Inter', sans-serif",
        }}
     >
       <div style={{ padding: '10px 10px 25px 10px'  }}>
@@ -118,7 +128,6 @@ function CallLogPanel() {
           fontWeight: 500, 
           color: 'rgba(255, 255, 255, 0.9)',
           letterSpacing: '0.5px',
-          fontFamily: "'Inter', sans-serif",
         }}>
           Call Log
         </h2>
@@ -130,373 +139,316 @@ function CallLogPanel() {
           backdropFilter: "blur(20px) saturate(180%)",
           border: "1px solid rgba(255, 255, 255, 0.15)",
           boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
+          maxHeight: "100%", 
         }}
       >
-        {/* Header */}
-        <div style={{ padding: "10px 10px 25px 10px" }}>
-          <div
-            className="flex items-center justify-between"
-            style={{ marginBottom: "24px" }}
+        <div 
+          style={{ 
+            padding: "20px 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "16px",
+            borderBottom: "1px solid rgba(255,255,255,0.05)"
+          }}
+        >
+          <div 
+            className="flex" 
+            style={{ 
+              gap: "8px", 
+              overflowX: "auto", 
+              scrollbarWidth: "none", 
+              msOverflowStyle: "none", 
+              paddingBottom: "4px", 
+              alignItems: "center",
+              flex: 1, 
+              minWidth: 0, 
+            }}
           >
+            <style>{`
+              .flex::-webkit-scrollbar { display: none; }
+            `}</style>
             
-            <div className="flex items-center" style={{ gap: "16px" }}>
-              <Search
-                className="text-white cursor-pointer"
-                size={24}
+            {["all", "missed", "incoming", "outgoing", "voice", "video"].map((filter) => (
+                <button
+                key={filter}
                 style={{
-                  opacity: hoveredIcon === "search" ? 1 : 0.7,
-                  transform:
-                    hoveredIcon === "search" ? "scale(1.1)" : "scale(1)",
-                  transition: "all 0.3s ease",
+                    background: activeFilter === filter ? "rgba(139, 237, 233, 0.9)" : "rgba(255, 255, 255, 0.1)",
+                    color: activeFilter === filter ? "#1a1a2e" : "white",
+                    padding: "8px 16px",
+                    borderRadius: "9999px",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    border: "none",
+                    whiteSpace: "nowrap",
+                    transform: hoveredButton === filter ? "scale(1.02)" : "scale(1)",
+                    transition: "all 0.2s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    textTransform: "capitalize",
+                    flexShrink: 0 
                 }}
-                onMouseEnter={() => setHoveredIcon("search")}
-                onMouseLeave={() => setHoveredIcon(null)}
-              />
-              <MoreVertical
-                className="text-white cursor-pointer"
-                size={24}
-                style={{
-                  opacity: hoveredIcon === "more" ? 1 : 0.7,
-                  transform: hoveredIcon === "more" ? "scale(1.1)" : "scale(1)",
-                  transition: "all 0.3s ease",
-                }}
-                onMouseEnter={() => setHoveredIcon("more")}
-                onMouseLeave={() => setHoveredIcon(null)}
-              />
-            </div>
+                onMouseEnter={() => setHoveredButton(filter)}
+                onMouseLeave={() => setHoveredButton(null)}
+                onClick={() => setActiveFilter(filter)}
+                >
+                {filter === "voice" && <Phone size={12} />}
+                {filter === "video" && <Video size={12} />}
+                {filter}
+                </button>
+            ))}
           </div>
 
-          {/* Filter Tabs */}
-          <div className="flex" style={{ gap: "12px", flexWrap: "wrap" }}>
-            <button
-              style={{
-                background: activeFilter === "all" ? "rgba(139, 237, 233, 0.9)" : "rgba(255, 255, 255, 0.1)",
-                color: activeFilter === "all" ? "#1a1a2e" : "white",
-                padding: "8px 20px",
-                borderRadius: "9999px",
-                fontSize: "14px",
-                fontWeight: 500,
-                cursor: "pointer",
-                border: "none",
-                transform: hoveredButton === "all" ? "scale(1.02)" : "scale(1)",
-                boxShadow:
-                  hoveredButton === "all" && activeFilter === "all"
-                    ? "0 4px 12px rgba(139, 237, 233, 0.3)"
-                    : "none",
-                transition: "all 0.3s ease",
-              }}
-              onMouseEnter={() => setHoveredButton("all")}
-              onMouseLeave={() => setHoveredButton(null)}
-              onClick={() => setActiveFilter("all")}
-            >
-              All
-            </button>
-            <button
-              style={{
-                background: activeFilter === "missed" ? "rgba(255, 107, 107, 0.9)" : "rgba(255, 255, 255, 0.1)",
-                color: "white",
-                padding: "8px 20px",
-                borderRadius: "9999px",
-                fontSize: "14px",
-                fontWeight: 500,
-                cursor: "pointer",
-                border: "none",
-                transform:
-                  hoveredButton === "missed" ? "scale(1.02)" : "scale(1)",
-                boxShadow:
-                  hoveredButton === "missed" && activeFilter === "missed"
-                    ? "0 4px 12px rgba(255, 107, 107, 0.3)"
-                    : "none",
-                transition: "all 0.3s ease",
-              }}
-              onMouseEnter={() => setHoveredButton("missed")}
-              onMouseLeave={() => setHoveredButton(null)}
-              onClick={() => setActiveFilter("missed")}
-            >
-              Missed
-            </button>
-            <button
-              style={{
-                background:
-                  hoveredButton === "incoming" || activeFilter === "incoming"
-                    ? "rgba(255, 255, 255, 0.2)"
-                    : "rgba(255, 255, 255, 0.1)",
-                color: "white",
-                padding: "8px 20px",
-                borderRadius: "9999px",
-                fontSize: "14px",
-                fontWeight: 500,
-                cursor: "pointer",
-                border: "none",
-                transform:
-                  hoveredButton === "incoming" ? "scale(1.02)" : "scale(1)",
-                transition: "all 0.3s ease",
-              }}
-              onMouseEnter={() => setHoveredButton("incoming")}
-              onMouseLeave={() => setHoveredButton(null)}
-              onClick={() => setActiveFilter("incoming")}
-            >
-              Incoming
-            </button>
-            <button
-              style={{
-                background:
-                  hoveredButton === "outgoing" || activeFilter === "outgoing"
-                    ? "rgba(255, 255, 255, 0.2)"
-                    : "rgba(255, 255, 255, 0.1)",
-                color: "white",
-                padding: "8px 20px",
-                borderRadius: "9999px",
-                fontSize: "14px",
-                fontWeight: 500,
-                cursor: "pointer",
-                border: "none",
-                transform:
-                  hoveredButton === "outgoing" ? "scale(1.02)" : "scale(1)",
-                transition: "all 0.3s ease",
-              }}
-              onMouseEnter={() => setHoveredButton("outgoing")}
-              onMouseLeave={() => setHoveredButton(null)}
-              onClick={() => setActiveFilter("outgoing")}
-            >
-              Outgoing
-            </button>
-            <button
-              style={{
-                background:
-                  hoveredButton === "voice" || activeFilter === "voice"
-                    ? "rgba(255, 255, 255, 0.2)"
-                    : "rgba(255, 255, 255, 0.1)",
-                color: "white",
-                padding: "8px 20px",
-                borderRadius: "9999px",
-                fontSize: "14px",
-                fontWeight: 500,
-                cursor: "pointer",
-                border: "none",
-                transform:
-                  hoveredButton === "voice" ? "scale(1.02)" : "scale(1)",
-                transition: "all 0.3s ease",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-              onMouseEnter={() => setHoveredButton("voice")}
-              onMouseLeave={() => setHoveredButton(null)}
-              onClick={() => setActiveFilter("voice")}
-            >
-              <Phone size={14} />
-              Voice
-            </button>
-            <button
-              style={{
-                background:
-                  hoveredButton === "video" || activeFilter === "video"
-                    ? "rgba(255, 255, 255, 0.2)"
-                    : "rgba(255, 255, 255, 0.1)",
-                color: "white",
-                padding: "8px 20px",
-                borderRadius: "9999px",
-                fontSize: "14px",
-                fontWeight: 500,
-                cursor: "pointer",
-                border: "none",
-                transform:
-                  hoveredButton === "video" ? "scale(1.02)" : "scale(1)",
-                transition: "all 0.3s ease",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-              onMouseEnter={() => setHoveredButton("video")}
-              onMouseLeave={() => setHoveredButton(null)}
-              onClick={() => setActiveFilter("video")}
-            >
-              <Video size={14} />
-              Video
-            </button>
-          </div>
+          <div className="flex items-center" style={{ gap: "12px", flexShrink: 0 }}>
+              
+              <div 
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  background: isSearchActive ? "rgba(255, 255, 255, 0.1)" : "transparent",
+                  borderRadius: "99px",
+                  padding: isSearchActive ? "6px 12px" : "6px",
+                  transition: "all 0.3s ease",
+                  border: isSearchActive ? "1px solid rgba(255,255,255,0.2)" : "1px solid transparent",
+                  width: isSearchActive ? "220px" : "36px", 
+                }}
+              >
+                <Search
+                  className="text-white cursor-pointer"
+                  size={20}
+                  style={{
+                    opacity: hoveredIcon === "search" ? 1 : 0.7,
+                    minWidth: "20px",
+                  }}
+                  onClick={() => setIsSearchActive(true)}
+                  onMouseEnter={() => setHoveredIcon("search")}
+                  onMouseLeave={() => setHoveredIcon(null)}
+                />
+                
+                {isSearchActive && (
+                  <>
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="Search..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        outline: "none",
+                        color: "white",
+                        marginLeft: "8px",
+                        fontSize: "14px",
+                        width: "100%"
+                      }}
+                    />
+                    <X 
+                      size={16} 
+                      className="text-white cursor-pointer" 
+                      style={{ opacity: 0.7 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSearchQuery("");
+                        setIsSearchActive(false);
+                      }}
+                    />
+                  </>
+                )}
+              </div>
+
+              {!isSearchActive && (
+                <MoreVertical
+                  className="text-white cursor-pointer"
+                  size={20}
+                  style={{
+                    opacity: hoveredIcon === "more" ? 1 : 0.7,
+                    transform: hoveredIcon === "more" ? "scale(1.1)" : "scale(1)",
+                    transition: "all 0.3s ease",
+                  }}
+                  onMouseEnter={() => setHoveredIcon("more")}
+                  onMouseLeave={() => setHoveredIcon(null)}
+                />
+              )}
+            </div>
         </div>
 
-        {/* Call Log List */}
         <div
           style={{
             flex: 1,
             overflowY: "auto",
-            padding: "0 32px 32px",
+            padding: "24px 32px 32px",
           }}
         >
-          {filteredCalls.map((call) => (
-            <div
-              key={call.id}
-              style={{
-                marginBottom: "12px",
-                transition: "all 0.3s ease",
-                cursor: "pointer",
-              }}
-              onMouseEnter={() => setHoveredCall(call.id)}
-              onMouseLeave={() => setHoveredCall(null)}
-            >
+          {filteredCalls.length > 0 ? (
+            filteredCalls.map((call) => (
               <div
+                key={call.id}
                 style={{
-                  padding: "16px",
-                  borderRadius: "16px",
-                  background:
-                    hoveredCall === call.id
-                      ? "rgba(255, 255, 255, 0.08)"
-                      : "rgba(255, 255, 255, 0.03)",
-                  border: "1px solid rgba(180, 180, 180, 0.3)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "16px",
+                  marginBottom: "12px",
                   transition: "all 0.3s ease",
+                  cursor: "pointer",
                 }}
+                onMouseEnter={() => setHoveredCall(call.id)}
+                onMouseLeave={() => setHoveredCall(null)}
               >
-                {/* Avatar */}
                 <div
                   style={{
-                    width: "48px",
-                    height: "48px",
-                    borderRadius: "50%",
-                    background: "rgba(139, 237, 233, 0.2)",
+                    padding: "16px",
+                    borderRadius: "16px",
+                    background:
+                      hoveredCall === call.id
+                        ? "rgba(255, 255, 255, 0.08)"
+                        : "rgba(255, 255, 255, 0.03)",
+                    border: "1px solid rgba(180, 180, 180, 0.3)",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "18px",
-                    fontWeight: 600,
-                    color: "rgba(139, 237, 233, 1)",
+                    gap: "16px",
+                    transition: "all 0.3s ease",
                   }}
                 >
-                  {call.name.charAt(0)}
-                </div>
-
-                {/* Contact Info */}
-                <div style={{ flex: 1 }}>
                   <div
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: 500,
-                      color: "white",
-                      marginBottom: "4px",
-                    }}
-                  >
-                    {call.name}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      color: "rgba(255, 255, 255, 0.5)",
-                    }}
-                  >
-                    {call.number}
-                  </div>
-                </div>
-
-                {/* Call Type & Direction Icons */}
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  {/* Call Type Icon (Voice or Video) */}
-                  {call.callType === "video" ? (
-                    <Video
-                      size={18}
-                      style={{
-                        color: "rgba(139, 237, 233, 0.7)",
-                      }}
-                    />
-                  ) : (
-                    <Phone
-                      size={18}
-                      style={{
-                        color: "rgba(139, 237, 233, 0.7)",
-                      }}
-                    />
-                  )}
-                  
-                  {/* Direction Icon */}
-                  {call.type === "incoming" ? (
-                    <ArrowDownLeft
-                      size={20}
-                      style={{
-                        color: "rgba(139, 237, 233, 1)",
-                      }}
-                    />
-                  ) : (
-                    <ArrowUpRight
-                      size={20}
-                      style={{
-                        color: call.status === "missed" ? "rgba(255, 107, 107, 1)" : "rgba(139, 237, 233, 1)",
-                      }}
-                    />
-                  )}
-                </div>
-
-                {/* Time and Date */}
-                <div style={{ textAlign: "right", minWidth: "80px" }}>
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: 500,
-                      color: "white",
-                      marginBottom: "4px",
-                    }}
-                  >
-                    {call.time}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "13px",
-                      color: call.status === "missed" ? "rgba(255, 107, 107, 1)" : "rgba(255, 255, 255, 0.5)",
-                    }}
-                  >
-                    {call.date}
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <button
                     style={{
                       width: "48px",
                       height: "48px",
                       borderRadius: "50%",
-                      background: hoveredAction === `phone-${call.id}` ? "rgba(139, 237, 233, 0.3)" : "rgba(255, 255, 255, 0.1)",
-                      border: "none",
-                      cursor: "pointer",
+                      background: "rgba(139, 237, 233, 0.2)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      transform: hoveredAction === `phone-${call.id}` ? "scale(1.05)" : "scale(1)",
-                      transition: "all 0.3s ease",
+                      fontSize: "18px",
+                      fontWeight: 600,
+                      color: "rgba(139, 237, 233, 1)",
                     }}
-                    onMouseEnter={() => setHoveredAction(`phone-${call.id}`)}
-                    onMouseLeave={() => setHoveredAction(null)}
                   >
-                    <Phone size={20} className="text-white" />
-                  </button>
-                  <button
-                    style={{
-                      width: "48px",
-                      height: "48px",
-                      borderRadius: "50%",
-                      background: hoveredAction === `video-${call.id}` ? "rgba(139, 237, 233, 0.3)" : "rgba(255, 255, 255, 0.1)",
-                      border: "none",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      transform: hoveredAction === `video-${call.id}` ? "scale(1.05)" : "scale(1)",
-                      transition: "all 0.3s ease",
-                    }}
-                    onMouseEnter={() => setHoveredAction(`video-${call.id}`)}
-                    onMouseLeave={() => setHoveredAction(null)}
-                  >
-                    <Video size={20} className="text-white" />
-                  </button>
+                    {call.name.charAt(0)}
+                  </div>
+
+                  <div style={{ flex: 1 }}>
+                    <div
+                      style={{
+                        fontSize: "16px",
+                        fontWeight: 500,
+                        color: "white",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      {call.name}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        color: "rgba(255, 255, 255, 0.5)",
+                      }}
+                    >
+                      {call.number}
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    {call.callType === "video" ? (
+                      <Video size={18} style={{ color: "rgba(139, 237, 233, 0.7)" }} />
+                    ) : (
+                      <Phone size={18} style={{ color: "rgba(139, 237, 233, 0.7)" }} />
+                    )}
+                    
+                    {call.type === "incoming" ? (
+                      <ArrowDownLeft size={20} style={{ color: "rgba(139, 237, 233, 1)" }} />
+                    ) : (
+                      <ArrowUpRight
+                        size={20}
+                        style={{ color: call.status === "missed" ? "rgba(255, 107, 107, 1)" : "rgba(139, 237, 233, 1)" }}
+                      />
+                    )}
+                  </div>
+
+                  <div style={{ 
+                      minWidth: "120px", 
+                      display: "flex", 
+                      justifyContent: "flex-end",
+                      alignItems: "center"
+                  }}>
+                    {hoveredCall === call.id ? (
+                      <div style={{ display: "flex", gap: "8px", animation: "fadeIn 0.2s ease-in" }}>
+                        <button
+                          style={{
+                            width: "40px",
+                            height: "40px",
+                            borderRadius: "50%",
+                            background: hoveredAction === `phone-${call.id}` ? "rgba(139, 237, 233, 0.3)" : "rgba(255, 255, 255, 0.1)",
+                            border: "none",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            transition: "all 0.2s ease",
+                          }}
+                          onMouseEnter={() => setHoveredAction(`phone-${call.id}`)}
+                          onMouseLeave={() => setHoveredAction(null)}
+                        >
+                          <Phone size={18} className="text-white" />
+                        </button>
+                        <button
+                          style={{
+                            width: "40px",
+                            height: "40px",
+                            borderRadius: "50%",
+                            background: hoveredAction === `video-${call.id}` ? "rgba(139, 237, 233, 0.3)" : "rgba(255, 255, 255, 0.1)",
+                            border: "none",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            transition: "all 0.2s ease",
+                          }}
+                          onMouseEnter={() => setHoveredAction(`video-${call.id}`)}
+                          onMouseLeave={() => setHoveredAction(null)}
+                        >
+                          <Video size={18} className="text-white" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ textAlign: "right" }}>
+                        <div
+                          style={{
+                            fontSize: "14px",
+                            fontWeight: 500,
+                            color: "white",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          {call.time}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "13px",
+                            color: call.status === "missed" ? "rgba(255, 107, 107, 1)" : "rgba(255, 255, 255, 0.5)",
+                          }}
+                        >
+                          {call.date}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                 </div>
               </div>
+            ))
+          ) : (
+            <div style={{ textAlign: "center", color: "rgba(255,255,255,0.5)", marginTop: "40px" }}>
+              No calls found matching "{searchQuery}"
             </div>
-          ))}
+          )}
         </div>
       </div>
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(5px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }
