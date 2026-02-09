@@ -32,7 +32,7 @@ function App() {
         <StreamPanel />
         {/* <ChatContainer /> */}
         <SettingsPanel />
-        {/* <CallLogPanel /> */}
+        <CallLogPanel />
       </div>
     </div>
   )

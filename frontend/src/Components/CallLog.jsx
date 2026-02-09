@@ -19,6 +19,7 @@ function CallLogPanel() {
       date: "04-21",
       type: "incoming",
       status: "answered",
+      callType: "voice", // Added call type
     },
     {
       id: 2,
@@ -28,6 +29,7 @@ function CallLogPanel() {
       date: "Missed",
       type: "outgoing",
       status: "missed",
+      callType: "video", // Added call type
     },
     {
       id: 3,
@@ -37,6 +39,7 @@ function CallLogPanel() {
       date: "04-21",
       type: "incoming",
       status: "answered",
+      callType: "voice",
     },
     {
       id: 4,
@@ -46,6 +49,7 @@ function CallLogPanel() {
       date: "04-21",
       type: "incoming",
       status: "answered",
+      callType: "video",
     },
     {
       id: 5,
@@ -55,6 +59,7 @@ function CallLogPanel() {
       date: "Missed",
       type: "outgoing",
       status: "missed",
+      callType: "voice",
     },
     {
       id: 6,
@@ -64,6 +69,7 @@ function CallLogPanel() {
       date: "04-21",
       type: "incoming",
       status: "answered",
+      callType: "video",
     },
     {
       id: 7,
@@ -73,6 +79,7 @@ function CallLogPanel() {
       date: "04-21",
       type: "outgoing",
       status: "answered",
+      callType: "voice",
     },
   ];
 
@@ -161,7 +168,7 @@ function CallLogPanel() {
                 fontWeight: 500,
                 cursor: "pointer",
                 border: "none",
-                transform: hoveredButton === "all" ? "scale(1.05)" : "scale(1)",
+                transform: hoveredButton === "all" ? "scale(1.02)" : "scale(1)",
                 boxShadow:
                   hoveredButton === "all" && activeFilter === "all"
                     ? "0 4px 12px rgba(139, 237, 233, 0.3)"
@@ -185,7 +192,7 @@ function CallLogPanel() {
                 cursor: "pointer",
                 border: "none",
                 transform:
-                  hoveredButton === "missed" ? "scale(1.05)" : "scale(1)",
+                  hoveredButton === "missed" ? "scale(1.02)" : "scale(1)",
                 boxShadow:
                   hoveredButton === "missed" && activeFilter === "missed"
                     ? "0 4px 12px rgba(255, 107, 107, 0.3)"
@@ -212,7 +219,7 @@ function CallLogPanel() {
                 cursor: "pointer",
                 border: "none",
                 transform:
-                  hoveredButton === "incoming" ? "scale(1.05)" : "scale(1)",
+                  hoveredButton === "incoming" ? "scale(1.02)" : "scale(1)",
                 transition: "all 0.3s ease",
               }}
               onMouseEnter={() => setHoveredButton("incoming")}
@@ -235,7 +242,7 @@ function CallLogPanel() {
                 cursor: "pointer",
                 border: "none",
                 transform:
-                  hoveredButton === "outgoing" ? "scale(1.05)" : "scale(1)",
+                  hoveredButton === "outgoing" ? "scale(1.02)" : "scale(1)",
                 transition: "all 0.3s ease",
               }}
               onMouseEnter={() => setHoveredButton("outgoing")}
@@ -260,7 +267,6 @@ function CallLogPanel() {
               key={call.id}
               style={{
                 marginBottom: "12px",
-                transform: hoveredCall === call.id ? "scale(1.02)" : "scale(1)",
                 transition: "all 0.3s ease",
                 cursor: "pointer",
               }}
@@ -322,8 +328,26 @@ function CallLogPanel() {
                   </div>
                 </div>
 
-                {/* Call Direction Icon */}
+                {/* Call Type & Direction Icons */}
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  {/* Call Type Icon (Voice or Video) */}
+                  {call.callType === "video" ? (
+                    <Video
+                      size={18}
+                      style={{
+                        color: "rgba(139, 237, 233, 0.7)",
+                      }}
+                    />
+                  ) : (
+                    <Phone
+                      size={18}
+                      style={{
+                        color: "rgba(139, 237, 233, 0.7)",
+                      }}
+                    />
+                  )}
+                  
+                  {/* Direction Icon */}
                   {call.type === "incoming" ? (
                     <ArrowDownLeft
                       size={20}
@@ -376,7 +400,7 @@ function CallLogPanel() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      transform: hoveredAction === `phone-${call.id}` ? "scale(1.1)" : "scale(1)",
+                      transform: hoveredAction === `phone-${call.id}` ? "scale(1.05)" : "scale(1)",
                       transition: "all 0.3s ease",
                     }}
                     onMouseEnter={() => setHoveredAction(`phone-${call.id}`)}
@@ -395,7 +419,7 @@ function CallLogPanel() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      transform: hoveredAction === `video-${call.id}` ? "scale(1.1)" : "scale(1)",
+                      transform: hoveredAction === `video-${call.id}` ? "scale(1.05)" : "scale(1)",
                       transition: "all 0.3s ease",
                     }}
                     onMouseEnter={() => setHoveredAction(`video-${call.id}`)}
