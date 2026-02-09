@@ -1,0 +1,84 @@
+/* src/components/Login.css */
+.login-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.glass-login-card {
+  background: rgba(255, 255, 255, 0.05); /* High transparency */
+  backdrop-filter: blur(15px); /* Frosty glass effect */
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 50px 40px;
+  width: 350px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+h2 {
+  color: white;
+  font-weight: 300;
+  letter-spacing: 5px;
+  margin-bottom: 40px;
+  font-size: 2rem;
+}
+
+.input-row {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.input-row input {
+  width: 100%;
+  padding: 15px 50px 15px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50px; /* Pill shape */
+  color: white;
+  outline: none;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.row-icon {
+  position: absolute;
+  right: 20px; /* Icon on the right side */
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.2rem;
+}
+
+.sign-in-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 20px;
+  background: transparent;
+  border: 2px solid white;
+  color: white;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.sign-in-btn:hover {
+  background: white;
+  color: #220044;
+}
+
+.bottom-links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 30px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
