@@ -4,7 +4,7 @@ import ChatContainer from './Components/ChatContainer.jsx'
 import StreamPanel from './Components/StreamPanel.jsx'
 import SettingsPanel from './Components/Settings.jsx'
 import CallLogPanel from './Components/CallLog.jsx'
-import ContactsPanel from './Components/ContactsPanel.jsx'
+
 
 function App() {
   const [activeView, setActiveView] = useState('messages');
