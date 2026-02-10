@@ -13,7 +13,7 @@ function App() {
     switch(activeView) {
       case 'home': return null; 
       case 'messages': return <ChatContainer />;
-      case 'contacts': return <ContactsPanel/>; 
+      case 'contacts': return null; 
       case 'call-log': return <CallLogPanel />;
       case 'settings': return <SettingsPanel />;
       default: return <ChatContainer />;
