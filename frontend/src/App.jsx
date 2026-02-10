@@ -38,5 +38,5 @@ function App() {
         <CallLogPanel />
       </div>
     </div>
-  )}
+  );}
   export default App;
