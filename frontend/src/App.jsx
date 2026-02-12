@@ -4,6 +4,10 @@ import ChatContainer from './Components/ChatContainer.jsx'
 import StreamPanel from './Components/StreamPanel.jsx'
 import SettingsPanel from './Components/Settings.jsx'
 import CallLogPanel from './Components/CallLog.jsx'
+import Login from './components/Login';
+import Signup from './components/signup'; // Ensure this matches your filename
+import { useState } from 'react';
+import './App.css';
 
 
 function App() {
@@ -39,15 +43,12 @@ function App() {
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E")`
         }}>
       </div>
-      
-      <Dock onNavigate={setActiveView} activeView={activeView} />
-      
+ <Dock />
+
       <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '12px', height: '100vh', marginLeft: '100px' }}>
         <StreamPanel />
         {renderView()}
       </div>
     </div>
   )
-}
-
-export default App
+  export default App;}
