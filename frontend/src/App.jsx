@@ -6,7 +6,7 @@ import CallLogPanel from './Components/CallLog.jsx'
 import Login from './components/Login';
 import Signup from './components/signup'; // Ensure this matches your filename
 import { useState } from 'react';
-import './App.css';
+//import './App.css';
 
 function App() {
   return (
@@ -19,7 +19,7 @@ function App() {
                radial-gradient(circle at 80% 70%, rgba(0, 191, 255, 0.2) 0%, transparent 40%),
                radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
                radial-gradient(circle at 70% 20%, rgba(14, 165, 233, 0.15) 0%, transparent 35%)
-             `
+           ++  `
         }}>
       </div>
 
