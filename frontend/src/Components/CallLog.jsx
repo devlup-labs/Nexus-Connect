@@ -19,6 +19,7 @@ function CallLogPanel() {
       date: "04-21",
       type: "incoming",
       status: "answered",
+      callType: "voice", 
     },
     {
       id: 2,
@@ -28,6 +29,7 @@ function CallLogPanel() {
       date: "Missed",
       type: "outgoing",
       status: "missed",
+      callType: "video", 
     },
     {
       id: 3,
@@ -37,6 +39,7 @@ function CallLogPanel() {
       date: "04-21",
       type: "incoming",
       status: "answered",
+      callType: "voice",
     },
     {
       id: 4,
@@ -46,6 +49,7 @@ function CallLogPanel() {
       date: "04-21",
       type: "incoming",
       status: "answered",
+      callType: "video",
     },
     {
       id: 5,
@@ -55,6 +59,7 @@ function CallLogPanel() {
       date: "Missed",
       type: "outgoing",
       status: "missed",
+      callType: "voice",
     },
     {
       id: 6,
@@ -64,6 +69,7 @@ function CallLogPanel() {
       date: "04-21",
       type: "incoming",
       status: "answered",
+      callType: "video",
     },
     {
       id: 7,
@@ -73,6 +79,7 @@ function CallLogPanel() {
       date: "04-21",
       type: "outgoing",
       status: "answered",
+      callType: "voice",
     },
   ];
 
@@ -86,6 +93,10 @@ function CallLogPanel() {
       return callLogs.filter(call => call.type === "incoming");
     } else if (activeFilter === "outgoing") {
       return callLogs.filter(call => call.type === "outgoing");
+    } else if (activeFilter === "voice") {
+      return callLogs.filter(call => call.callType === "voice");
+    } else if (activeFilter === "video") {
+      return callLogs.filter(call => call.callType === "video");
     }
     return callLogs;
   };
@@ -94,9 +105,24 @@ function CallLogPanel() {
 
   return (
     <div
-      className="w-175 h-screen"
-      style={{ padding: "24px", boxSizing: "border-box" }}
+      className="w-full h-screen flex flex-col"
+      style={{ 
+        boxSizing: "border-box",
+        paddingRight: "24px", 
+        paddingBottom: "24px"
+       }}
     >
+      <div style={{ padding: '10px 10px 25px 10px'  }}>
+        <h2 style={{ 
+          fontSize: '24px', 
+          fontWeight: 500, 
+          color: 'rgba(255, 255, 255, 0.9)',
+          letterSpacing: '0.5px',
+          fontFamily: "'Inter', sans-serif",
+        }}>
+          Call Log
+        </h2>
+      </div>
       <div
         className="w-full h-full rounded-2xl flex flex-col"
         style={{
@@ -107,21 +133,12 @@ function CallLogPanel() {
         }}
       >
         {/* Header */}
-        <div style={{ padding: "32px 32px 24px" }}>
+        <div style={{ padding: "10px 10px 25px 10px" }}>
           <div
             className="flex items-center justify-between"
             style={{ marginBottom: "24px" }}
           >
-            <h2
-              style={{
-                fontSize: "32px",
-                fontWeight: 500,
-                color: "white",
-                margin: 0,
-              }}
-            >
-              Call Log
-            </h2>
+            
             <div className="flex items-center" style={{ gap: "16px" }}>
               <Search
                 className="text-white cursor-pointer"
@@ -150,7 +167,7 @@ function CallLogPanel() {
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex" style={{ gap: "12px" }}>
+          <div className="flex" style={{ gap: "12px", flexWrap: "wrap" }}>
             <button
               style={{
                 background: activeFilter === "all" ? "rgba(139, 237, 233, 0.9)" : "rgba(255, 255, 255, 0.1)",
@@ -161,7 +178,7 @@ function CallLogPanel() {
                 fontWeight: 500,
                 cursor: "pointer",
                 border: "none",
-                transform: hoveredButton === "all" ? "scale(1.05)" : "scale(1)",
+                transform: hoveredButton === "all" ? "scale(1.02)" : "scale(1)",
                 boxShadow:
                   hoveredButton === "all" && activeFilter === "all"
                     ? "0 4px 12px rgba(139, 237, 233, 0.3)"
@@ -185,7 +202,7 @@ function CallLogPanel() {
                 cursor: "pointer",
                 border: "none",
                 transform:
-                  hoveredButton === "missed" ? "scale(1.05)" : "scale(1)",
+                  hoveredButton === "missed" ? "scale(1.02)" : "scale(1)",
                 boxShadow:
                   hoveredButton === "missed" && activeFilter === "missed"
                     ? "0 4px 12px rgba(255, 107, 107, 0.3)"
@@ -212,7 +229,7 @@ function CallLogPanel() {
                 cursor: "pointer",
                 border: "none",
                 transform:
-                  hoveredButton === "incoming" ? "scale(1.05)" : "scale(1)",
+                  hoveredButton === "incoming" ? "scale(1.02)" : "scale(1)",
                 transition: "all 0.3s ease",
               }}
               onMouseEnter={() => setHoveredButton("incoming")}
@@ -235,7 +252,7 @@ function CallLogPanel() {
                 cursor: "pointer",
                 border: "none",
                 transform:
-                  hoveredButton === "outgoing" ? "scale(1.05)" : "scale(1)",
+                  hoveredButton === "outgoing" ? "scale(1.02)" : "scale(1)",
                 transition: "all 0.3s ease",
               }}
               onMouseEnter={() => setHoveredButton("outgoing")}
@@ -243,6 +260,60 @@ function CallLogPanel() {
               onClick={() => setActiveFilter("outgoing")}
             >
               Outgoing
+            </button>
+            <button
+              style={{
+                background:
+                  hoveredButton === "voice" || activeFilter === "voice"
+                    ? "rgba(255, 255, 255, 0.2)"
+                    : "rgba(255, 255, 255, 0.1)",
+                color: "white",
+                padding: "8px 20px",
+                borderRadius: "9999px",
+                fontSize: "14px",
+                fontWeight: 500,
+                cursor: "pointer",
+                border: "none",
+                transform:
+                  hoveredButton === "voice" ? "scale(1.02)" : "scale(1)",
+                transition: "all 0.3s ease",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+              onMouseEnter={() => setHoveredButton("voice")}
+              onMouseLeave={() => setHoveredButton(null)}
+              onClick={() => setActiveFilter("voice")}
+            >
+              <Phone size={14} />
+              Voice
+            </button>
+            <button
+              style={{
+                background:
+                  hoveredButton === "video" || activeFilter === "video"
+                    ? "rgba(255, 255, 255, 0.2)"
+                    : "rgba(255, 255, 255, 0.1)",
+                color: "white",
+                padding: "8px 20px",
+                borderRadius: "9999px",
+                fontSize: "14px",
+                fontWeight: 500,
+                cursor: "pointer",
+                border: "none",
+                transform:
+                  hoveredButton === "video" ? "scale(1.02)" : "scale(1)",
+                transition: "all 0.3s ease",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+              onMouseEnter={() => setHoveredButton("video")}
+              onMouseLeave={() => setHoveredButton(null)}
+              onClick={() => setActiveFilter("video")}
+            >
+              <Video size={14} />
+              Video
             </button>
           </div>
         </div>
@@ -260,7 +331,6 @@ function CallLogPanel() {
               key={call.id}
               style={{
                 marginBottom: "12px",
-                transform: hoveredCall === call.id ? "scale(1.02)" : "scale(1)",
                 transition: "all 0.3s ease",
                 cursor: "pointer",
               }}
@@ -322,8 +392,26 @@ function CallLogPanel() {
                   </div>
                 </div>
 
-                {/* Call Direction Icon */}
+                {/* Call Type & Direction Icons */}
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  {/* Call Type Icon (Voice or Video) */}
+                  {call.callType === "video" ? (
+                    <Video
+                      size={18}
+                      style={{
+                        color: "rgba(139, 237, 233, 0.7)",
+                      }}
+                    />
+                  ) : (
+                    <Phone
+                      size={18}
+                      style={{
+                        color: "rgba(139, 237, 233, 0.7)",
+                      }}
+                    />
+                  )}
+                  
+                  {/* Direction Icon */}
                   {call.type === "incoming" ? (
                     <ArrowDownLeft
                       size={20}
@@ -376,7 +464,7 @@ function CallLogPanel() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      transform: hoveredAction === `phone-${call.id}` ? "scale(1.1)" : "scale(1)",
+                      transform: hoveredAction === `phone-${call.id}` ? "scale(1.05)" : "scale(1)",
                       transition: "all 0.3s ease",
                     }}
                     onMouseEnter={() => setHoveredAction(`phone-${call.id}`)}
@@ -395,7 +483,7 @@ function CallLogPanel() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      transform: hoveredAction === `video-${call.id}` ? "scale(1.1)" : "scale(1)",
+                      transform: hoveredAction === `video-${call.id}` ? "scale(1.05)" : "scale(1)",
                       transition: "all 0.3s ease",
                     }}
                     onMouseEnter={() => setHoveredAction(`video-${call.id}`)}
