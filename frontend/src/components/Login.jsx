@@ -1,23 +1,22 @@
 import React, { useState } from 'react';
 import './Login.css';
-import { FiUser, FiLock } from 'react-icons/fi'; // Feather icons match your UI perfectly
+import { FiUser, FiLock } from 'react-icons/fi';
+import nebulaBg from '../assets/background.jpg'; 
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    console.log("Login Data:", { username, password });
-  };
-
   return (
-    <div className="login-wrapper">
-      <div className="glass-card">
+    <div 
+      className="desktop-fullscreen-bg" 
+      style={{ backgroundImage: `url(${nebulaBg})` }}
+    >
+      <div className="center-login-card">
         <h2>LOGIN</h2>
-        <form onSubmit={handleLogin}>
-          {/* Username Field */}
-          <div className="input-field">
+        
+        <form onSubmit={(e) => e.preventDefault()}>
+          <div className="input-container">
             <input 
               type="text" 
               placeholder="Username" 
@@ -25,11 +24,10 @@ const Login = () => {
               onChange={(e) => setUsername(e.target.value)} 
               required 
             />
-            <FiUser className="field-icon" />
+            <FiUser className="input-icon" />
           </div>
           
-          {/* Password Field */}
-          <div className="input-field">
+          <div className="input-container">
             <input 
               type="password" 
               placeholder="Password" 
@@ -37,13 +35,13 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)} 
               required 
             />
-            <FiLock className="field-icon" />
+            <FiLock className="input-icon" />
           </div>
 
-          <button type="submit" className="signin-btn">Sign In</button>
+          <button type="submit" className="login-submit-btn">Sign In</button>
         </form>
 
-        <div className="footer-links">
+        <div className="bottom-links-container">
           <span>Forgot Password?</span>
           <span>Create Account</span>
         </div>
