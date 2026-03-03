@@ -4,6 +4,7 @@ import ChatContainer from './Components/ChatContainer.jsx'
 import StreamPanel from './Components/StreamPanel.jsx'
 import SettingsPanel from './Components/Settings.jsx'
 import CallLogPanel from './Components/CallLog.jsx'
+import ContactsPanel from './Components/ContactsPanel.jsx'
 // import Login from './components/Login';
 // import Signup from './components/signup'; // Ensure this matches your filename
 // import { useState } from 'react';
@@ -17,7 +18,7 @@ function App() {
     switch (activeView) {
       case 'home': return null;
       case 'messages': return <ChatContainer />;
-      case 'contacts': return null;
+      case 'contacts': return <ContactsPanel />;
       case 'call-log': return <CallLogPanel />;
       case 'settings': return <SettingsPanel />;
       default: return <ChatContainer />;
