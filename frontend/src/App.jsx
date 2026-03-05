@@ -4,17 +4,10 @@ import ChatContainer from './Components/ChatContainer.jsx'
 import StreamPanel from './Components/StreamPanel.jsx'
 import SettingsPanel from './Components/Settings.jsx'
 import CallLogPanel from './Components/CallLog.jsx'
-<<<<<<< HEAD
 import Login from './components/Login';
 import Signup from './components/signup'; // Ensure this matches your filename
 import { useState } from 'react';
 //import './App.css';
-=======
-// import Login from './components/Login';
-// import Signup from './components/signup'; // Ensure this matches your filename
-// import { useState } from 'react';
-// import './App.css';
->>>>>>> 20d5d55a62625bbe8ff8ea3cc945887d99fd7887
 
 
 function App() {
