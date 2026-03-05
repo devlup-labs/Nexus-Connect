@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { AppWindow, MoreHorizontal, Play } from 'lucide-react';
+import { AppWindow, MoreHorizontal, Play, Eye, Share2, Bookmark, Flag, RefreshCw, PlusCircle, Trash2 } from 'lucide-react';
+import ContextMenu from './ContextMenu';
 import './StreamPanel.css';
 
 const StreamPanel = () => {
     const [activeCard, setActiveCard] = useState(null);
+    const [contextMenu, setContextMenu] = useState(null);
 
     const streamItems = [
         {
@@ -94,6 +96,11 @@ const StreamPanel = () => {
                     <div
                         className={`stream-card text-card ${isActive ? 'active' : ''}`}
                         onClick={() => setActiveCard(item.id)}
+                        onContextMenu={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setContextMenu({ x: e.clientX, y: e.clientY, type: 'card', itemId: item.id });
+                        }}
                     >
                         <CardHeader />
                         <div className="card-content">
@@ -108,6 +115,11 @@ const StreamPanel = () => {
                     <div
                         className={`stream-card small-media-card ${isActive ? 'active' : ''}`}
                         onClick={() => setActiveCard(item.id)}
+                        onContextMenu={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setContextMenu({ x: e.clientX, y: e.clientY, type: 'card', itemId: item.id });
+                        }}
                     >
                         <CardHeader />
                         <div className="media-preview">
@@ -139,6 +151,11 @@ const StreamPanel = () => {
                     <div
                         className={`stream-card audio-card ${isActive ? 'active' : ''}`}
                         onClick={() => setActiveCard(item.id)}
+                        onContextMenu={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setContextMenu({ x: e.clientX, y: e.clientY, type: 'card', itemId: item.id });
+                        }}
                     >
                         <CardHeader />
                         <div className="audio-content">
@@ -163,6 +180,11 @@ const StreamPanel = () => {
                     <div
                         className={`stream-card large-media-card ${isActive ? 'active' : ''}`}
                         onClick={() => setActiveCard(item.id)}
+                        onContextMenu={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setContextMenu({ x: e.clientX, y: e.clientY, type: 'card', itemId: item.id });
+                        }}
                     >
                         <CardHeader />
                         <div className="large-media-preview">
@@ -211,7 +233,12 @@ const StreamPanel = () => {
                 </div>
             </div>
             <div className="stream-divider"></div>
-            <div className="stream-feed-masonry">
+            <div className="stream-feed-masonry"
+                onContextMenu={(e) => {
+                    e.preventDefault();
+                    setContextMenu({ x: e.clientX, y: e.clientY, type: 'panel' });
+                }}
+            >
                 <div className="feed-column">
                     {leftColumnItems.map((item) => (
                         <React.Fragment key={item.id}>
@@ -227,6 +254,29 @@ const StreamPanel = () => {
                     ))}
                 </div>
             </div>
+
+            {/* Context Menu */}
+            {contextMenu && (
+                <ContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    onClose={() => setContextMenu(null)}
+                    items={
+                        contextMenu.type === 'card'
+                            ? [
+                                { label: 'View Chat', icon: <Eye size={16} />, onClick: () => { } },
+                                // { label: 'Share', icon: <Share2 size={16} />, onClick: () => { } },
+                                { label: 'Archive', icon: <Bookmark size={16} />, onClick: () => { } },
+                                { divider: true },
+                                { label: 'Report', icon: <Flag size={16} />, color: '#ef4444', onClick: () => { } },
+                            ]
+                            : [
+                                { label: 'Refresh Feed', icon: <RefreshCw size={16} />, onClick: () => { } },
+                                { label: 'New Post', icon: <PlusCircle size={16} />, onClick: () => { } },
+                            ]
+                    }
+                />
+            )}
         </div>
     );
 };

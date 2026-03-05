@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, MoreHorizontal, SendHorizontal, X, Mail, Phone as PhoneIcon, User, Info, ArrowLeft, CheckSquare, Trash2, Forward, Copy, Check } from 'lucide-react';
+import { Phone, Video, MoreHorizontal, SendHorizontal, X, Mail, Phone as PhoneIcon, User, Info, ArrowLeft, CheckSquare, Trash2, Forward, Copy, Check, Search, ChevronUp, ChevronDown, Reply, MessageSquare } from 'lucide-react';
+import ContextMenu from './ContextMenu';
 
 const ChatContainer = () => {
     const [message, setMessage] = useState('');
@@ -7,7 +8,14 @@ const ChatContainer = () => {
     const [showProfile, setShowProfile] = useState(false);
     const [selectMode, setSelectMode] = useState(false);
     const [selectedMessages, setSelectedMessages] = useState([]);
+    const [searchMode, setSearchMode] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [currentMatchIndex, setCurrentMatchIndex] = useState(-1);
+    const [matchingMessageIds, setMatchingMessageIds] = useState([]);
     const menuRef = useRef(null);
+    const searchInputRef = useRef(null);
+    const messagesContainerRef = useRef(null);
+    const [contextMenu, setContextMenu] = useState(null);
 
     // Sample user profile data
     const userProfile = {
@@ -37,7 +45,69 @@ const ChatContainer = () => {
         } else if (option === 'select') {
             setSelectMode(true);
             setSelectedMessages([]);
+        } else if (option === 'search') {
+            setSearchMode(true);
+            setSearchQuery('');
+            setMatchingMessageIds([]);
+            setCurrentMatchIndex(-1);
+            setTimeout(() => searchInputRef.current?.focus(), 100);
         }
+    };
+
+    const closeSearch = () => {
+        setSearchMode(false);
+        setSearchQuery('');
+        setMatchingMessageIds([]);
+        setCurrentMatchIndex(-1);
+    };
+
+    const doesMessageMatch = (msg) => {
+        if (!searchQuery.trim()) return false;
+        return msg.text?.toLowerCase().includes(searchQuery.toLowerCase());
+    };
+
+    // Update matches when query changes
+    useEffect(() => {
+        if (!searchQuery.trim()) {
+            setMatchingMessageIds([]);
+            setCurrentMatchIndex(-1);
+            return;
+        }
+
+        const matches = messages
+            .filter(m => m.type !== 'status' && doesMessageMatch(m))
+            .map(m => m.id);
+
+        setMatchingMessageIds(matches);
+        // If we have matches, select the first one (or keep current if valid?)
+        // Simple behavior: reset to first match on query change
+        setCurrentMatchIndex(matches.length > 0 ? 0 : -1);
+    }, [searchQuery]);
+
+    // Scroll to current match within the messages container only
+    useEffect(() => {
+        if (currentMatchIndex >= 0 && matchingMessageIds.length > 0) {
+            const matchId = matchingMessageIds[currentMatchIndex];
+            const element = document.getElementById(`msg-${matchId}`);
+            const container = messagesContainerRef.current;
+            if (element && container) {
+                const elementTop = element.offsetTop - container.offsetTop;
+                const elementHeight = element.offsetHeight;
+                const containerHeight = container.clientHeight;
+                const scrollTo = elementTop - (containerHeight / 2) + (elementHeight / 2);
+                container.scrollTo({ top: scrollTo, behavior: 'smooth' });
+            }
+        }
+    }, [currentMatchIndex, matchingMessageIds]);
+
+    const nextMatch = () => {
+        if (matchingMessageIds.length === 0) return;
+        setCurrentMatchIndex(prev => (prev + 1) % matchingMessageIds.length);
+    };
+
+    const prevMatch = () => {
+        if (matchingMessageIds.length === 0) return;
+        setCurrentMatchIndex(prev => (prev - 1 + matchingMessageIds.length) % matchingMessageIds.length);
     };
 
     const toggleMessageSelection = (msgId) => {
@@ -137,6 +207,153 @@ const ChatContainer = () => {
         },
         {
             id: 9,
+            type: 'received',
+            text: 'Chatmsg should show here pls work.....',
+            timestamp: '7:23 AM',
+            barColor: 'from-purple-500 to-pink-500'
+        },
+        {
+            id: 10,
+            type: 'sent',
+            text: "Ig it is workin",
+            timestamp: '7:42 PM',
+            barColor: 'from-cyan-400 to-purple-500'
+        },
+        {
+            id: 11,
+            type: 'sent',
+            text: 'Well, did you know!',
+            timestamp: '7:42 PM',
+            barColor: 'from-cyan-400 to-purple-500'
+        },
+        {
+            id: 12,
+            type: 'received',
+            text: "yaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            timestamp: '8:24 PM',
+            barColor: 'from-cyan-400 to-blue-500'
+        },
+        {
+            id: 13,
+            type: 'sent',
+            text: 'msg recieved',
+            timestamp: '8:52 PM',
+            barColor: 'from-cyan-400 to-purple-500'
+        },
+        {
+            id: 14,
+            type: 'sent',
+            text: 'So how was the island....',
+            timestamp: '8:52 PM',
+            barColor: 'from-cyan-400 to-purple-500'
+        },
+        {
+            id: 15,
+            type: 'received',
+            text: "not bad...",
+            timestamp: '9:06 PM',
+            barColor: 'from-yellow-400 to-orange-500'
+        },
+        {
+            id: 16,
+            type: 'received',
+            text: 'Chatmsg should show here pls work.....',
+            timestamp: '7:23 AM',
+            barColor: 'from-purple-500 to-pink-500'
+        },
+        {
+            id: 17,
+            type: 'sent',
+            text: "Ig it is workin",
+            timestamp: '7:42 PM',
+            barColor: 'from-cyan-400 to-purple-500'
+        },
+        {
+            id: 18,
+            type: 'sent',
+            text: 'Well, did you know!',
+            timestamp: '7:42 PM',
+            barColor: 'from-cyan-400 to-purple-500'
+        },
+        {
+            id: 19,
+            type: 'received',
+            text: "yaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            timestamp: '8:24 PM',
+            barColor: 'from-cyan-400 to-blue-500'
+        },
+        {
+            id: 20,
+            type: 'sent',
+            text: 'msg recieved',
+            timestamp: '8:52 PM',
+            barColor: 'from-cyan-400 to-purple-500'
+        },
+        {
+            id: 21,
+            type: 'sent',
+            text: 'So how was the island....',
+            timestamp: '8:52 PM',
+            barColor: 'from-cyan-400 to-purple-500'
+        },
+        {
+            id: 22,
+            type: 'received',
+            text: "not bad...",
+            timestamp: '9:06 PM',
+            barColor: 'from-yellow-400 to-orange-500'
+        },
+        {
+            id: 23,
+            type: 'received',
+            text: 'Chatmsg should show here pls work.....',
+            timestamp: '7:23 AM',
+            barColor: 'from-purple-500 to-pink-500'
+        },
+        {
+            id: 24,
+            type: 'sent',
+            text: "Ig it is workin",
+            timestamp: '7:42 PM',
+            barColor: 'from-cyan-400 to-purple-500'
+        },
+        {
+            id: 25,
+            type: 'sent',
+            text: 'Well, did you know!',
+            timestamp: '7:42 PM',
+            barColor: 'from-cyan-400 to-purple-500'
+        },
+        {
+            id: 26,
+            type: 'received',
+            text: "yaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            timestamp: '8:24 PM',
+            barColor: 'from-cyan-400 to-blue-500'
+        },
+        {
+            id: 27,
+            type: 'sent',
+            text: 'msg recieved',
+            timestamp: '8:52 PM',
+            barColor: 'from-cyan-400 to-purple-500'
+        },
+        {
+            id: 28,
+            type: 'sent',
+            text: 'So how was the island....',
+            timestamp: '8:52 PM',
+            barColor: 'from-cyan-400 to-purple-500'
+        },
+        {
+            id: 29,
+            type: 'received',
+            text: "not bad...",
+            timestamp: '9:06 PM',
+            barColor: 'from-yellow-400 to-orange-500'
+        },
+        {
+            id: 30,
             type: 'status',
             text: 'Stephen Hawking is online',
             timestamp: '9:06 PM'
@@ -324,6 +541,29 @@ const ChatContainer = () => {
                                     >
                                         <div style={{ padding: '6px' }}>
                                             <button
+                                                onClick={() => handleMenuOption('search')}
+                                                className="menu-item"
+                                                style={{
+                                                    width: '100%',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '10px',
+                                                    padding: '10px 12px',
+                                                    borderRadius: '8px',
+                                                    border: 'none',
+                                                    background: 'transparent',
+                                                    color: 'rgba(255, 255, 255, 0.85)',
+                                                    fontSize: '13px',
+                                                    cursor: 'pointer',
+                                                    transition: 'background 0.15s'
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                            >
+                                                <Search size={15} style={{ color: '#30FBE6', flexShrink: 0 }} />
+                                                <span>Search Messages</span>
+                                            </button>
+                                            <button
                                                 onClick={() => handleMenuOption('select')}
                                                 className="menu-item"
                                                 style={{
@@ -376,8 +616,120 @@ const ChatContainer = () => {
                         </div>
                     )}
 
+                    {/* Search Bar */}
+                    {searchMode && (
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                marginLeft: '32px',
+                                marginRight: '32px',
+                                marginBottom: '12px',
+                                padding: '10px 16px',
+                                borderRadius: '12px',
+                                background: 'rgba(15, 23, 42, 0.8)',
+                                border: '1px solid rgba(48, 251, 230, 0.2)',
+                                boxShadow: '0 0 20px rgba(48, 251, 230, 0.05)',
+                                animation: 'fadeSlideIn 0.2s ease-out'
+                            }}
+                        >
+                            <Search size={16} style={{ color: '#30FBE6', flexShrink: 0 }} />
+                            <input
+                                ref={searchInputRef}
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search messages..."
+                                style={{
+                                    flex: 1,
+                                    background: 'transparent',
+                                    border: 'none',
+                                    outline: 'none',
+                                    color: 'rgba(255, 255, 255, 0.9)',
+                                    fontSize: '14px',
+                                    fontFamily: "'Inter', sans-serif",
+                                    caretColor: '#30FBE6'
+                                }}
+                            />
+                            {searchQuery && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '8px', paddingRight: '4px' }}>
+                                    <span style={{
+                                        fontSize: '12px',
+                                        color: 'rgba(255, 255, 255, 0.5)',
+                                        whiteSpace: 'nowrap',
+                                        minWidth: '40px',
+                                        textAlign: 'center'
+                                    }}>
+                                        {matchingMessageIds.length > 0
+                                            ? `${currentMatchIndex + 1} of ${matchingMessageIds.length}`
+                                            : '0 found'}
+                                    </span>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        <button
+                                            onClick={prevMatch}
+                                            disabled={matchingMessageIds.length === 0}
+                                            style={{
+                                                padding: '2px',
+                                                borderRadius: '4px',
+                                                background: 'rgba(255,255,255,0.05)',
+                                                border: 'none',
+                                                color: 'rgba(255,255,255,0.8)',
+                                                cursor: 'pointer',
+                                                lineHeight: 0
+                                            }}
+                                            className="hover:bg-white/10"
+                                        >
+                                            <ChevronUp size={12} />
+                                        </button>
+                                        <button
+                                            onClick={nextMatch}
+                                            disabled={matchingMessageIds.length === 0}
+                                            style={{
+                                                padding: '2px',
+                                                borderRadius: '4px',
+                                                background: 'rgba(255,255,255,0.05)',
+                                                border: 'none',
+                                                color: 'rgba(255,255,255,0.8)',
+                                                cursor: 'pointer',
+                                                lineHeight: 0
+                                            }}
+                                            className="hover:bg-white/10"
+                                        >
+                                            <ChevronDown size={12} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                            <button
+                                onClick={closeSearch}
+                                style={{
+                                    padding: '4px',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    background: 'transparent',
+                                    color: 'rgba(255, 255, 255, 0.5)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.9)'}
+                                onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.5)'}
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+                    )}
+
                     {/* Messages scroll area */}
-                    <div className="overflow-y-auto overflow-x-hidden pr-6 scrollbar-thin scrollbar-thumb-transparent" style={{ flex: 1, maxHeight: 'calc(100% - 200px)' }}>
+                    <div ref={messagesContainerRef} className="overflow-y-auto overflow-x-hidden pr-6 scrollbar-thin scrollbar-thumb-transparent" style={{ flex: 1, maxHeight: 'calc(100% - 200px)' }}
+                        onContextMenu={(e) => {
+                            e.preventDefault();
+                            setContextMenu({ x: e.clientX, y: e.clientY, type: 'panel' });
+                        }}
+                    >
 
                         {/* large faint watermark behind messages - centered */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none">
@@ -425,12 +777,21 @@ const ChatContainer = () => {
                                     return '8px'; // single selected message
                                 };
 
+                                const isSearchMatch = matchingMessageIds.includes(msg.id);
+                                const isCurrentMatch = isSearchMatch && matchingMessageIds[currentMatchIndex] === msg.id;
+
                                 if (msg.type === 'received') {
                                     return (
                                         <div
                                             key={msg.id}
+                                            id={`msg-${msg.id}`}
                                             className={`flex items-center gap-3 ${marginTop} ${selectMode ? 'cursor-pointer' : ''}`}
                                             onClick={() => toggleMessageSelection(msg.id)}
+                                            onContextMenu={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setContextMenu({ x: e.clientX, y: e.clientY, type: 'message', msgId: msg.id, msgText: msg.text });
+                                            }}
                                             style={{
                                                 marginLeft: '-16px',
                                                 marginRight: '-16px',
@@ -462,7 +823,14 @@ const ChatContainer = () => {
                                                     {isSelected && <Check size={14} style={{ color: '#000' }} />}
                                                 </div>
                                             )}
-                                            <div className="flex items-stretch gap-6 max-w-[70%]">
+                                            <div className="flex items-stretch gap-6 max-w-[70%]" style={{
+                                                opacity: searchMode && searchQuery && !isSearchMatch ? 0.3 : 1,
+                                                transform: isCurrentMatch ? 'scale(1.02)' : 'scale(1)',
+                                                transformOrigin: msg.type === 'received' ? 'left center' : 'right center',
+                                                boxShadow: isCurrentMatch ? '0 0 20px rgba(48, 251, 230, 0.15)' : 'none',
+                                                borderRadius: '12px',
+                                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                                            }}>
                                                 <div className={`w-[4px] ${barRounding} bg-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.18)]`} />
                                                 <div className="flex flex-col gap-1 py-1">
                                                     {showTimestamp && <div className="text-[12px] text-gray-400/75">Received • {msg.timestamp}</div>}
@@ -477,8 +845,14 @@ const ChatContainer = () => {
                                     return (
                                         <div
                                             key={msg.id}
+                                            id={`msg-${msg.id}`}
                                             className={`flex items-center justify-end gap-3 ${marginTop} ${selectMode ? 'cursor-pointer' : ''}`}
                                             onClick={() => toggleMessageSelection(msg.id)}
+                                            onContextMenu={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setContextMenu({ x: e.clientX, y: e.clientY, type: 'message', msgId: msg.id, msgText: msg.text });
+                                            }}
                                             style={{
                                                 marginLeft: '-16px',
                                                 marginRight: '-16px',
@@ -491,7 +865,14 @@ const ChatContainer = () => {
                                                 transition: 'all 0.15s ease'
                                             }}
                                         >
-                                            <div className="flex items-stretch gap-6 max-w-[70%]">
+                                            <div className="flex items-stretch gap-6 max-w-[70%]" style={{
+                                                opacity: searchMode && searchQuery && !isSearchMatch ? 0.3 : 1,
+                                                transform: isCurrentMatch ? 'scale(1.02)' : 'scale(1)',
+                                                transformOrigin: msg.type === 'received' ? 'left center' : 'right center',
+                                                boxShadow: isCurrentMatch ? '0 0 20px rgba(48, 251, 230, 0.15)' : 'none',
+                                                borderRadius: '12px',
+                                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                                            }}>
                                                 <div className="flex flex-col gap-1 items-end py-1">
                                                     {showTimestamp && <div className="text-[12px] text-gray-400/70">{msg.timestamp}</div>}
                                                     <div className="text-[15px] leading-relaxed text-white/85 text-right">{msg.text}</div>
@@ -901,6 +1282,32 @@ const ChatContainer = () => {
                     }
                 }
             `}</style>
+
+            {/* Context Menu */}
+            {contextMenu && (
+                <ContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    onClose={() => setContextMenu(null)}
+                    items={
+                        contextMenu.type === 'message'
+                            ? [
+                                { label: 'Reply', icon: <Reply size={16} />, onClick: () => { } },
+                                { label: 'Copy', icon: <Copy size={16} />, onClick: () => navigator.clipboard.writeText(contextMenu.msgText) },
+                                { label: 'Forward', icon: <Forward size={16} />, onClick: () => { } },
+                                { divider: true },
+                                { label: 'Select', icon: <CheckSquare size={16} />, onClick: () => { setSelectMode(true); toggleMessageSelection(contextMenu.msgId); } },
+                                { label: 'Delete', icon: <Trash2 size={16} />, color: '#ef4444', onClick: () => { } },
+                            ]
+                            : [
+                                { label: 'Search Messages', icon: <Search size={16} />, onClick: () => { setSearchMode(true); } },
+                                { label: 'Select Messages', icon: <CheckSquare size={16} />, onClick: () => setSelectMode(true) },
+                                { divider: true },
+                                { label: 'Clear Chat', icon: <Trash2 size={16} />, color: '#ef4444', onClick: () => { } },
+                            ]
+                    }
+                />
+            )}
         </div>
     );
 };
