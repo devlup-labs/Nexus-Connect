@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, MoreHorizontal, SendHorizontal, X, Mail, Phone as PhoneIcon, User, Info, ArrowLeft, CheckSquare, Trash2, Forward, Copy, Check, Search, ChevronUp, ChevronDown, Reply, MessageSquare } from 'lucide-react';
+import { Phone, Video, MoreHorizontal, SendHorizontal, X, Mail, Phone as PhoneIcon, User, Info, ArrowLeft, CheckSquare, Trash2, Forward, Copy, Check, Search, ChevronUp, ChevronDown, Reply, MessageSquare, Paperclip, Mic, Image as ImageIcon, FileText as FileIcon, XCircle, Square as StopIcon } from 'lucide-react';
 import ContextMenu from './ContextMenu';
+import { getMessages, sendMessage, deleteForMe, deleteForEveryone, editMessage } from '../api';
 
-const ChatContainer = () => {
+const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
     const [message, setMessage] = useState('');
+    const [messages, setMessages] = useState([]);
+    const [loadingMsgs, setLoadingMsgs] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const [showProfile, setShowProfile] = useState(false);
     const [selectMode, setSelectMode] = useState(false);
@@ -16,16 +19,84 @@ const ChatContainer = () => {
     const searchInputRef = useRef(null);
     const messagesContainerRef = useRef(null);
     const [contextMenu, setContextMenu] = useState(null);
+    const [showAttachMenu, setShowAttachMenu] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordingTime, setRecordingTime] = useState(0);
+    const attachMenuRef = useRef(null);
 
-    // Sample user profile data
-    const userProfile = {
-        name: 'Stephen Hawking',
-        about: 'Theoretical physicist and cosmologist. Author of "A Brief History of Time".',
-        email: 'stephen.hawking@cambridge.edu',
-        phone: '+44 1223 337733',
-        status: 'online',
-        joinedDate: 'March 2024'
+    // Recording timer and click outside effects
+    useEffect(() => {
+        let timer;
+        if (isRecording) {
+            timer = setInterval(() => {
+                setRecordingTime(prev => prev + 1);
+            }, 1000);
+        } else {
+            setRecordingTime(0);
+        }
+        return () => clearInterval(timer);
+    }, [isRecording]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (attachMenuRef.current && !attachMenuRef.current.contains(event.target)) {
+                setShowAttachMenu(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const formatRecordingTime = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
+
+    // Fetch messages when a contact is selected
+    useEffect(() => {
+        if (!selectedContact?._id) {
+            setMessages([]);
+            return;
+        }
+        let cancelled = false;
+
+        const fetchMessages = async () => {
+            setLoadingMsgs(true);
+            try {
+                const res = await getMessages(selectedContact._id);
+                if (!cancelled) {
+                    setMessages(res.data);
+                }
+            } catch (err) {
+                console.error('Failed to fetch messages:', err);
+            } finally {
+                if (!cancelled) setLoadingMsgs(false);
+            }
+        };
+
+        fetchMessages();
+
+        // Poll for new messages every 3 seconds
+        const interval = setInterval(async () => {
+            try {
+                const res = await getMessages(selectedContact._id);
+                if (!cancelled) setMessages(res.data);
+            } catch (err) { /* silently fail */ }
+        }, 3000);
+
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
+        };
+    }, [selectedContact?._id]);
+
+    // Auto-scroll to bottom when messages change
+    useEffect(() => {
+        if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+    }, [messages]);
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -75,14 +146,12 @@ const ChatContainer = () => {
         }
 
         const matches = messages
-            .filter(m => m.type !== 'status' && doesMessageMatch(m))
-            .map(m => m.id);
+            .filter(m => doesMessageMatch(m))
+            .map(m => m._id);
 
         setMatchingMessageIds(matches);
-        // If we have matches, select the first one (or keep current if valid?)
-        // Simple behavior: reset to first match on query change
         setCurrentMatchIndex(matches.length > 0 ? 0 : -1);
-    }, [searchQuery]);
+    }, [searchQuery, messages]);
 
     // Scroll to current match within the messages container only
     useEffect(() => {
@@ -116,7 +185,6 @@ const ChatContainer = () => {
             const newSelection = prev.includes(msgId)
                 ? prev.filter(id => id !== msgId)
                 : [...prev, msgId];
-            // If no messages selected, exit select mode
             if (newSelection.length === 0) {
                 setSelectMode(false);
             }
@@ -129,241 +197,58 @@ const ChatContainer = () => {
         setSelectedMessages([]);
     };
 
-    const handleDeleteSelected = () => {
-        // In real app, delete the selected messages
-        console.log('Delete messages:', selectedMessages);
+    const handleDeleteSelected = async () => {
+        for (const msgId of selectedMessages) {
+            try {
+                await deleteForMe(msgId);
+            } catch (err) {
+                console.error('Failed to delete message:', err);
+            }
+        }
+        setMessages(prev => prev.filter(m => !selectedMessages.includes(m._id)));
         exitSelectMode();
     };
 
     const handleForwardSelected = () => {
-        // In real app, forward the selected messages
         console.log('Forward messages:', selectedMessages);
         exitSelectMode();
     };
 
     const handleCopySelected = () => {
-        const selectedMsgs = messages.filter(m => selectedMessages.includes(m.id));
+        const selectedMsgs = messages.filter(m => selectedMessages.includes(m._id));
         const text = selectedMsgs.map(m => m.text).join('\n');
         navigator.clipboard.writeText(text);
         exitSelectMode();
     };
 
-    const messages = [
-        {
-            id: 1,
-            type: 'received',
-            text: 'Hello this is chat testing.........................  ',
-            timestamp: '7:23 AM',
-            barColor: 'from-purple-500 to-pink-500'
-        },
-        {
-            id: 2,
-            type: 'received',
-            text: 'Chatmsg should show here pls work.....',
-            timestamp: '7:23 AM',
-            barColor: 'from-purple-500 to-pink-500'
-        },
-        {
-            id: 3,
-            type: 'sent',
-            text: "Ig it is workin",
-            timestamp: '7:42 PM',
-            barColor: 'from-cyan-400 to-purple-500'
-        },
-        {
-            id: 4,
-            type: 'sent',
-            text: 'Well, did you know!',
-            timestamp: '7:42 PM',
-            barColor: 'from-cyan-400 to-purple-500'
-        },
-        {
-            id: 5,
-            type: 'received',
-            text: "yaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            timestamp: '8:24 PM',
-            barColor: 'from-cyan-400 to-blue-500'
-        },
-        {
-            id: 6,
-            type: 'sent',
-            text: 'msg recieved',
-            timestamp: '8:52 PM',
-            barColor: 'from-cyan-400 to-purple-500'
-        },
-        {
-            id: 7,
-            type: 'sent',
-            text: 'So how was the island....',
-            timestamp: '8:52 PM',
-            barColor: 'from-cyan-400 to-purple-500'
-        },
-        {
-            id: 8,
-            type: 'received',
-            text: "not bad...",
-            timestamp: '9:06 PM',
-            barColor: 'from-yellow-400 to-orange-500'
-        },
-        {
-            id: 9,
-            type: 'received',
-            text: 'Chatmsg should show here pls work.....',
-            timestamp: '7:23 AM',
-            barColor: 'from-purple-500 to-pink-500'
-        },
-        {
-            id: 10,
-            type: 'sent',
-            text: "Ig it is workin",
-            timestamp: '7:42 PM',
-            barColor: 'from-cyan-400 to-purple-500'
-        },
-        {
-            id: 11,
-            type: 'sent',
-            text: 'Well, did you know!',
-            timestamp: '7:42 PM',
-            barColor: 'from-cyan-400 to-purple-500'
-        },
-        {
-            id: 12,
-            type: 'received',
-            text: "yaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            timestamp: '8:24 PM',
-            barColor: 'from-cyan-400 to-blue-500'
-        },
-        {
-            id: 13,
-            type: 'sent',
-            text: 'msg recieved',
-            timestamp: '8:52 PM',
-            barColor: 'from-cyan-400 to-purple-500'
-        },
-        {
-            id: 14,
-            type: 'sent',
-            text: 'So how was the island....',
-            timestamp: '8:52 PM',
-            barColor: 'from-cyan-400 to-purple-500'
-        },
-        {
-            id: 15,
-            type: 'received',
-            text: "not bad...",
-            timestamp: '9:06 PM',
-            barColor: 'from-yellow-400 to-orange-500'
-        },
-        {
-            id: 16,
-            type: 'received',
-            text: 'Chatmsg should show here pls work.....',
-            timestamp: '7:23 AM',
-            barColor: 'from-purple-500 to-pink-500'
-        },
-        {
-            id: 17,
-            type: 'sent',
-            text: "Ig it is workin",
-            timestamp: '7:42 PM',
-            barColor: 'from-cyan-400 to-purple-500'
-        },
-        {
-            id: 18,
-            type: 'sent',
-            text: 'Well, did you know!',
-            timestamp: '7:42 PM',
-            barColor: 'from-cyan-400 to-purple-500'
-        },
-        {
-            id: 19,
-            type: 'received',
-            text: "yaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            timestamp: '8:24 PM',
-            barColor: 'from-cyan-400 to-blue-500'
-        },
-        {
-            id: 20,
-            type: 'sent',
-            text: 'msg recieved',
-            timestamp: '8:52 PM',
-            barColor: 'from-cyan-400 to-purple-500'
-        },
-        {
-            id: 21,
-            type: 'sent',
-            text: 'So how was the island....',
-            timestamp: '8:52 PM',
-            barColor: 'from-cyan-400 to-purple-500'
-        },
-        {
-            id: 22,
-            type: 'received',
-            text: "not bad...",
-            timestamp: '9:06 PM',
-            barColor: 'from-yellow-400 to-orange-500'
-        },
-        {
-            id: 23,
-            type: 'received',
-            text: 'Chatmsg should show here pls work.....',
-            timestamp: '7:23 AM',
-            barColor: 'from-purple-500 to-pink-500'
-        },
-        {
-            id: 24,
-            type: 'sent',
-            text: "Ig it is workin",
-            timestamp: '7:42 PM',
-            barColor: 'from-cyan-400 to-purple-500'
-        },
-        {
-            id: 25,
-            type: 'sent',
-            text: 'Well, did you know!',
-            timestamp: '7:42 PM',
-            barColor: 'from-cyan-400 to-purple-500'
-        },
-        {
-            id: 26,
-            type: 'received',
-            text: "yaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            timestamp: '8:24 PM',
-            barColor: 'from-cyan-400 to-blue-500'
-        },
-        {
-            id: 27,
-            type: 'sent',
-            text: 'msg recieved',
-            timestamp: '8:52 PM',
-            barColor: 'from-cyan-400 to-purple-500'
-        },
-        {
-            id: 28,
-            type: 'sent',
-            text: 'So how was the island....',
-            timestamp: '8:52 PM',
-            barColor: 'from-cyan-400 to-purple-500'
-        },
-        {
-            id: 29,
-            type: 'received',
-            text: "not bad...",
-            timestamp: '9:06 PM',
-            barColor: 'from-yellow-400 to-orange-500'
-        },
-        {
-            id: 30,
-            type: 'status',
-            text: 'Stephen Hawking is online',
-            timestamp: '9:06 PM'
-        }
-    ];
+    const handleSendMessage = async () => {
+        if (!message.trim() || !selectedContact?._id) return;
 
-    const handleSendMessage = () => {
-        if (message.trim()) {
-            // append or handle send here if needed
-            setMessage('');
+        const text = message.trim();
+        setMessage('');
+
+        // Optimistic update
+        const optimisticMsg = {
+            _id: 'temp-' + Date.now(),
+            senderId: authUser._id,
+            receiverId: selectedContact._id,
+            text,
+            createdAt: new Date().toISOString(),
+            _optimistic: true,
+        };
+        setMessages(prev => [...prev, optimisticMsg]);
+
+        try {
+            const res = await sendMessage(selectedContact._id, { text });
+            // Replace optimistic message with real one
+            setMessages(prev =>
+                prev.map(m => m._id === optimisticMsg._id ? res.data : m)
+            );
+        } catch (err) {
+            console.error('Failed to send message:', err);
+            // Remove optimistic message on failure
+            setMessages(prev => prev.filter(m => m._id !== optimisticMsg._id));
+            setMessage(text); // restore the text
         }
     };
 
@@ -374,10 +259,48 @@ const ChatContainer = () => {
         }
     };
 
+    const formatTime = (dateStr) => {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    };
+
+    const getInitials = (name) => {
+        if (!name) return '?';
+        return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    };
+
+    // No contact selected placeholder
+    if (!selectedContact) {
+        return (
+            <div className="flex flex-col w-[820px] flex-shrink-0" style={{ height: '100%', marginTop: '4px', paddingBottom: '20px' }}>
+                <div style={{ padding: '0px', marginTop: '30px', marginBottom: '-25px' }}>
+                    <h2 className="text-[24px] font-medium text-white/90 tracking-[0.5px]" style={{ fontFamily: "'Inter', sans-serif" }}>Canvas</h2>
+                </div>
+                <div className="relative flex-1 rounded-[14px] border border-white/8 overflow-hidden backdrop-blur-3xl bg-gradient-to-br from-[#0b1220]/40 via-[#2b1b3a]/20 to-[#091021]/40 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '16px' }}>
+                        <MessageSquare size={64} style={{ color: 'rgba(48, 251, 230, 0.2)' }} />
+                        <h3 style={{ fontSize: '20px', fontWeight: 300, color: 'rgba(255,255,255,0.5)', fontFamily: "'Inter', sans-serif" }}>
+                            Select a contact to start chatting
+                        </h3>
+                        <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.25)', maxWidth: '300px', textAlign: 'center' }}>
+                            Choose a person from the panel on the left to begin your conversation
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Derive message type from senderId
+    const processedMessages = messages.map(msg => ({
+        ...msg,
+        type: msg.senderId === authUser._id ? 'sent' : 'received',
+    }));
+
     return (
         <div className="flex flex-col w-[820px] flex-shrink-0" style={{ height: '100%', marginTop: '4px', paddingBottom: '20px' }}>
-            {/* Small external label - matches Stream title */}
-            <div style={{ padding: '10px 10px 25px 10px' }}>
+            <div style={{ padding: '0px', marginTop: '30px', marginBottom: '-25px' }}>
                 <h2 className="text-[24px] font-medium text-white/90 tracking-[0.5px]" style={{ fontFamily: "'Inter', sans-serif" }}>Canvas</h2>
             </div>
 
@@ -504,16 +427,16 @@ const ChatContainer = () => {
                         </div>
                     ) : (
                         /* Normal Contact header */
-                        <div className="flex items-center justify-between" style={{ marginTop: '12px', paddingLeft: '32px', paddingRight: '32px' }}>
+                        <div className="flex items-center justify-between" style={{ marginTop: '4px', paddingLeft: '32px', paddingRight: '32px' }}>
                             <div className="">
-                                <h2 className="text-[36px] leading-tight font-extralight text-white/95 tracking-tight">{userProfile.name}</h2>
-                                <div className="flex items-center gap-3 mt-2" style={{ marginBottom: '16px' }}>
+                                <h2 className="text-[36px] leading-tight font-extralight text-white/95 tracking-tight" style={{ marginTop: '15px' }}>{selectedContact.fullName}</h2>
+                                <div className="flex items-center gap-3 mt-1" style={{ marginBottom: '6px' }}>
                                     <div className="w-2.5 h-2.5 rounded-full bg-green-400 shadow-[0_0_10px_rgba(34,197,94,0.45)]" />
-                                    <span className="text-[12px] text-gray-400/80" >You messaged {userProfile.name}</span>
+                                    <span className="text-[12px] text-gray-400/80" >You messaged {selectedContact.fullName}</span>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-4 relative" style={{ marginTop: '-30px' }} ref={menuRef}>
+                            <div className="flex items-center gap-4 relative" style={{ marginTop: '-60px' }} ref={menuRef}>
                                 <button className="text-gray-300/70 hover:text-white/95 transition-colors">
                                     <Phone size={18} strokeWidth={1.5} />
                                 </button>
@@ -733,201 +656,322 @@ const ChatContainer = () => {
 
                         {/* large faint watermark behind messages - centered */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none">
-                            <span className="text-[120px] font-bold text-white/[0.03] blur-[1px] whitespace-nowrap">Stephen Hawking</span>
+                            <span className="text-[120px] font-bold text-white/[0.03] blur-[1px] whitespace-nowrap">{selectedContact.fullName}</span>
                         </div>
 
-                        <div className="relative z-10 pb-10" style={{ paddingLeft: '32px', paddingRight: '32px' }}>
-                            {messages.map((msg, index) => {
-                                // Check if previous/next messages are same type for connected bars
-                                const prevMsg = index > 0 ? messages[index - 1] : null;
-                                const nextMsg = index < messages.length - 1 ? messages[index + 1] : null;
-                                const isFirstInGroup = !prevMsg || prevMsg.type !== msg.type;
-                                const isLastInGroup = !nextMsg || nextMsg.type !== msg.type;
-                                const showTimestamp = isFirstInGroup;
+                        {loadingMsgs ? (
+                            <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
+                                <div style={{
+                                    width: '32px',
+                                    height: '32px',
+                                    border: '3px solid rgba(48, 251, 230, 0.15)',
+                                    borderTopColor: '#30FBE6',
+                                    borderRadius: '50%',
+                                    animation: 'spin 0.8s linear infinite'
+                                }} />
+                                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                            </div>
+                        ) : processedMessages.length === 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0', gap: '8px' }}>
+                                <MessageSquare size={32} style={{ color: 'rgba(255,255,255,0.15)' }} />
+                                <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '14px' }}>No messages yet. Say hello!</span>
+                            </div>
+                        ) : (
+                            <div className="relative z-10 pb-10" style={{ paddingLeft: '32px', paddingRight: '32px' }}>
+                                {processedMessages.map((msg, index) => {
+                                    const prevMsg = index > 0 ? processedMessages[index - 1] : null;
+                                    const nextMsg = index < processedMessages.length - 1 ? processedMessages[index + 1] : null;
+                                    const isFirstInGroup = !prevMsg || prevMsg.type !== msg.type;
+                                    const isLastInGroup = !nextMsg || nextMsg.type !== msg.type;
+                                    const showTimestamp = isFirstInGroup;
 
-                                // Bar rounding based on position in group
-                                const barRounding = isFirstInGroup && isLastInGroup ? 'rounded-full'
-                                    : isFirstInGroup ? 'rounded-t-full'
-                                        : isLastInGroup ? 'rounded-b-full'
-                                            : '';
+                                    const barRounding = isFirstInGroup && isLastInGroup ? 'rounded-full'
+                                        : isFirstInGroup ? 'rounded-t-full'
+                                            : isLastInGroup ? 'rounded-b-full'
+                                                : '';
 
-                                // Margin based on group position
-                                const marginTop = isFirstInGroup ? 'mt-4' : 'mt-0';
+                                    const marginTop = isFirstInGroup ? 'mt-4' : 'mt-0';
 
-                                if (msg.type === 'status') {
-                                    return (
-                                        <div key={msg.id} className="flex justify-center mt-4">
-                                            <span className="text-[12px] text-gray-500/60 italic">{msg.text}</span>
-                                        </div>
-                                    );
-                                }
+                                    const isSelected = selectedMessages.includes(msg._id);
+                                    const prevSelected = prevMsg && selectedMessages.includes(prevMsg._id);
+                                    const nextSelected = nextMsg && selectedMessages.includes(nextMsg._id);
 
-                                const isSelected = selectedMessages.includes(msg.id);
+                                    const getSelectionRadius = () => {
+                                        if (!isSelected) return '0';
+                                        if (prevSelected && nextSelected) return '0';
+                                        if (prevSelected && !nextSelected) return '0 0 8px 8px';
+                                        if (!prevSelected && nextSelected) return '8px 8px 0 0';
+                                        return '8px';
+                                    };
 
-                                // Check if adjacent messages are also selected for connected selection styling
-                                const prevSelected = prevMsg && selectedMessages.includes(prevMsg.id);
-                                const nextSelected = nextMsg && selectedMessages.includes(nextMsg.id);
+                                    const isSearchMatch = matchingMessageIds.includes(msg._id);
+                                    const isCurrentMatch = isSearchMatch && matchingMessageIds[currentMatchIndex] === msg._id;
 
-                                // Calculate border-radius based on selection neighbors
-                                const getSelectionRadius = () => {
-                                    if (!isSelected) return '0';
-                                    if (prevSelected && nextSelected) return '0'; // middle of selection
-                                    if (prevSelected && !nextSelected) return '0 0 8px 8px'; // last in selection
-                                    if (!prevSelected && nextSelected) return '8px 8px 0 0'; // first in selection
-                                    return '8px'; // single selected message
-                                };
-
-                                const isSearchMatch = matchingMessageIds.includes(msg.id);
-                                const isCurrentMatch = isSearchMatch && matchingMessageIds[currentMatchIndex] === msg.id;
-
-                                if (msg.type === 'received') {
-                                    return (
-                                        <div
-                                            key={msg.id}
-                                            id={`msg-${msg.id}`}
-                                            className={`flex items-center gap-3 ${marginTop} ${selectMode ? 'cursor-pointer' : ''}`}
-                                            onClick={() => toggleMessageSelection(msg.id)}
-                                            onContextMenu={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                setContextMenu({ x: e.clientX, y: e.clientY, type: 'message', msgId: msg.id, msgText: msg.text });
-                                            }}
-                                            style={{
-                                                marginLeft: '-16px',
-                                                marginRight: '-16px',
-                                                paddingLeft: '16px',
-                                                paddingRight: '16px',
-                                                paddingTop: isSelected && !prevSelected ? '8px' : isSelected ? '4px' : '0',
-                                                paddingBottom: isSelected && !nextSelected ? '8px' : isSelected ? '4px' : '0',
-                                                background: isSelected ? 'rgba(48, 251, 230, 0.08)' : 'transparent',
-                                                borderRadius: getSelectionRadius(),
-                                                transition: 'all 0.15s ease'
-                                            }}
-                                        >
-                                            {/* Selection checkbox */}
-                                            {selectMode && (
-                                                <div
-                                                    style={{
-                                                        width: '22px',
-                                                        height: '22px',
-                                                        borderRadius: '50%',
-                                                        border: isSelected ? 'none' : '2px solid rgba(255, 255, 255, 0.3)',
-                                                        background: isSelected ? '#30FBE6' : 'transparent',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        flexShrink: 0,
-                                                        transition: 'all 0.15s ease'
-                                                    }}
-                                                >
-                                                    {isSelected && <Check size={14} style={{ color: '#000' }} />}
-                                                </div>
-                                            )}
-                                            <div className="flex items-stretch gap-6 max-w-[70%]" style={{
-                                                opacity: searchMode && searchQuery && !isSearchMatch ? 0.3 : 1,
-                                                transform: isCurrentMatch ? 'scale(1.02)' : 'scale(1)',
-                                                transformOrigin: msg.type === 'received' ? 'left center' : 'right center',
-                                                boxShadow: isCurrentMatch ? '0 0 20px rgba(48, 251, 230, 0.15)' : 'none',
-                                                borderRadius: '12px',
-                                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                                            }}>
-                                                <div className={`w-[4px] ${barRounding} bg-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.18)]`} />
-                                                <div className="flex flex-col gap-1 py-1">
-                                                    {showTimestamp && <div className="text-[12px] text-gray-400/75">Received • {msg.timestamp}</div>}
-                                                    <div className="text-[15px] leading-relaxed text-white/85 max-w-[720px]">{msg.text}</div>
+                                    if (msg.type === 'received') {
+                                        return (
+                                            <div
+                                                key={msg._id}
+                                                id={`msg-${msg._id}`}
+                                                className={`flex items-center gap-3 ${marginTop} ${selectMode ? 'cursor-pointer' : ''}`}
+                                                onClick={() => toggleMessageSelection(msg._id)}
+                                                onContextMenu={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setContextMenu({ x: e.clientX, y: e.clientY, type: 'message', msgId: msg._id, msgText: msg.text, msgSenderId: msg.senderId });
+                                                }}
+                                                style={{
+                                                    marginLeft: '-16px',
+                                                    marginRight: '-16px',
+                                                    paddingLeft: '16px',
+                                                    paddingRight: '16px',
+                                                    paddingTop: isSelected && !prevSelected ? '8px' : isSelected ? '4px' : '0',
+                                                    paddingBottom: isSelected && !nextSelected ? '8px' : isSelected ? '4px' : '0',
+                                                    background: isSelected ? 'rgba(48, 251, 230, 0.08)' : 'transparent',
+                                                    borderRadius: getSelectionRadius(),
+                                                    transition: 'all 0.15s ease'
+                                                }}
+                                            >
+                                                {/* Selection checkbox */}
+                                                {selectMode && (
+                                                    <div
+                                                        style={{
+                                                            width: '22px',
+                                                            height: '22px',
+                                                            borderRadius: '50%',
+                                                            border: isSelected ? 'none' : '2px solid rgba(255, 255, 255, 0.3)',
+                                                            background: isSelected ? '#30FBE6' : 'transparent',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            flexShrink: 0,
+                                                            transition: 'all 0.15s ease'
+                                                        }}
+                                                    >
+                                                        {isSelected && <Check size={14} style={{ color: '#000' }} />}
+                                                    </div>
+                                                )}
+                                                <div className="flex items-stretch gap-6 max-w-[70%]" style={{
+                                                    opacity: searchMode && searchQuery && !isSearchMatch ? 0.3 : 1,
+                                                    transform: isCurrentMatch ? 'scale(1.02)' : 'scale(1)',
+                                                    transformOrigin: 'left center',
+                                                    boxShadow: isCurrentMatch ? '0 0 20px rgba(48, 251, 230, 0.15)' : 'none',
+                                                    borderRadius: '12px',
+                                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                                                }}>
+                                                    <div className={`w-[4px] ${barRounding} bg-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.18)]`} />
+                                                    <div className="flex flex-col gap-1 py-1">
+                                                        {showTimestamp && <div className="text-[12px] text-gray-400/75">Received • {formatTime(msg.createdAt)}</div>}
+                                                        <div className="text-[15px] leading-relaxed text-white/85 max-w-[720px]">{msg.text}</div>
+                                                        {msg.image && (
+                                                            <img src={msg.image} alt="attachment" style={{ maxWidth: '300px', borderRadius: '8px', marginTop: '4px' }} />
+                                                        )}
+                                                        {msg.isEdited && <span className="text-[10px] text-gray-500 italic">edited</span>}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    );
-                                }
+                                        );
+                                    }
 
-                                if (msg.type === 'sent') {
-                                    return (
-                                        <div
-                                            key={msg.id}
-                                            id={`msg-${msg.id}`}
-                                            className={`flex items-center justify-end gap-3 ${marginTop} ${selectMode ? 'cursor-pointer' : ''}`}
-                                            onClick={() => toggleMessageSelection(msg.id)}
-                                            onContextMenu={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                setContextMenu({ x: e.clientX, y: e.clientY, type: 'message', msgId: msg.id, msgText: msg.text });
-                                            }}
-                                            style={{
-                                                marginLeft: '-16px',
-                                                marginRight: '-16px',
-                                                paddingLeft: '16px',
-                                                paddingRight: '16px',
-                                                paddingTop: isSelected && !prevSelected ? '8px' : isSelected ? '4px' : '0',
-                                                paddingBottom: isSelected && !nextSelected ? '8px' : isSelected ? '4px' : '0',
-                                                background: isSelected ? 'rgba(48, 251, 230, 0.08)' : 'transparent',
-                                                borderRadius: getSelectionRadius(),
-                                                transition: 'all 0.15s ease'
-                                            }}
-                                        >
-                                            <div className="flex items-stretch gap-6 max-w-[70%]" style={{
-                                                opacity: searchMode && searchQuery && !isSearchMatch ? 0.3 : 1,
-                                                transform: isCurrentMatch ? 'scale(1.02)' : 'scale(1)',
-                                                transformOrigin: msg.type === 'received' ? 'left center' : 'right center',
-                                                boxShadow: isCurrentMatch ? '0 0 20px rgba(48, 251, 230, 0.15)' : 'none',
-                                                borderRadius: '12px',
-                                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                                            }}>
-                                                <div className="flex flex-col gap-1 items-end py-1">
-                                                    {showTimestamp && <div className="text-[12px] text-gray-400/70">{msg.timestamp}</div>}
-                                                    <div className="text-[15px] leading-relaxed text-white/85 text-right">{msg.text}</div>
+                                    if (msg.type === 'sent') {
+                                        return (
+                                            <div
+                                                key={msg._id}
+                                                id={`msg-${msg._id}`}
+                                                className={`flex items-center justify-end gap-3 ${marginTop} ${selectMode ? 'cursor-pointer' : ''}`}
+                                                onClick={() => toggleMessageSelection(msg._id)}
+                                                onContextMenu={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setContextMenu({ x: e.clientX, y: e.clientY, type: 'message', msgId: msg._id, msgText: msg.text, msgSenderId: msg.senderId });
+                                                }}
+                                                style={{
+                                                    marginLeft: '-16px',
+                                                    marginRight: '-16px',
+                                                    paddingLeft: '16px',
+                                                    paddingRight: '16px',
+                                                    paddingTop: isSelected && !prevSelected ? '8px' : isSelected ? '4px' : '0',
+                                                    paddingBottom: isSelected && !nextSelected ? '8px' : isSelected ? '4px' : '0',
+                                                    background: isSelected ? 'rgba(48, 251, 230, 0.08)' : 'transparent',
+                                                    borderRadius: getSelectionRadius(),
+                                                    transition: 'all 0.15s ease',
+                                                    opacity: msg._optimistic ? 0.6 : 1
+                                                }}
+                                            >
+                                                <div className="flex items-stretch gap-6 max-w-[70%]" style={{
+                                                    opacity: searchMode && searchQuery && !isSearchMatch ? 0.3 : 1,
+                                                    transform: isCurrentMatch ? 'scale(1.02)' : 'scale(1)',
+                                                    transformOrigin: 'right center',
+                                                    boxShadow: isCurrentMatch ? '0 0 20px rgba(48, 251, 230, 0.15)' : 'none',
+                                                    borderRadius: '12px',
+                                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                                                }}>
+                                                    <div className="flex flex-col gap-1 items-end py-1">
+                                                        {showTimestamp && <div className="text-[12px] text-gray-400/70">{formatTime(msg.createdAt)}</div>}
+                                                        <div className="text-[15px] leading-relaxed text-white/85 text-right">{msg.text}</div>
+                                                        {msg.image && (
+                                                            <img src={msg.image} alt="attachment" style={{ maxWidth: '300px', borderRadius: '8px', marginTop: '4px' }} />
+                                                        )}
+                                                        {msg.isEdited && <span className="text-[10px] text-gray-500 italic">edited</span>}
+                                                    </div>
+                                                    <div className={`w-[4px] ${barRounding} bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.14)]`} />
                                                 </div>
-                                                <div className={`w-[4px] ${barRounding} bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.14)]`} />
+                                                {/* Selection checkbox */}
+                                                {selectMode && (
+                                                    <div
+                                                        style={{
+                                                            width: '22px',
+                                                            height: '22px',
+                                                            borderRadius: '50%',
+                                                            border: isSelected ? 'none' : '2px solid rgba(255, 255, 255, 0.3)',
+                                                            background: isSelected ? '#30FBE6' : 'transparent',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            flexShrink: 0,
+                                                            transition: 'all 0.15s ease'
+                                                        }}
+                                                    >
+                                                        {isSelected && <Check size={14} style={{ color: '#000' }} />}
+                                                    </div>
+                                                )}
                                             </div>
-                                            {/* Selection checkbox */}
-                                            {selectMode && (
-                                                <div
-                                                    style={{
-                                                        width: '22px',
-                                                        height: '22px',
-                                                        borderRadius: '50%',
-                                                        border: isSelected ? 'none' : '2px solid rgba(255, 255, 255, 0.3)',
-                                                        background: isSelected ? '#30FBE6' : 'transparent',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        flexShrink: 0,
-                                                        transition: 'all 0.15s ease'
-                                                    }}
-                                                >
-                                                    {isSelected && <Check size={14} style={{ color: '#000' }} />}
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                }
+                                        );
+                                    }
 
-                                return null;
-                            })}
-                        </div>
+                                    return null;
+                                })}
+                            </div>
+                        )}
                     </div>
 
-                    {/* Bottom centered input like the second image */}
+                    {/* Bottom centered input */}
                     <div className="flex justify-center" style={{ marginTop: 'auto', paddingTop: '16px', paddingBottom: '20px' }}>
-                        <div className="w-[86%] max-w-[820px] h-[56px] bg-black/20 backdrop-blur-xl border border-white/8 shadow-[0_8px_30px_rgba(2,6,23,0.6)] flex items-center gap-3" style={{ borderRadius: '28px', paddingLeft: '24px', paddingRight: '4px' }}>
+                        <div
+                            className="w-[86%] max-w-[820px] h-[56px] bg-black/20 backdrop-blur-xl border border-white/8 shadow-[0_8px_30px_rgba(2,6,23,0.6)] flex items-center relative"
+                            style={{ borderRadius: '28px', paddingLeft: '8px', paddingRight: '8px' }}
+                        >
+                            {/* Attachment Menu */}
+                            {showAttachMenu && (
+                                <div
+                                    ref={attachMenuRef}
+                                    style={{
+                                        position: 'absolute',
+                                        bottom: '70px',
+                                        left: '20px',
+                                        background: 'rgba(15, 23, 42, 0.95)',
+                                        backdropFilter: 'blur(16px)',
+                                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                                        borderRadius: '16px',
+                                        padding: '12px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '8px',
+                                        boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+                                        zIndex: 50,
+                                        width: '180px'
+                                    }}
+                                >
+                                    <button className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-white/80 hover:text-white" onClick={() => setShowAttachMenu(false)}>
+                                        <FileIcon size={18} className="text-blue-400" />
+                                        <span className="text-[14px] font-medium">Document</span>
+                                    </button>
+                                    <button className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-white/80 hover:text-white" onClick={() => setShowAttachMenu(false)}>
+                                        <ImageIcon size={18} className="text-purple-400" />
+                                        <span className="text-[14px] font-medium">Image</span>
+                                    </button>
+                                    <button className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-white/80 hover:text-white" onClick={() => setShowAttachMenu(false)}>
+                                        <Video size={18} className="text-pink-400" />
+                                        <span className="text-[14px] font-medium">Video</span>
+                                    </button>
+                                </div>
+                            )}
 
-                            <input
-                                type="text"
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                                onKeyPress={handleKeyPress}
-                                placeholder="Type a message"
-                                className="flex-1 bg-transparent text-white/90 text-[15px] placeholder-white/30 outline-none"
-                            />
+                            {isRecording ? (
+                                /* Recording UI */
+                                <div className="flex-1 flex items-center justify-between px-4 h-full">
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            onClick={() => setIsRecording(false)}
+                                            className="text-gray-400 hover:text-red-400 transition-colors"
+                                            title="Cancel Recording"
+                                        >
+                                            <Trash2 size={20} />
+                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <div style={{
+                                                width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#ef4444',
+                                                boxShadow: '0 0 10px rgba(239, 68, 68, 0.8)',
+                                                animation: 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                                            }} />
+                                            <span className="text-red-400 text-[15px] font-medium tracking-wide">
+                                                {formatRecordingTime ? formatRecordingTime(recordingTime) : `${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')}`}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={() => setIsRecording(false)}
+                                            className="w-[40px] h-[40px] rounded-full bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-colors flex items-center justify-center flex-shrink-0"
+                                        >
+                                            <StopIcon size={18} fill="currentColor" />
+                                        </button>
+                                        <button
+                                            onClick={() => { setIsRecording(false); /* send logic */ }}
+                                            className="w-[40px] h-[40px] rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 hover:scale-105 transition-transform flex items-center justify-center flex-shrink-0"
+                                            style={{ boxShadow: '0 0 20px rgba(34, 211, 238, 0.6)' }}
+                                        >
+                                            <SendHorizontal size={18} className="text-white" />
+                                        </button>
+                                    </div>
+                                    <style>{`
+                                        @keyframes pulse {
+                                            0%, 100% { opacity: 1; transform: scale(1); }
+                                            50% { opacity: 0.5; transform: scale(1.2); }
+                                        }
+                                    `}</style>
+                                </div>
+                            ) : (
+                                /* Normal Input UI */
+                                <>
+                                    <button
+                                        onClick={() => setShowAttachMenu(!showAttachMenu)}
+                                        className="w-[40px] h-[40px] flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors flex-shrink-0 ml-1"
+                                    >
+                                        <Paperclip size={20} />
+                                    </button>
 
-                            <button
-                                onClick={handleSendMessage}
-                                className="w-[40px] h-[40px] rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 hover:scale-105 transition-transform flex items-center justify-center flex-shrink-0"
-                                style={{ boxShadow: '0 0 20px rgba(34, 211, 238, 0.6), 0 0 40px rgba(34, 211, 238, 0.3)' }}
-                                aria-label="Send"
-                            >
-                                <SendHorizontal size={18} className="text-white" />
-                            </button>
+                                    <input
+                                        type="text"
+                                        value={message}
+                                        onChange={(e) => setMessage(e.target.value)}
+                                        onKeyPress={handleKeyPress}
+                                        placeholder="Type a message..."
+                                        className="flex-1 bg-transparent text-white/90 text-[15px] placeholder-white/40 outline-none px-3 h-full"
+                                    />
+
+                                    <div className="flex items-center gap-2 mr-1">
+                                        {!message.trim() && (
+                                            <button
+                                                onClick={() => setIsRecording(true)}
+                                                className="w-[40px] h-[40px] flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors flex-shrink-0"
+                                            >
+                                                <Mic size={20} />
+                                            </button>
+                                        )}
+                                        {(message.trim() || true) && (
+                                            <button
+                                                onClick={handleSendMessage}
+                                                className={`w-[40px] h-[40px] rounded-full ${message.trim() ? 'bg-gradient-to-br from-cyan-400 to-teal-500 hover:scale-105' : 'bg-white/10 text-white/50'} transition-all flex items-center justify-center flex-shrink-0`}
+                                                style={message.trim() ? { boxShadow: '0 0 20px rgba(34, 211, 238, 0.6), 0 0 40px rgba(34, 211, 238, 0.3)' } : {}}
+                                                aria-label="Send"
+                                                disabled={!message.trim()}
+                                            >
+                                                <SendHorizontal size={18} className={message.trim() ? 'text-white' : 'currentColor'} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
 
@@ -1053,9 +1097,14 @@ const ChatContainer = () => {
                                             background: 'rgba(15, 23, 42, 0.95)',
                                             display: 'flex',
                                             alignItems: 'center',
-                                            justifyContent: 'center'
+                                            justifyContent: 'center',
+                                            overflow: 'hidden'
                                         }}>
-                                            <User size={36} style={{ color: 'rgba(255, 255, 255, 0.5)' }} />
+                                            {selectedContact.profilePic ? (
+                                                <img src={selectedContact.profilePic} alt={selectedContact.fullName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            ) : (
+                                                <User size={36} style={{ color: 'rgba(255, 255, 255, 0.5)' }} />
+                                            )}
                                         </div>
                                     </div>
                                     <div style={{
@@ -1077,7 +1126,7 @@ const ChatContainer = () => {
                                     marginBottom: '6px',
                                     textAlign: 'center'
                                 }}>
-                                    {userProfile.name}
+                                    {selectedContact.fullName}
                                 </h2>
                                 <div style={{
                                     display: 'flex',
@@ -1105,20 +1154,6 @@ const ChatContainer = () => {
 
                             {/* Profile Details */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, overflow: 'auto' }}>
-                                {/* About */}
-                                <div style={{
-                                    padding: '14px 16px',
-                                    borderRadius: '12px',
-                                    background: 'rgba(255, 255, 255, 0.04)',
-                                    border: '1px solid rgba(255, 255, 255, 0.08)'
-                                }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                                        <Info size={14} style={{ color: '#a855f7' }} />
-                                        <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255, 255, 255, 0.5)' }}>About</span>
-                                    </div>
-                                    <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.8)', lineHeight: 1.5, marginLeft: '24px' }}>{userProfile.about}</p>
-                                </div>
-
                                 {/* Email */}
                                 <div
                                     style={{
@@ -1142,33 +1177,7 @@ const ChatContainer = () => {
                                         <Mail size={14} style={{ color: '#30FBE6' }} />
                                         <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255, 255, 255, 0.5)' }}>Email</span>
                                     </div>
-                                    <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.8)', marginLeft: '24px' }}>{userProfile.email}</p>
-                                </div>
-
-                                {/* Phone */}
-                                <div
-                                    style={{
-                                        padding: '14px 16px',
-                                        borderRadius: '12px',
-                                        background: 'rgba(255, 255, 255, 0.04)',
-                                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.15s'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                                    }}
-                                >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                                        <PhoneIcon size={14} style={{ color: '#22c55e' }} />
-                                        <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255, 255, 255, 0.5)' }}>Phone</span>
-                                    </div>
-                                    <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.8)', marginLeft: '24px' }}>{userProfile.phone}</p>
+                                    <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.8)', marginLeft: '24px' }}>{selectedContact.email}</p>
                                 </div>
 
                                 {/* Member Since */}
@@ -1194,13 +1203,16 @@ const ChatContainer = () => {
                                         <User size={14} style={{ color: '#a855f7' }} />
                                         <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255, 255, 255, 0.5)' }}>Member Since</span>
                                     </div>
-                                    <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.8)', marginLeft: '24px' }}>{userProfile.joinedDate}</p>
+                                    <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.8)', marginLeft: '24px' }}>
+                                        {selectedContact.createdAt ? new Date(selectedContact.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Unknown'}
+                                    </p>
                                 </div>
                             </div>
 
                             {/* Bottom Actions */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
                                 <button
+                                    onClick={() => setShowProfile(false)}
                                     style={{
                                         width: '100%',
                                         padding: '12px',
@@ -1297,7 +1309,22 @@ const ChatContainer = () => {
                                 { label: 'Forward', icon: <Forward size={16} />, onClick: () => { } },
                                 { divider: true },
                                 { label: 'Select', icon: <CheckSquare size={16} />, onClick: () => { setSelectMode(true); toggleMessageSelection(contextMenu.msgId); } },
-                                { label: 'Delete', icon: <Trash2 size={16} />, color: '#ef4444', onClick: () => { } },
+                                {
+                                    label: 'Delete for Me', icon: <Trash2 size={16} />, color: '#ef4444', onClick: async () => {
+                                        try {
+                                            await deleteForMe(contextMenu.msgId);
+                                            setMessages(prev => prev.filter(m => m._id !== contextMenu.msgId));
+                                        } catch (err) { console.error(err); }
+                                    }
+                                },
+                                ...(contextMenu.msgSenderId === authUser._id ? [{
+                                    label: 'Delete for Everyone', icon: <Trash2 size={16} />, color: '#ef4444', onClick: async () => {
+                                        try {
+                                            await deleteForEveryone(contextMenu.msgId);
+                                            setMessages(prev => prev.filter(m => m._id !== contextMenu.msgId));
+                                        } catch (err) { console.error(err); }
+                                    }
+                                }] : []),
                             ]
                             : [
                                 { label: 'Search Messages', icon: <Search size={16} />, onClick: () => { setSearchMode(true); } },
