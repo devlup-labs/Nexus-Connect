@@ -18,7 +18,7 @@ function App() {
     switch (activeView) {
       case 'home': return null;
       case 'messages': return <ChatContainer />;
-      case 'contacts': return <ContactsPanel />;
+      case 'contacts': return null;
       case 'call-log': return <CallLogPanel />;
       case 'settings': return <SettingsPanel />;
       default: return <ChatContainer />;
@@ -47,7 +47,7 @@ function App() {
       <Dock onNavigate={setActiveView} activeView={activeView} />
 
       <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '12px', height: '100vh', marginLeft: '100px' }}>
-        <StreamPanel />
+        {activeView === 'contacts' ? <ContactsPanel /> : <StreamPanel />}
         {renderView()}
       </div>
     </div>

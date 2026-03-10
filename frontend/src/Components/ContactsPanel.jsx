@@ -190,12 +190,9 @@ const ContactsPanel = () => {
   ];
 
   return (
-    <div
-      className="flex flex-col w-[820px] flex-shrink-0"
-      style={{ height: "100%", marginTop: "4px", paddingBottom: "20px" }}
-    >
+    <div style={{ width: '420px', maxWidth: '420px', height: '100%', background: 'transparent', position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0 }}>
       {/* Title */}
-      <div style={{ padding: "10px 10px 25px 10px" }}>
+      <div style={{ padding: "10px 10px 20px 10px" }}>
         <h2
           className="text-[24px] font-medium text-white/90 tracking-[0.5px]"
           style={{ fontFamily: "'Inter', sans-serif" }}
@@ -214,26 +211,23 @@ const ContactsPanel = () => {
           }}
         />
 
-        <div
-          className="px-8"
-          style={{ display: "flex", flexDirection: "column", height: "100%" }}
-        >
+        <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: "12px" }}>
           {/* Search Bar */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "12px",
-              margin: "20px 32px 8px 32px",
-              padding: "10px 16px",
-              borderRadius: "12px",
+              gap: "10px",
+              margin: "4px 0 8px 0",
+              padding: "8px 12px",
+              borderRadius: "10px",
               background: "rgba(15, 23, 42, 0.6)",
               border: "1px solid rgba(255, 255, 255, 0.1)",
               transition: "border-color 0.2s",
             }}
           >
             <Search
-              size={16}
+              size={15}
               style={{ color: "rgba(255, 255, 255, 0.4)", flexShrink: 0 }}
             />
             <input
@@ -248,7 +242,7 @@ const ContactsPanel = () => {
                 border: "none",
                 outline: "none",
                 color: "rgba(255, 255, 255, 0.9)",
-                fontSize: "14px",
+                fontSize: "13px",
                 fontFamily: "'Inter', sans-serif",
                 caretColor: "#30FBE6",
               }}
@@ -275,16 +269,16 @@ const ContactsPanel = () => {
                   (e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)")
                 }
               >
-                <X size={16} />
+                <X size={14} />
               </button>
             )}
           </div>
 
           {/* Contact count */}
-          <div style={{ padding: "8px 32px 4px 32px" }}>
+          <div style={{ padding: "4px 8px 4px 8px" }}>
             <span
               style={{
-                fontSize: "12px",
+                fontSize: "11px",
                 color: "rgba(255, 255, 255, 0.4)",
                 fontFamily: "'Inter', sans-serif",
                 letterSpacing: "0.04em",
@@ -300,9 +294,9 @@ const ContactsPanel = () => {
             className="overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-transparent"
             style={{
               flex: 1,
-              paddingLeft: "32px",
-              paddingRight: "24px",
-              paddingBottom: "20px",
+              paddingLeft: "4px",
+              paddingRight: "4px",
+              paddingBottom: "100px",
             }}
           >
             <div
@@ -319,8 +313,8 @@ const ContactsPanel = () => {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "14px",
-                    padding: "12px 16px",
+                    gap: "12px",
+                    padding: "10px 12px",
                     borderRadius: "12px",
                     cursor: "pointer",
                     transition: "all 0.15s ease",
@@ -349,14 +343,14 @@ const ContactsPanel = () => {
                   <div style={{ position: "relative", flexShrink: 0 }}>
                     <div
                       style={{
-                        width: "44px",
-                        height: "44px",
+                        width: "40px",
+                        height: "40px",
                         borderRadius: "50%",
                         background: contact.gradient,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        fontSize: "14px",
+                        fontSize: "13px",
                         fontWeight: 600,
                         color: "rgba(255, 255, 255, 0.95)",
                         boxShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
@@ -371,11 +365,11 @@ const ContactsPanel = () => {
                         position: "absolute",
                         bottom: "1px",
                         right: "1px",
-                        width: "12px",
-                        height: "12px",
+                        width: "10px",
+                        height: "10px",
                         borderRadius: "50%",
                         background: statusColors[contact.status],
-                        border: "2.5px solid rgba(11, 18, 32, 0.95)",
+                        border: "2px solid rgba(11, 18, 32, 0.95)",
                         boxShadow:
                           contact.status === "online"
                             ? "0 0 6px rgba(34, 197, 94, 0.5)"
@@ -388,7 +382,7 @@ const ContactsPanel = () => {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
-                        fontSize: "14px",
+                        fontSize: "13px",
                         fontWeight: 500,
                         color: "rgba(255, 255, 255, 0.92)",
                         fontFamily: "'Inter', sans-serif",
@@ -399,7 +393,7 @@ const ContactsPanel = () => {
                     </div>
                     <div
                       style={{
-                        fontSize: "12px",
+                        fontSize: "11px",
                         color: "rgba(255, 255, 255, 0.45)",
                         fontFamily: "'Inter', sans-serif",
                         whiteSpace: "nowrap",
@@ -414,7 +408,7 @@ const ContactsPanel = () => {
                   {/* Status label */}
                   <span
                     style={{
-                      fontSize: "11px",
+                      fontSize: "10px",
                       fontWeight: 500,
                       color: statusColors[contact.status],
                       fontFamily: "'Inter', sans-serif",
