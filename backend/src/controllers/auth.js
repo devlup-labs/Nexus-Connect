@@ -1,4 +1,3 @@
-
 import { generateToken } from "../lib/utils.js";
 import User from "../models/user.js";
 import bcrypt from "bcryptjs";
@@ -14,9 +13,11 @@ export const signup = async (req, res) => {
     }
 
     if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters" });
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
     }
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ message: "Invalid email format" });
@@ -35,7 +36,6 @@ export const signup = async (req, res) => {
     });
 
     if (newUser) {
-
       const savedUser = await newUser.save();
       generateToken(savedUser._id, res);
 
@@ -70,9 +70,10 @@ export const login = async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
-   
+
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect) return res.status(400).json({ message: "Invalid credentials" });
+    if (!isPasswordCorrect)
+      return res.status(400).json({ message: "Invalid credentials" });
 
     generateToken(user._id, res);
 
@@ -95,18 +96,32 @@ export const logout = (_, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { profilePic } = req.body;
-    if (!profilePic) return res.status(400).json({ message: "Profile picture is required" });
-
+    const { profilePic, fullName } = req.body;
     const userId = req.user._id;
 
-    const uploadResponse = await cloudinary.uploader.upload(profilePic);
+    const updates = {};
 
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { profilePic: uploadResponse.secure_url },
-      { new: true }
-    );
+    if (fullName) {
+      if (fullName.trim().length < 2) {
+        return res
+          .status(400)
+          .json({ message: "Name must be at least 2 characters" });
+      }
+      updates.fullName = fullName.trim();
+    }
+
+    if (profilePic) {
+      const uploadResponse = await cloudinary.uploader.upload(profilePic);
+      updates.profilePic = uploadResponse.secure_url;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: "No fields to update" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updates, {
+      new: true,
+    });
 
     res.status(200).json(updatedUser);
   } catch (error) {
