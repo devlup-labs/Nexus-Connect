@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Edit2, ChevronDown } from "lucide-react";
+import { updateProfile } from "../api";
 
-function SettingsPanel() {
+function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
+  const fileInputRef = useRef(null);
   const [theme, setTheme] = useState("dark");
   const [sounds, setSounds] = useState(true);
   const [banners, setBanners] = useState(true);
@@ -9,10 +11,36 @@ function SettingsPanel() {
   const [langOpen, setLangOpen] = useState(false);
 
   const languages = ["English", "Hindi", "Spanish", "French"];
+  const [uploadingPic, setUploadingPic] = useState(false);
+
+  const getInitials = (name) => {
+    if (!name) return "?";
+    return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  };
+
+  const handleProfilePicUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+      const base64 = reader.result;
+      setUploadingPic(true);
+      try {
+        const res = await updateProfile(base64);
+        if (onProfileUpdate) onProfileUpdate(res.data);
+      } catch (err) {
+        console.error("Failed to update profile pic:", err);
+      } finally {
+        setUploadingPic(false);
+      }
+    };
+  };
 
   return (
     <div
-      className="w-screen h-screen flex flex-col"
+      className="w-[840px] shrink-0 h-full flex flex-col pt-1"
       style={{ boxSizing: "border-box" }}
     >
       {/* HEADER */}
@@ -65,14 +93,22 @@ function SettingsPanel() {
 
           <div style={{ display: "flex", gap: "1.25rem" }}>
             {/* Avatar */}
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              onChange={handleProfilePicUpload}
+            />
             <div
               style={{
                 position: "relative",
                 width: "5rem",
                 height: "5rem",
                 borderRadius: "50%",
-                background:
-                  "linear-gradient(135deg, rgba(48, 251, 230, 0.3), rgba(138, 43, 226, 0.3))",
+                background: authUser?.profilePic
+                  ? `url(${authUser.profilePic}) center/cover`
+                  : "linear-gradient(135deg, rgba(48, 251, 230, 0.3), rgba(138, 43, 226, 0.3))",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -82,21 +118,26 @@ function SettingsPanel() {
                 flexShrink: "0",
                 border: "1px solid rgba(255, 255, 255, 0.2)",
                 boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+                opacity: uploadingPic ? 0.5 : 1,
+                transition: "opacity 0.3s ease",
               }}
             >
-              <span
-                style={{
-                  fontSize: "1.75rem",
-                  fontWeight: "500",
-                  color: "rgba(255, 255, 255, 0.9)",
-                  textShadow: "0 1px 3px rgba(0, 0, 0, 0.3)",
-                }}
-              >
-                TB
-              </span>
-              <div />
+              {!authUser?.profilePic && (
+                <span
+                  style={{
+                    fontSize: "1.75rem",
+                    fontWeight: "500",
+                    color: "rgba(255, 255, 255, 0.9)",
+                    textShadow: "0 1px 3px rgba(0, 0, 0, 0.3)",
+                  }}
+                >
+                  {getInitials(authUser?.fullName)}
+                </span>
+              )}
 
               <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingPic}
                 style={{
                   position: "absolute",
                   bottom: "0px",
@@ -110,7 +151,7 @@ function SettingsPanel() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  cursor: "pointer",
+                  cursor: uploadingPic ? "wait" : "pointer",
                   color: "rgba(255, 255, 255, 0.95)",
                 }}
               >
@@ -123,9 +164,9 @@ function SettingsPanel() {
               className="flex-1 flex flex-col"
               style={{ rowGap: "0.625rem" }}
             >
-              <Field text="Alex Chen" />
+              <Field text={authUser?.fullName || "User"} />
               <Field
-                text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod something a mind."
+                text={authUser?.email || "No email"}
                 small
               />
               <button
@@ -307,8 +348,7 @@ function SettingsPanel() {
           {/* LOGOUT BUTTON */}
           <button
             onClick={() => {
-              // Add logout logic here
-              console.log("Logging out...");
+              if (onLogout) onLogout();
             }}
             style={{
               marginTop: "0.5rem",
