@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Edit2, ChevronDown } from "lucide-react";
+import { updateProfile } from "../api";
 
-function SettingsPanel() {
+function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
+  const fileInputRef = useRef(null);
   const [theme, setTheme] = useState("dark");
   const [sounds, setSounds] = useState(true);
   const [banners, setBanners] = useState(true);
@@ -9,6 +11,32 @@ function SettingsPanel() {
   const [langOpen, setLangOpen] = useState(false);
 
   const languages = ["English", "Hindi", "Spanish", "French"];
+  const [uploadingPic, setUploadingPic] = useState(false);
+
+  const getInitials = (name) => {
+    if (!name) return "?";
+    return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  };
+
+  const handleProfilePicUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+      const base64 = reader.result;
+      setUploadingPic(true);
+      try {
+        const res = await updateProfile(base64);
+        if (onProfileUpdate) onProfileUpdate(res.data);
+      } catch (err) {
+        console.error("Failed to update profile pic:", err);
+      } finally {
+        setUploadingPic(false);
+      }
+    };
+  };
 
   return (
     <div style={{ flex: 1, minWidth: 0, height: '100%', background: 'transparent', position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingRight: '24px', paddingBottom: '24px' }}>

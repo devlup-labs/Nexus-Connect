@@ -18,7 +18,7 @@ const _dirname = path.resolve();
 
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json({ limit: "5mb" }));
+app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 app.use(
   cors({
