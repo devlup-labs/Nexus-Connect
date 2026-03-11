@@ -4,9 +4,12 @@ import ChatContainer from './Components/ChatContainer.jsx'
 import StreamPanel from './Components/StreamPanel.jsx'
 import SettingsPanel from './Components/Settings.jsx'
 import CallLogPanel from './Components/CallLog.jsx'
-import Login from './Components/Login.jsx'
-import Signup from './Components/signup.jsx'
-import { checkAuth, logout as logoutApi } from './api'
+import ContactsPanel from './Components/ContactsPanel.jsx'
+// import Login from './components/Login';
+// import Signup from './components/signup'; // Ensure this matches your filename
+// import { useState } from 'react';
+// import './App.css';
+
 
 function App() {
   const [activeView, setActiveView] = useState('messages');
@@ -118,14 +121,9 @@ function App() {
       <div className="relative z-10 flex items-center gap-6 h-screen pl-5">
         <Dock onNavigate={setActiveView} activeView={activeView} />
 
-        <div className="flex items-center gap-3 h-full">
-          <StreamPanel
-            authUser={authUser}
-            selectedContactId={selectedContact?._id}
-            onSelectContact={(contact) => { setSelectedContact(contact); setActiveView('messages'); }}
-          />
-          {renderView()}
-        </div>
+      <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '12px', height: '100vh', marginLeft: '100px' }}>
+        {activeView === 'contacts' ? <ContactsPanel /> : <StreamPanel />}
+        {renderView()}
       </div>
     </div>
   );
