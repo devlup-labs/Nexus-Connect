@@ -11,331 +11,298 @@ function SettingsPanel() {
   const languages = ["English", "Hindi", "Spanish", "French"];
 
   return (
-    <div
-      className="w-screen h-screen flex flex-col"
-      style={{ boxSizing: "border-box" }}
-    >
-      {/* HEADER */}
-      <div style={{ padding: "10px 10px 25px 10px" }}>
+    <div style={{ flex: 1, minWidth: 0, height: '100%', background: 'transparent', position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingRight: '24px', paddingBottom: '24px' }}>
+      {/* Title */}
+      <div style={{ padding: "10px 10px 20px 10px" }}>
         <h2
-          style={{
-            fontSize: "24px",
-            fontWeight: 500,
-            color: "rgba(255, 255, 255, 0.9)",
-            letterSpacing: "0.5px",
-            fontFamily: "'Inter', sans-serif",
-          }}
+          className="text-[24px] font-medium text-white/90 tracking-[0.5px]"
+          style={{ fontFamily: "'Inter', sans-serif" }}
         >
           Settings
         </h2>
       </div>
 
-      {/* CONTENT */}
-      <div
-        className="flex-1 flex flex-col"
-        style={{
-          padding: "0 1.5rem 6.25rem 1.5rem",
-          rowGap: "0.75rem",
-          overflowY: "auto",
-        }}
-      >
-        {/* PROFILE SETTINGS */}
-        <section
+      {/* Main Glass Panel */}
+      <div className="relative flex-1 rounded-[14px] border border-white/8 overflow-hidden backdrop-blur-3xl bg-gradient-to-br from-[#0b1220]/40 via-[#2b1b3a]/20 to-[#091021]/40 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+        {/* Noise texture */}
+        <div
+          className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
           style={{
-            background: "rgba(255, 255, 255, 0.03)",
-            backdropFilter: "blur(20px) saturate(180%)",
-            WebkitBackdropFilter: "blur(20px) saturate(180%)",
-            border: "1px solid rgba(255, 255, 255, 0.15)",
-            borderRadius: "0.875rem",
-            padding: "1.25rem",
-            isolation: "isolate",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
           }}
+        />
+
+        <div
+          className="overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-transparent"
+          style={{ display: "flex", flexDirection: "column", height: "100%", padding: "12px", gap: "12px", paddingBottom: "100px" }}
         >
-          <h3
-            style={{
-              fontSize: "1.125rem",
-              marginBottom: "1.25rem",
-              color: "rgba(255, 255, 255, 0.9)",
-              fontWeight: 500,
-            }}
-          >
-            Profile Settings
-          </h3>
+          {/* Profile Settings Section */}
+          <div style={{
+            padding: "16px",
+            borderRadius: "12px",
+            background: "rgba(255, 255, 255, 0.04)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+          }}>
+            <h3 style={{
+              fontSize: "12px",
+              fontWeight: 600,
+              color: "rgba(255, 255, 255, 0.5)",
+              fontFamily: "'Inter', sans-serif",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              marginBottom: "16px",
+            }}>
+              Profile
+            </h3>
 
-          <div style={{ display: "flex", gap: "1.25rem" }}>
-            {/* Avatar */}
-            <div
-              style={{
-                position: "relative",
-                width: "5rem",
-                height: "5rem",
-                borderRadius: "50%",
-                background:
-                  "linear-gradient(135deg, rgba(48, 251, 230, 0.3), rgba(138, 43, 226, 0.3))",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "0.625rem",
-                fontWeight: "600",
-                color: "rgba(255, 255, 255, 0.95)",
-                flexShrink: "0",
-                border: "1px solid rgba(255, 255, 255, 0.2)",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "1.75rem",
-                  fontWeight: "500",
-                  color: "rgba(255, 255, 255, 0.9)",
-                  textShadow: "0 1px 3px rgba(0, 0, 0, 0.3)",
-                }}
-              >
-                TB
-              </span>
-              <div />
-
-              <button
-                style={{
-                  position: "absolute",
-                  bottom: "0px",
-                  right: "0px",
-                  width: "1.75rem",
-                  height: "1.75rem",
+            <div style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
+              {/* Avatar */}
+              <div style={{ position: "relative", flexShrink: 0 }}>
+                <div style={{
+                  width: "56px",
+                  height: "56px",
                   borderRadius: "50%",
-                  background: "rgba(255, 255, 255, 0.2)",
-                  backdropFilter: "blur(12px)",
-                  border: "1px solid rgba(255, 255, 255, 0.3)",
+                  padding: "2px",
+                  background: "linear-gradient(135deg, #30FBE6, #a855f7)",
+                  boxShadow: "0 0 20px rgba(48, 251, 230, 0.25)",
+                }}>
+                  <div style={{
+                    width: "100%",
+                    height: "100%",
+                    borderRadius: "50%",
+                    background: "rgba(15, 23, 42, 0.95)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "18px",
+                    fontWeight: 600,
+                    color: "rgba(255, 255, 255, 0.7)",
+                    fontFamily: "'Inter', sans-serif",
+                  }}>
+                    TB
+                  </div>
+                </div>
+                <button style={{
+                  position: "absolute",
+                  bottom: "-2px",
+                  right: "-2px",
+                  width: "22px",
+                  height: "22px",
+                  borderRadius: "50%",
+                  background: "rgba(48, 251, 230, 0.2)",
+                  border: "2px solid rgba(11, 18, 32, 0.95)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   cursor: "pointer",
-                  color: "rgba(255, 255, 255, 0.95)",
-                }}
-              >
-                <Edit2 size={14} />
-              </button>
-            </div>
+                  color: "#30FBE6",
+                }}>
+                  <Edit2 size={10} />
+                </button>
+              </div>
 
-            {/* Fields */}
-            <div
-              className="flex-1 flex flex-col"
-              style={{ rowGap: "0.625rem" }}
-            >
-              <Field text="Alex Chen" />
-              <Field
-                text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod something a mind."
-                small
-              />
-              <button
-                style={{
-                  marginTop: "0.25rem",
-                  padding: "0.5rem 0.875rem",
-                  borderRadius: "0.625rem",
-                  background: "rgba(255, 255, 255, 0.1)",
-                  backdropFilter: "blur(12px)",
-                  border: "1px solid rgba(255, 255, 255, 0.2)",
-                  cursor: "pointer",
-                  fontWeight: 500,
-                  fontSize: "0.9375rem",
-                  color: "rgba(255, 255, 255, 0.9)",
-                  transition: "all 0.3s ease",
-                }}
-              >
-                Edit Profile
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* GENERAL SETTINGS */}
-        <section
-          className="flex flex-col"
-          style={{
-            rowGap: "0.875rem",
-            background: "rgba(255, 255, 255, 0.03)",
-            backdropFilter: "blur(20px) saturate(180%)",
-            WebkitBackdropFilter: "blur(20px) saturate(180%)",
-            border: "1px solid rgba(255, 255, 255, 0.15)",
-            borderRadius: "0.875rem",
-            padding: "1.25rem",
-            isolation: "isolate",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
-          }}
-        >
-          <h3
-            style={{
-              fontSize: "1.125rem",
-              color: "rgba(255, 255, 255, 0.9)",
-              fontWeight: 500,
-              marginBottom: "0.375rem",
-            }}
-          >
-            General Settings
-          </h3>
-
-          <SettingRow label="Theme">
-            <div
-              style={{
-                display: "flex",
-                background: "rgba(255, 255, 255, 0.1)",
-                borderRadius: "999px",
-                padding: "0.1875rem",
-                border: "1px solid rgba(255, 255, 255, 0.15)",
-              }}
-            >
-              {["Dark", "Light"].map((t) => (
+              {/* Fields */}
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
+                <Field text="Alex Chen" />
+                <Field
+                  text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod something a mind."
+                  small
+                />
                 <button
-                  key={t}
-                  onClick={() => setTheme(t.toLowerCase())}
                   style={{
-                    padding: "0.375rem 0.875rem",
-                    borderRadius: "999px",
-                    background:
-                      theme === t.toLowerCase()
-                        ? "rgba(48, 251, 230, 0.2)"
-                        : "transparent",
-                    color:
-                      theme === t.toLowerCase()
-                        ? "rgba(255, 255, 255, 0.95)"
-                        : "rgba(255, 255, 255, 0.6)",
-                    border:
-                      theme === t.toLowerCase()
-                        ? "1px solid rgba(48, 251, 230, 0.3)"
-                        : "none",
+                    marginTop: "4px",
+                    padding: "8px 14px",
+                    borderRadius: "10px",
+                    background: "rgba(48, 251, 230, 0.1)",
+                    border: "1px solid rgba(48, 251, 230, 0.2)",
                     cursor: "pointer",
-                    fontSize: "0.9375rem",
                     fontWeight: 500,
+                    fontSize: "12px",
+                    color: "#30FBE6",
+                    fontFamily: "'Inter', sans-serif",
+                    transition: "all 0.15s ease",
+                    alignSelf: "flex-start",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(48, 251, 230, 0.18)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "rgba(48, 251, 230, 0.1)";
                   }}
                 >
-                  {t}
+                  Edit Profile
                 </button>
-              ))}
+              </div>
             </div>
-          </SettingRow>
+          </div>
 
-          <SettingRow label="Notifications">
-            <div style={{ display: "flex", gap: "1.25rem" }}>
-              <Toggle label="Sounds" value={sounds} onChange={setSounds} />
-              <Toggle label="Banners" value={banners} onChange={setBanners} />
-            </div>
-          </SettingRow>
+          {/* General Settings Section */}
+          <div style={{
+            padding: "16px",
+            borderRadius: "12px",
+            background: "rgba(255, 255, 255, 0.04)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+          }}>
+            <h3 style={{
+              fontSize: "12px",
+              fontWeight: 600,
+              color: "rgba(255, 255, 255, 0.5)",
+              fontFamily: "'Inter', sans-serif",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              marginBottom: "8px",
+            }}>
+              General
+            </h3>
 
-          {/* LANGUAGE DROPDOWN */}
-          <SettingRow label="Language">
-            <div style={{ position: "relative" }}>
-              <button
-                onClick={() => setLangOpen(!langOpen)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.375rem",
-                  padding: "0.375rem 0.75rem",
-                  borderRadius: "0.5rem",
-                  background: "rgba(255, 255, 255, 0.1)",
-                  backdropFilter: "blur(12px)",
-                  border: "1px solid rgba(255, 255, 255, 0.2)",
-                  cursor: "pointer",
-                  color: "rgba(255, 255, 255, 0.9)",
-                  fontSize: "0.9375rem",
-                  fontWeight: 500,
-                  transition: "all 0.3s ease",
-                }}
-              >
-                {language}
-                <ChevronDown size={14} />
-              </button>
+            {/* Theme */}
+            <SettingRow label="Theme">
+              <div style={{
+                display: "flex",
+                background: "rgba(15, 23, 42, 0.6)",
+                borderRadius: "8px",
+                padding: "3px",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+              }}>
+                {["Dark", "Light"].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTheme(t.toLowerCase())}
+                    style={{
+                      padding: "5px 12px",
+                      borderRadius: "6px",
+                      background: theme === t.toLowerCase() ? "rgba(48, 251, 230, 0.15)" : "transparent",
+                      color: theme === t.toLowerCase() ? "#30FBE6" : "rgba(255, 255, 255, 0.5)",
+                      border: theme === t.toLowerCase() ? "1px solid rgba(48, 251, 230, 0.2)" : "1px solid transparent",
+                      cursor: "pointer",
+                      fontSize: "12px",
+                      fontWeight: 500,
+                      fontFamily: "'Inter', sans-serif",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </SettingRow>
 
-              {langOpen && (
-                <div
+            {/* Notifications */}
+            <SettingRow label="Notifications">
+              <div style={{ display: "flex", gap: "12px" }}>
+                <Toggle label="Sounds" value={sounds} onChange={setSounds} />
+                <Toggle label="Banners" value={banners} onChange={setBanners} />
+              </div>
+            </SettingRow>
+
+            {/* Language */}
+            <SettingRow label="Language">
+              <div style={{ position: "relative" }}>
+                <button
+                  onClick={() => setLangOpen(!langOpen)}
                   style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "5px 10px",
+                    borderRadius: "8px",
+                    background: "rgba(15, 23, 42, 0.6)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    cursor: "pointer",
+                    color: "rgba(255, 255, 255, 0.8)",
+                    fontSize: "12px",
+                    fontWeight: 500,
+                    fontFamily: "'Inter', sans-serif",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {language}
+                  <ChevronDown size={12} style={{ opacity: 0.5 }} />
+                </button>
+
+                {langOpen && (
+                  <div style={{
                     position: "absolute",
                     right: 0,
                     top: "110%",
-                    minWidth: "8.75rem",
-                    background: "rgba(255, 255, 255, 0.08)",
-                    backdropFilter: "blur(20px) saturate(180%)",
-                    border: "1px solid rgba(255, 255, 255, 0.2)",
-                    borderRadius: "0.625rem",
-                    boxShadow: "0 12px 30px rgba(0,0,0,0.3)",
+                    minWidth: "120px",
+                    background: "rgba(15, 23, 42, 0.95)",
+                    backdropFilter: "blur(20px)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    borderRadius: "10px",
+                    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.4)",
                     overflow: "hidden",
                     zIndex: 10,
-                  }}
-                >
-                  {languages.map((l) => (
-                    <div
-                      key={l}
-                      onClick={() => {
-                        setLanguage(l);
-                        setLangOpen(false);
-                      }}
-                      style={{
-                        padding: "0.625rem 0.875rem",
-                        cursor: "pointer",
-                        fontSize: "0.9375rem",
-                        background:
-                          language === l
-                            ? "rgba(48, 251, 230, 0.15)"
-                            : "transparent",
-                        color: "rgba(255, 255, 255, 0.9)",
-                        transition: "all 0.2s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (language !== l) {
-                          e.target.style.background =
-                            "rgba(255, 255, 255, 0.1)";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (language !== l) {
-                          e.target.style.background = "transparent";
-                        }
-                      }}
-                    >
-                      {l}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </SettingRow>
+                    padding: "4px",
+                  }}>
+                    {languages.map((l) => (
+                      <div
+                        key={l}
+                        onClick={() => { setLanguage(l); setLangOpen(false); }}
+                        style={{
+                          padding: "8px 12px",
+                          cursor: "pointer",
+                          fontSize: "12px",
+                          fontFamily: "'Inter', sans-serif",
+                          borderRadius: "8px",
+                          background: language === l ? "rgba(48, 251, 230, 0.12)" : "transparent",
+                          color: language === l ? "#30FBE6" : "rgba(255, 255, 255, 0.8)",
+                          transition: "all 0.15s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (language !== l) {
+                            e.target.style.background = "rgba(255, 255, 255, 0.06)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (language !== l) {
+                            e.target.style.background = "transparent";
+                          }
+                        }}
+                      >
+                        {l}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </SettingRow>
 
-          <SettingRow label="Privacy & Security" right="Menu" />
-          <SettingRow label="Storage & Data" right="Menu" />
+            <SettingRow label="Privacy & Security" right="→" />
+            <SettingRow label="Storage & Data" right="→" />
+          </div>
 
-          {/* LOGOUT BUTTON */}
+          {/* Logout */}
           <button
-            onClick={() => {
-              // Add logout logic here
-              console.log("Logging out...");
-            }}
+            onClick={() => console.log("Logging out...")}
             style={{
-              marginTop: "0.5rem",
-              padding: "0.75rem 1rem",
-              borderRadius: "0.75rem",
-              background: "rgba(255, 59, 48, 0.15)",
-              backdropFilter: "blur(12px)",
-              border: "1px solid rgba(255, 59, 48, 0.3)",
-              cursor: "pointer",
-              fontWeight: 500,
-              fontSize: "0.9375rem",
-              color: "rgba(255, 99, 88, 0.95)",
-              transition: "all 0.3s ease",
               width: "100%",
+              padding: "12px",
+              borderRadius: "12px",
+              border: "1px solid rgba(239, 68, 68, 0.2)",
+              background: "rgba(239, 68, 68, 0.08)",
+              color: "rgba(239, 68, 68, 0.9)",
+              fontSize: "13px",
+              fontWeight: 500,
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+              fontFamily: "'Inter', sans-serif",
             }}
             onMouseEnter={(e) => {
-              e.target.style.background = "rgba(255, 59, 48, 0.25)";
-              e.target.style.borderColor = "rgba(255, 59, 48, 0.4)";
+              e.currentTarget.style.background = "rgba(239, 68, 68, 0.15)";
+              e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.3)";
             }}
             onMouseLeave={(e) => {
-              e.target.style.background = "rgba(255, 59, 48, 0.15)";
-              e.target.style.borderColor = "rgba(255, 59, 48, 0.3)";
+              e.currentTarget.style.background = "rgba(239, 68, 68, 0.08)";
+              e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.2)";
             }}
           >
             Logout
           </button>
-        </section>
+        </div>
       </div>
     </div>
   );
@@ -345,18 +312,16 @@ function SettingsPanel() {
 
 export function Field({ text, small }) {
   return (
-    <div
-      style={{
-        padding: small ? "0.5rem 0.75rem" : "0.625rem 0.875rem",
-        borderRadius: "0.625rem",
-        background: "rgba(0, 0, 0, 0.3)",
-        border: "1px solid rgba(255, 255, 255, 0.1)",
-        fontSize: small ? "0.875rem" : "0.9375rem",
-        lineHeight: "1.5",
-        color: "rgba(255, 255, 255, 0.85)",
-        textShadow: "0 1px 2px rgba(0, 0, 0, 0.2)",
-      }}
-    >
+    <div style={{
+      padding: small ? "8px 12px" : "10px 14px",
+      borderRadius: "10px",
+      background: "rgba(15, 23, 42, 0.6)",
+      border: "1px solid rgba(255, 255, 255, 0.08)",
+      fontSize: small ? "11px" : "13px",
+      lineHeight: "1.5",
+      color: "rgba(255, 255, 255, 0.75)",
+      fontFamily: "'Inter', sans-serif",
+    }}>
       {text}
     </div>
   );
@@ -364,33 +329,42 @@ export function Field({ text, small }) {
 
 function SettingRow({ label, children, right }) {
   return (
-    <div
-      style={{
-        padding: "0.75rem 0.875rem",
-        borderRadius: "0.75rem",
-        background: "rgba(0, 0, 0, 0.2)",
-        border: "1px solid rgba(255, 255, 255, 0.08)",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
+    <div style={{
+      padding: "12px 14px",
+      borderRadius: "10px",
+      background: "rgba(15, 23, 42, 0.4)",
+      border: "1px solid rgba(255, 255, 255, 0.06)",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      cursor: right ? "pointer" : "default",
+      transition: "all 0.15s ease",
+    }}
+      onMouseEnter={(e) => {
+        if (right) {
+          e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (right) {
+          e.currentTarget.style.background = "rgba(15, 23, 42, 0.4)";
+        }
       }}
     >
-      <span
-        style={{
-          fontSize: "0.9375rem",
-          color: "rgba(255, 255, 255, 0.85)",
-          fontWeight: 500,
-        }}
-      >
+      <span style={{
+        fontSize: "13px",
+        color: "rgba(255, 255, 255, 0.8)",
+        fontWeight: 500,
+        fontFamily: "'Inter', sans-serif",
+      }}>
         {label}
       </span>
       {children ?? (
-        <span
-          style={{
-            color: "rgba(255, 255, 255, 0.6)",
-            fontSize: "0.9375rem",
-          }}
-        >
+        <span style={{
+          color: "rgba(255, 255, 255, 0.4)",
+          fontSize: "13px",
+          fontFamily: "'Inter', sans-serif",
+        }}>
           {right}
         </span>
       )}
@@ -400,48 +374,39 @@ function SettingRow({ label, children, right }) {
 
 function Toggle({ label, value, onChange }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-      <span
-        style={{
-          fontSize: "0.9375rem",
-          color: "rgba(255, 255, 255, 0.85)",
-        }}
-      >
+    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+      <span style={{
+        fontSize: "12px",
+        color: "rgba(255, 255, 255, 0.7)",
+        fontFamily: "'Inter', sans-serif",
+      }}>
         {label}
       </span>
       <button
         onClick={() => onChange(!value)}
         style={{
-          width: "2.375rem",
-          height: "1.25rem",
+          width: "34px",
+          height: "18px",
           borderRadius: "999px",
-          background: value
-            ? "rgba(48, 251, 230, 0.3)"
-            : "rgba(255, 255, 255, 0.15)",
-          border: value
-            ? "1px solid rgba(48, 251, 230, 0.4)"
-            : "1px solid rgba(255, 255, 255, 0.2)",
+          background: value ? "rgba(48, 251, 230, 0.25)" : "rgba(255, 255, 255, 0.1)",
+          border: value ? "1px solid rgba(48, 251, 230, 0.35)" : "1px solid rgba(255, 255, 255, 0.15)",
           position: "relative",
           cursor: "pointer",
-          transition: "all 0.3s ease",
+          transition: "all 0.2s ease",
         }}
       >
-        <div
-          style={{
-            width: "1rem",
-            height: "1rem",
-            background: value
-              ? "rgba(48, 251, 230, 0.9)"
-              : "rgba(255, 255, 255, 0.8)",
-            borderRadius: "50%",
-            position: "absolute",
-            top: "1px",
-            left: "1px",
-            transform: value ? "translateX(1.125rem)" : "translateX(0)",
-            transition: "transform 0.25s ease",
-            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
-          }}
-        />
+        <div style={{
+          width: "14px",
+          height: "14px",
+          background: value ? "#30FBE6" : "rgba(255, 255, 255, 0.7)",
+          borderRadius: "50%",
+          position: "absolute",
+          top: "1px",
+          left: "1px",
+          transform: value ? "translateX(16px)" : "translateX(0)",
+          transition: "transform 0.2s ease",
+          boxShadow: value ? "0 0 8px rgba(48, 251, 230, 0.4)" : "0 1px 3px rgba(0, 0, 0, 0.2)",
+        }} />
       </button>
     </div>
   );

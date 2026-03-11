@@ -4,6 +4,7 @@ import ChatContainer from './Components/ChatContainer.jsx'
 import StreamPanel from './Components/StreamPanel.jsx'
 import SettingsPanel from './Components/Settings.jsx'
 import CallLogPanel from './Components/CallLog.jsx'
+import ContactsPanel from './Components/ContactsPanel.jsx'
 // import Login from './components/Login';
 // import Signup from './components/signup'; // Ensure this matches your filename
 // import { useState } from 'react';
@@ -46,7 +47,7 @@ function App() {
       <Dock onNavigate={setActiveView} activeView={activeView} />
 
       <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '12px', height: '100vh', marginLeft: '100px' }}>
-        <StreamPanel />
+        {activeView === 'contacts' ? <ContactsPanel /> : <StreamPanel />}
         {renderView()}
       </div>
     </div>
