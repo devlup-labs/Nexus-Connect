@@ -42,7 +42,7 @@ const contacts = [
   {
     id: 3,
     name: "Alan Turing",
-    status: "away",
+    status: "offline",
     about:
       "Father of theoretical computer science and artificial intelligence.",
     email: "alan.turing@bletchley.uk",
@@ -87,7 +87,7 @@ const contacts = [
   {
     id: 7,
     name: "Emmy Noether",
-    status: "away",
+    status: "offline",
     about:
       "Mathematician known for contributions to abstract algebra and theoretical physics.",
     email: "emmy.noether@erlangen.de",
@@ -134,13 +134,11 @@ const contacts = [
 
 const statusColors = {
   online: "#22c55e",
-  away: "#f59e0b",
   offline: "#6b7280",
 };
 
 const statusLabels = {
   online: "Online",
-  away: "Away",
   offline: "Offline",
 };
 
@@ -154,9 +152,9 @@ const ContactsPanel = () => {
     c.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  // Sort: online first, then away, then offline
+  // Sort: online first, then offline
   const sortedContacts = [...filteredContacts].sort((a, b) => {
-    const order = { online: 0, away: 1, offline: 2 };
+    const order = { online: 0, offline: 1 };
     return order[a.status] - order[b.status];
   });
 
