@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AppWindow, MoreHorizontal, Play, Eye, Bookmark, Flag, RefreshCw, PlusCircle, UserPlus, X, Search, Archive, RotateCcw } from 'lucide-react';
+import { AppWindow, MoreHorizontal, Play, Eye, Bookmark, Flag, RefreshCw, PlusCircle, UserPlus, X, Search, Archive, RotateCcw, FileText as FileIcon } from 'lucide-react';
 import ContextMenu from './ContextMenu';
 import { getChatPartners, getContacts, toggleArchiveUser, getArchivedUsers } from '../api';
 import './StreamPanel.css';
@@ -89,27 +89,39 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
     const getCardType = (contact) => {
         if (!contact.lastMessage || !contact.lastMessage.image) return 'text';
         const img = contact.lastMessage.image.toLowerCase();
+
+        // Check for documents first
+        if (img.includes('.pdf') || img.includes('.doc') || img.includes('.docx') || img.includes('.xls') || img.includes('.xlsx') || img.includes('.ppt') || img.includes('.pptx') || img.includes('.txt') || img.includes('.zip') || img.includes('.rar')) {
+            return 'document';
+        }
+
+        // Check for audio. We also check the preview text as a hint.
+        const preview = getLastMessagePreview(contact);
+        if (img.includes('.mp3') || img.includes('.wav') || img.includes('.ogg') || img.includes('audio') || preview === 'Voice' || (img.includes('.webm') && (!img.includes('/video/') || img.includes('f_auto') || img.includes('upload/v')))) {
+            return 'audio';
+        }
+
         if (img.includes('/video/') || img.includes('.mp4') || img.includes('.webm') || img.includes('.mov')) {
             return 'large-media';
         }
-        if (img.includes('.mp3') || img.includes('.wav') || img.includes('.ogg') || img.includes('audio')) {
-            return 'audio';
-        }
-        return 'image'; // Use new image card type
+
+        return 'image';
     };
 
     const getLastMessagePreview = (contact) => {
         if (!contact.lastMessage) return contact.email;
         if (contact.lastMessage.image) {
             const img = contact.lastMessage.image.toLowerCase();
-            if (img.includes('/video/') || img.includes('.mp4') || img.includes('.webm') || img.includes('.mov')) {
-                return 'Video';
+            // Check Document first
+            if (img.includes('.pdf') || img.includes('.doc') || img.includes('.docx') || img.includes('.xls') || img.includes('.xlsx') || img.includes('.ppt') || img.includes('.pptx') || img.includes('.txt') || img.includes('.zip') || img.includes('.rar')) {
+                return 'Document';
             }
-            if (img.includes('.mp3') || img.includes('.wav') || img.includes('.ogg') || img.includes('audio')) {
+            // Check Voice before Video
+            if (img.includes('.mp3') || img.includes('.wav') || img.includes('.ogg') || img.includes('audio') || (img.includes('.webm') && !img.includes('/video/'))) {
                 return 'Voice';
             }
-            if (img.includes('.pdf') || img.includes('.doc') || img.includes('.docx')) {
-                return 'Document';
+            if (img.includes('/video/') || img.includes('.mp4') || img.includes('.webm') || img.includes('.mov')) {
+                return 'Video';
             }
             return 'Image';
         }
@@ -167,6 +179,33 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
         } : {};
 
         switch (type) {
+            case 'document':
+                return (
+                    <div
+                        className={`stream-card doc-card ${isActive ? 'active' : ''}`}
+                        onClick={() => { setActiveCard(contact._id); onSelectContact(contact); }}
+                        onContextMenu={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setContextMenu({ x: e.clientX, y: e.clientY, type: 'card', itemId: contact._id });
+                        }}
+                        style={cardStyle}
+                    >
+                        <CardHeader />
+                        <div className="doc-content">
+                            <div className="doc-icon">
+                                <FileIcon size={22} />
+                            </div>
+                            <div className="doc-info" style={{ justifyContent: 'center' }}>
+                                <span style={{ fontSize: '15px', color: 'rgba(255,255,255,0.95)' }}>Document</span>
+                            </div>
+                        </div>
+                        <div className="card-content">
+                            <span className="card-timestamp">{getTimestamp(contact)}</span>
+                        </div>
+                    </div>
+                );
+
             case 'text':
                 return (
                     <div
@@ -399,13 +438,16 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    zIndex: 20,
-                    background: 'rgba(5, 10, 31, 0.92)',
-                    backdropFilter: 'blur(12px)',
+                    zIndex: 1000,
+                    background: 'rgba(7, 12, 35, 0.96)',
+                    backdropFilter: 'blur(25px) saturate(180%)',
                     display: 'flex',
                     flexDirection: 'column',
                     borderRadius: '14px',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                    animation: 'fadeIn 0.3s ease-out'
                 }}>
                     {/* Header */}
                     <div style={{
