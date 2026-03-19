@@ -313,13 +313,13 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
             <div className="stream-header">
                 <h2 className="stream-title">Stream</h2>
                 <div className="header-actions">
-                    <button
+                    {/* <button
                         className="icon-button"
                         onClick={() => { setShowNewChat(true); fetchAllContacts(); }}
                         title="New Chat"
                     >
                         <UserPlus size={18} />
-                    </button>
+                    </button> */}
                     <div style={{ position: 'relative' }} ref={headerMenuRef}>
                         <button className="icon-button" onClick={() => setShowHeaderMenu(!showHeaderMenu)}>
                             <MoreHorizontal size={18} />
