@@ -1,4 +1,3 @@
-
 import { generateToken } from "../lib/utils.js";
 import User from "../models/user.js";
 import bcrypt from "bcryptjs";
@@ -14,7 +13,9 @@ export const signup = async (req, res) => {
     }
 
     if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters" });
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -35,7 +36,6 @@ export const signup = async (req, res) => {
     });
 
     if (newUser) {
-
       const savedUser = await newUser.save();
       generateToken(savedUser._id, res);
 
@@ -72,7 +72,8 @@ export const login = async (req, res) => {
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect) return res.status(400).json({ message: "Invalid credentials" });
+    if (!isPasswordCorrect)
+      return res.status(400).json({ message: "Invalid credentials" });
 
     generateToken(user._id, res);
 
@@ -96,28 +97,31 @@ export const logout = (_, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const { profilePic, fullName } = req.body;
-
-    if (!profilePic && !fullName) {
-      return res.status(400).json({ message: "Either profile picture or full name is required" });
-    }
-
     const userId = req.user._id;
-    const updateData = {};
+
+    const updates = {};
+
+    if (fullName) {
+      if (fullName.trim().length < 2) {
+        return res
+          .status(400)
+          .json({ message: "Name must be at least 2 characters" });
+      }
+      updates.fullName = fullName.trim();
+    }
 
     if (profilePic) {
       const uploadResponse = await cloudinary.uploader.upload(profilePic);
-      updateData.profilePic = uploadResponse.secure_url;
+      updates.profilePic = uploadResponse.secure_url;
     }
 
-    if (fullName) {
-      updateData.fullName = fullName;
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: "No fields to update" });
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      updateData,
-      { new: true }
-    );
+    const updatedUser = await User.findByIdAndUpdate(userId, updates, {
+      new: true,
+    });
 
     res.status(200).json(updatedUser);
   } catch (error) {
