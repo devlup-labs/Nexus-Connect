@@ -120,14 +120,14 @@ function App() {
         }}>
       </div>
       <div className="relative z-10 flex items-center gap-6 h-screen pl-5">
-        <Dock onNavigate={setActiveView} activeView={activeView} />
+        <Dock onNavigate={setActiveView} activeView={activeView} onLogout={handleLogout} />
 
         <div className="flex items-center gap-3 h-full">
-          {activeView === 'contacts' ? <ContactsPanel/>: <StreamPanel
+          {activeView === 'contacts' ? <ContactsPanel /> : <StreamPanel
             authUser={authUser}
             selectedContactId={selectedContact?._id}
             onSelectContact={(contact) => { setSelectedContact(contact); setActiveView('messages'); }}
-          /> }
+          />}
           {renderView()}
         </div>
       </div>

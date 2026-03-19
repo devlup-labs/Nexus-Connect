@@ -42,15 +42,10 @@ function CallLogPanel() {
   ];
 
   return (
-    <div style={{ flex: 1, minWidth: 0, height: '100%', background: 'transparent', position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingRight: '24px', paddingBottom: '24px' }}>
+    <div className="flex flex-col flex-1 h-full mr-12 min-w-[840px] mb-2">
       {/* Title */}
-      <div style={{ padding: "10px 10px 20px 10px" }}>
-        <h2
-          className="text-[24px] font-medium text-white/90 tracking-[0.5px]"
-          style={{ fontFamily: "'Inter', sans-serif" }}
-        >
-          Call Log
-        </h2>
+      <div className="pt-[60px] pb-0 pl-2 flex justify-between items-end mb-[-30px] relative z-20">
+        <h2 className="text-[24px] font-medium text-white/90 tracking-[0.5px] font-sans leading-none pb-0">Call Log</h2>
       </div>
 
       {/* Main Glass Panel */}

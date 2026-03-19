@@ -1,7 +1,7 @@
-import { Home, MessageSquare, Phone, Settings, Contact2 } from 'lucide-react';
+import { Home, MessageSquare, Phone, Settings, Contact2, LogOut } from 'lucide-react';
 import { useState } from 'react';
 
-function Dock({ onNavigate, activeView }) {
+function Dock({ onNavigate, activeView, onLogout }) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
   const dockItems = [
@@ -10,6 +10,7 @@ function Dock({ onNavigate, activeView }) {
     { icon: Contact2, label: 'Contacts', view: 'contacts' },
     { icon: Phone, label: 'Phone', view: 'call-log' },
     { icon: Settings, label: 'Settings', view: 'settings' },
+    // { icon: LogOut, label: 'Logout', view: 'logout', action: true },
   ];
 
   return (
@@ -23,7 +24,13 @@ function Dock({ onNavigate, activeView }) {
         return (
           <div key={index} className="relative">
             <div
-              onClick={() => onNavigate(item.view)}
+              onClick={() => {
+                if (item.action && item.label === 'Logout') {
+                  if (onLogout) onLogout();
+                } else {
+                  onNavigate(item.view);
+                }
+              }}
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
               className={`w-12 h-12 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-300 ease-out relative ${isActive
@@ -34,7 +41,7 @@ function Dock({ onNavigate, activeView }) {
                 }`}
             >
               <item.icon
-                className={`w-6 h-6 transition-all duration-300 ${isActive ? 'text-gray-800' : 'text-white/70'} ${isHovered && !isActive ? 'scale-110 text-white' : ''}`}
+                className={`w-6 h-6 transition-all duration-300 ${isActive ? 'text-gray-800' : 'text-white/70'} ${isHovered && !isActive ? 'scale-110 text-white' : ''} ${item.label === 'Logout' ? 'text-red-400' : ''}`}
                 strokeWidth={2}
               />
             </div>
