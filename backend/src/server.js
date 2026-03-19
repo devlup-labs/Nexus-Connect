@@ -9,6 +9,7 @@ import { connectDB } from "./lib/db.js";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import userRoutes from "./routes/user.route.js";
+import callRoutes from "./routes/call.route.js";
 
 
 dotenv.config();
@@ -34,6 +35,7 @@ app.get("/health", (req, res) => {  //DO NOT REMOVE THIS ENDPOINT
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/calls", callRoutes);
 
 //This is for deploying the frontend
 if (process.env.NODE_ENV === 'production') {

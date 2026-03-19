@@ -12,10 +12,6 @@ export const toggleArchiveUser = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        if (currentUserId.toString() === targetUserId.toString()) {
-            return res.status(400).json({ message: "You cannot archive yourself" });
-        }
-
         const isArchived = user.archivedUsers.some((id) => id.toString() === targetUserId.toString());
 
         if (isArchived) {
@@ -40,7 +36,7 @@ export const toggleArchiveUser = async (req, res) => {
 export const getArchivedUsers = async (req, res) => {
     try {
         const currentUserId = req.user._id;
-        const user = await User.findById(currentUserId).populate("archivedUsers", "-password");
+        const user = await User.findById(currentUserId).populate("archivedUsers", "-password -archivedUsers");
 
         res.status(200).json(user.archivedUsers);
     } catch (error) {
