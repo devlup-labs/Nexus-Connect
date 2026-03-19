@@ -53,8 +53,9 @@ export const sendMessage = async (req, res) => {
 
     let imageUrl;
     if (image) {
-
-      const uploadResponse = await cloudinary.uploader.upload(image);
+      const uploadResponse = await cloudinary.uploader.upload(image, {
+        resource_type: "auto",
+      });
       imageUrl = uploadResponse.secure_url;
     }
 
@@ -80,25 +81,39 @@ export const getChatPartners = async (req, res) => {
 
     const messages = await Message.find({
       $or: [{ senderId: loggedInUserId }, { receiverId: loggedInUserId }],
+    }).sort({ createdAt: -1 });
+
+    const chatPartnerMap = new Map();
+
+    messages.forEach((msg) => {
+      const partnerId =
+        msg.senderId.toString() === loggedInUserId.toString()
+          ? msg.receiverId.toString()
+          : msg.senderId.toString();
+
+      if (!chatPartnerMap.has(partnerId)) {
+        chatPartnerMap.set(partnerId, msg);
+      }
     });
 
-    const chatPartnerIds = [
-      ...new Set(
-        messages.map((msg) =>
-          msg.senderId.toString() === loggedInUserId.toString()
-            ? msg.receiverId.toString()
-            : msg.senderId.toString()
-        )
-      ),
-    ];
+    const chatPartnerIds = Array.from(chatPartnerMap.keys());
 
     const chatPartners = await User.find({ _id: { $in: chatPartnerIds } }).select("-password");
 
     //don't show archived users
     const user = await User.findById(loggedInUserId);
-    const filteredChatPartners = chatPartners.filter(
-      (partner) => !user.archivedUsers.some((id) => id.toString() === partner._id.toString())
-    );
+    const filteredChatPartners = chatPartners
+      .filter((partner) => !user.archivedUsers.some((id) => id.toString() === partner._id.toString()))
+      .map((partner) => {
+        const pObj = partner.toObject();
+        pObj.lastMessage = chatPartnerMap.get(partner._id.toString());
+        return pObj;
+      })
+      .sort((a, b) => {
+        const dateA = a.lastMessage ? new Date(a.lastMessage.createdAt) : new Date(0);
+        const dateB = b.lastMessage ? new Date(b.lastMessage.createdAt) : new Date(0);
+        return dateB - dateA;
+      });
 
     res.status(200).json(filteredChatPartners);
   } catch (error) {
