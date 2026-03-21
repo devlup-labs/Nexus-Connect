@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
-import Dock from './components/Dock.jsx'
-import ChatContainer from './components/ChatContainer.jsx'
-import StreamPanel from './components/StreamPanel.jsx'
-import SettingsPanel from './components/Settings.jsx'
-import CallLogPanel from './components/CallLog.jsx'
-import ContactsPanel from './components/ContactsPanel.jsx'
-import Login from './components/Login.jsx'
-import Signup from './components/signup.jsx'
-import { checkAuth, logout } from './api'
+import Dock from './Components/Dock.jsx'
+import ChatContainer from './Components/ChatContainer.jsx'
+import StreamPanel from './Components/StreamPanel.jsx'
+import SettingsPanel from './Components/Settings.jsx'
+import CallLogPanel from './Components/CallLog.jsx'
+import Login from './Components/Login.jsx'
+import Signup from './Components/signup.jsx'
+import ContactsPanel from './Components/ContactsPanel.jsx'
+import { checkAuth, logout as logoutApi } from './api'
+
+
 
 
 function App() {
@@ -118,14 +120,18 @@ function App() {
         }}>
       </div>
       <div className="relative z-10 flex items-center gap-6 h-screen pl-5">
-        <Dock onNavigate={setActiveView} activeView={activeView} />
+        <Dock onNavigate={setActiveView} activeView={activeView} onLogout={handleLogout} />
 
-      <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '12px', height: '100vh', marginLeft: '100px' }}>
-        {activeView === 'contacts' ? <ContactsPanel /> : <StreamPanel />}
-        {renderView()}
+        <div className="flex items-center gap-3 h-full">
+          {activeView === 'contacts' ? <ContactsPanel /> : <StreamPanel
+            authUser={authUser}
+            selectedContactId={selectedContact?._id}
+            onSelectContact={(contact) => { setSelectedContact(contact); setActiveView('messages'); }}
+          />}
+          {renderView()}
+        </div>
       </div>
       </div>
-    </div>
   );
 }
 

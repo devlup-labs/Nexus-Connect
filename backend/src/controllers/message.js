@@ -5,7 +5,7 @@ import User from "../models/user.js";
 export const getAllContacts = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
-    const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select("-password");
+    const filteredUsers = await User.find().select("-password -archivedUsers");
 
     res.status(200).json(filteredUsers);
   } catch (error) {
@@ -43,9 +43,6 @@ export const sendMessage = async (req, res) => {
     if (!text && !image) {
       return res.status(400).json({ message: "Text or image is required." });
     }
-    if (senderId.equals(receiverId)) {
-      return res.status(400).json({ message: "Cannot send messages to yourself." });
-    }
     const receiverExists = await User.exists({ _id: receiverId });
     if (!receiverExists) {
       return res.status(404).json({ message: "Receiver not found." });
@@ -81,6 +78,7 @@ export const getChatPartners = async (req, res) => {
 
     const messages = await Message.find({
       $or: [{ senderId: loggedInUserId }, { receiverId: loggedInUserId }],
+      deletedBy: { $ne: loggedInUserId }
     }).sort({ createdAt: -1 });
 
     const chatPartnerMap = new Map();
@@ -98,7 +96,7 @@ export const getChatPartners = async (req, res) => {
 
     const chatPartnerIds = Array.from(chatPartnerMap.keys());
 
-    const chatPartners = await User.find({ _id: { $in: chatPartnerIds } }).select("-password");
+    const chatPartners = await User.find({ _id: { $in: chatPartnerIds } }).select("-password -archivedUsers");
 
     //don't show archived users
     const user = await User.findById(loggedInUserId);
@@ -194,3 +192,46 @@ export const deleteForMe = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const replyMessage = async (req, res) => {
+  try {
+    const { id: originalMessageId } = req.params;
+    const { text, image } = req.body;
+    const senderId = req.user._id;
+
+    if (!text && !image) {
+      return res.status(400).json({ message: "Text or image required." });
+    }
+
+    const originalMessage = await Message.findById(originalMessageId);
+    if (!originalMessage) {
+      return res.status(404).json({ message: "Original message not found." });
+    }
+
+    const receiverId = originalMessage.senderId.toString() === senderId.toString()
+      ? originalMessage.receiverId
+      : originalMessage.senderId;
+
+    let imageUrl;
+    if (image) {
+      const uploadResponse = await cloudinary.uploader.upload(image);
+      imageUrl = uploadResponse.secure_url;
+    }
+
+    const newMessage = new Message({
+      senderId,
+      receiverId,
+      text,
+      image: imageUrl,
+      replyTo: originalMessageId,
+    });
+
+    await newMessage.save();
+
+    res.status(201).json(newMessage);
+  } catch (error) {
+    console.log("Error: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
