@@ -1,7 +1,301 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, MoreHorizontal, SendHorizontal, X, Mail, Phone as PhoneIcon, User, Info, ArrowLeft, CheckSquare, Trash2, Forward, Copy, Check, Search, ChevronUp, ChevronDown, Reply, MessageSquare, Paperclip, Mic, Image as ImageIcon, FileText as FileIcon, XCircle, Square as StopIcon, Download } from 'lucide-react';
+import { Phone, Video, MoreHorizontal, SendHorizontal, X, Mail, Phone as PhoneIcon, User, Info, ArrowLeft, CheckSquare, Trash2, Forward, Copy, Check, Search, ChevronUp, ChevronDown, Reply, MessageSquare, Paperclip, Mic, Image as ImageIcon, FileText as FileIcon, XCircle, Square as StopIcon, Download, Play, Pause, Maximize, Volume2, VolumeX, Minimize } from 'lucide-react';
 import ContextMenu from './ContextMenu';
 import { getMessages, sendMessage, deleteForMe, deleteForEveryone, editMessage, getContacts } from '../api';
+
+const CustomAudioPlayer = ({ src }) => {
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const [playbackRate, setPlaybackRate] = useState(1);
+    const audioRef = useRef(null);
+
+    const togglePlay = () => {
+        if (!audioRef.current) return;
+        if (isPlaying) {
+            audioRef.current.pause();
+        } else {
+            audioRef.current.play();
+        }
+        setIsPlaying(!isPlaying);
+    };
+
+    const toggleSpeed = () => {
+        const speeds = [1, 1.5, 2];
+        const nextSpeed = speeds[(speeds.indexOf(playbackRate) + 1) % speeds.length];
+        setPlaybackRate(nextSpeed);
+        if (audioRef.current) audioRef.current.playbackRate = nextSpeed;
+    };
+
+    const onTimeUpdate = () => {
+        if (audioRef.current) {
+            setCurrentTime(audioRef.current.currentTime);
+        }
+    };
+
+    const onLoadedMetadata = () => {
+        if (!audioRef.current) return;
+        if (audioRef.current.duration === Infinity || isNaN(audioRef.current.duration)) {
+            audioRef.current.currentTime = 1e101;
+            audioRef.current.ontimeupdate = () => {
+                audioRef.current.ontimeupdate = onTimeUpdate;
+                setDuration(audioRef.current.duration);
+                audioRef.current.currentTime = 0;
+            };
+        } else {
+            setDuration(audioRef.current.duration);
+        }
+    };
+
+    const formatTime = (time) => {
+        if (isNaN(time) || time === Infinity) return "0:00";
+        const minutes = Math.floor(time / 60);
+        const seconds = Math.floor(time % 60);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    };
+
+    const handleSeek = (e) => {
+        const time = parseFloat(e.target.value);
+        if (audioRef.current) {
+            audioRef.current.currentTime = time;
+            setCurrentTime(time);
+        }
+    };
+
+    return (
+        <div className="flex items-center gap-3 bg-white/5 border border-white/10 p-2.5 px-4 rounded-2xl min-w-[320px] mt-2 group/audio backdrop-blur-md shadow-2xl transition-all duration-300 hover:border-white/20">
+            <button
+                onClick={togglePlay}
+                className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center hover:bg-cyan-500/30 transition-all duration-300 shrink-0 border border-cyan-500/30 shadow-[0_0_15px_rgba(34,211,238,0.1)]"
+            >
+                {isPlaying ? (
+                    <div className="flex gap-1 items-center">
+                        <div className="w-0.5 h-3 bg-cyan-400 rounded-full animate-bounce [animation-duration:0.6s]" />
+                        <div className="w-0.5 h-3 bg-cyan-400 rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.1s]" />
+                        <div className="w-0.5 h-3 bg-cyan-400 rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.2s]" />
+                    </div>
+                ) : (
+                    <Play size={18} className="text-cyan-400 fill-cyan-400 ml-0.5" />
+                )}
+            </button>
+            <div className="flex-1 flex items-center gap-2.5">
+                <span className="text-[10px] text-white/40 font-bold tabular-nums min-w-[28px]">{formatTime(currentTime)}</span>
+                <div className="flex-1 relative h-6 flex items-center">
+                    <input
+                        type="range"
+                        min="0"
+                        max={duration > 0 ? duration : 0.001}
+                        step="0.01"
+                        value={currentTime}
+                        onChange={handleSeek}
+                        className="audio-slider w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400 z-10"
+                    />
+                </div>
+                <span className="text-[10px] text-white/40 font-bold tabular-nums min-w-[28px] text-right">{formatTime(duration)}</span>
+            </div>
+            <button
+                onClick={toggleSpeed}
+                className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[11px] font-black text-cyan-400/80 hover:bg-white/10 hover:text-cyan-400 transition-all shrink-0 hover:scale-105 active:scale-95"
+            >
+                {playbackRate}x
+            </button>
+            <audio
+                ref={audioRef}
+                src={src}
+                onTimeUpdate={onTimeUpdate}
+                onLoadedMetadata={onLoadedMetadata}
+                onEnded={() => {
+                    setIsPlaying(false);
+                    setCurrentTime(0);
+                    if (audioRef.current) audioRef.current.currentTime = 0;
+                }}
+                className="hidden"
+            />
+        </div>
+    );
+};
+
+const CustomVideoPlayer = ({ src }) => {
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const [playbackRate, setPlaybackRate] = useState(1);
+    const [volume, setVolume] = useState(1);
+    const [isMuted, setIsMuted] = useState(false);
+    const [showControls, setShowControls] = useState(false);
+    const videoRef = useRef(null);
+    const containerRef = useRef(null);
+
+    const togglePlay = (e) => {
+        if (e) e.stopPropagation();
+        if (!videoRef.current) return;
+        if (isPlaying) videoRef.current.pause();
+        else videoRef.current.play();
+        setIsPlaying(!isPlaying);
+    };
+
+    const toggleMute = (e) => {
+        if (e) e.stopPropagation();
+        if (!videoRef.current) return;
+        videoRef.current.muted = !isMuted;
+        setIsMuted(!isMuted);
+    };
+
+    const toggleSpeed = (e) => {
+        if (e) e.stopPropagation();
+        const speeds = [1, 1.5, 2];
+        const nextSpeed = speeds[(speeds.indexOf(playbackRate) + 1) % speeds.length];
+        setPlaybackRate(nextSpeed);
+        if (videoRef.current) videoRef.current.playbackRate = nextSpeed;
+    };
+
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    const toggleFullscreen = (e) => {
+        if (e) e.stopPropagation();
+        if (!containerRef.current) return;
+
+        if (!document.fullscreenElement) {
+            containerRef.current.requestFullscreen().then(() => {
+                setIsFullscreen(true);
+            }).catch(err => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen().then(() => {
+                setIsFullscreen(false);
+            });
+        }
+    };
+
+    // Listen for fullscreen change events (e.g. if user presses Esc)
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    }, []);
+
+    const onTimeUpdate = () => {
+        if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
+    };
+
+    const onLoadedMetadata = () => {
+        if (videoRef.current) setDuration(videoRef.current.duration);
+    };
+
+    const formatTime = (time) => {
+        if (isNaN(time) || time === Infinity) return "0:00";
+        const minutes = Math.floor(time / 60);
+        const seconds = Math.floor(time % 60);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    };
+
+    const handleSeek = (e) => {
+        if (e) e.stopPropagation();
+        const time = parseFloat(e.target.value);
+        if (videoRef.current) {
+            videoRef.current.currentTime = time;
+            setCurrentTime(time);
+        }
+    };
+
+    return (
+        <div
+            ref={containerRef}
+            className="relative group mt-2 w-full max-w-[420px] aspect-video overflow-hidden rounded-2xl border border-white/10 bg-black/20 shadow-2xl transition-all duration-300 hover:border-white/20"
+            onMouseEnter={() => setShowControls(true)}
+            onMouseLeave={() => setShowControls(false)}
+        >
+            <video
+                ref={videoRef}
+                src={src}
+                className="w-full h-full object-contain cursor-pointer"
+                onTimeUpdate={onTimeUpdate}
+                onLoadedMetadata={onLoadedMetadata}
+                onClick={togglePlay}
+                onEnded={() => setIsPlaying(false)}
+            />
+
+            {/* Center Play/Pause Overlay */}
+            {!isPlaying && (
+                <div
+                    className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px] cursor-pointer transition-opacity"
+                    onClick={togglePlay}
+                >
+                    <div className="w-16 h-16 rounded-full bg-cyan-500/80 flex items-center justify-center animate-pulse shadow-[0_0_30px_rgba(34,211,238,0.4)]">
+                        <Play size={32} className="text-slate-900 fill-slate-900 ml-1" />
+                    </div>
+                </div>
+            )}
+
+            {/* Bottom Controls Bar */}
+            <div className={`absolute bottom-0 left-0 right-0 p-3 bg-linear-to-t from-black/80 via-black/40 to-transparent transition-all duration-300 ${showControls || !isPlaying ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                {/* Seek Bar */}
+                <div className="relative h-1 mb-3 group/seek">
+                    <input
+                        type="range"
+                        min="0"
+                        max={duration > 0 ? duration : 0.001}
+                        step="0.01"
+                        value={currentTime}
+                        onChange={handleSeek}
+                        onClick={(e) => e.stopPropagation()}
+                        className="audio-slider absolute inset-0 w-full h-full bg-white/20 rounded-full appearance-none cursor-pointer accent-cyan-400 z-10"
+                    />
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                        <button onClick={togglePlay} className="text-white hover:text-cyan-400 transition-colors">
+                            {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
+                        </button>
+                        <div className="flex items-center gap-1.5 ml-2">
+                            <button onClick={toggleMute} className="text-white hover:text-cyan-400 transition-colors">
+                                {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                            </button>
+                            <input
+                                type="range" min="0" max="1" step="0.1"
+                                value={isMuted ? 0 : volume}
+                                onChange={(e) => {
+                                    const v = parseFloat(e.target.value);
+                                    setVolume(v);
+                                    if (videoRef.current) videoRef.current.volume = v;
+                                    setIsMuted(v === 0);
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-16 h-1 bg-white/30 rounded-full appearance-none cursor-pointer accent-white hover:accent-cyan-400 hidden sm:block"
+                            />
+                        </div>
+                        <span className="text-[10px] text-white/90 font-medium tabular-nums ml-1 shrink-0 bg-white/5 px-1.5 py-0.5 rounded-md border border-white/5">
+                            {formatTime(currentTime)} / {formatTime(duration)}
+                        </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                        <button
+                            onClick={toggleSpeed}
+                            className="px-1.5 py-0.5 rounded bg-white/10 text-[9px] font-black text-cyan-400/90 border border-white/10 hover:bg-white/20 transition-all"
+                        >
+                            {playbackRate}x
+                        </button>
+                        <button onClick={toggleFullscreen} className="text-white hover:text-cyan-400 transition-colors p-1 rounded-lg hover:bg-white/5">
+                            {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <button
+                onClick={(e) => { e.stopPropagation(); downloadAttachment(src); }}
+                className="absolute top-3 right-3 w-9 h-9 rounded-xl bg-black/60 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-black/80 border border-white/20 shadow-xl"
+            >
+                <Download size={16} className="text-white" />
+            </button>
+        </div>
+    );
+};
 
 const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
     const [message, setMessage] = useState('');
@@ -34,11 +328,17 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingMessageId, setEditingMessageId] = useState(null);
     const [editMessageText, setEditMessageText] = useState('');
     const attachMenuRef = useRef(null);
     const [showAttachMenu, setShowAttachMenu] = useState(false);
+
+    // New states for Message Info
+    const [showInfoModal, setShowInfoModal] = useState(false);
+    const [selectedInfoMessage, setSelectedInfoMessage] = useState(null);
 
     // Recording timer and click outside effects
     useEffect(() => {
@@ -47,11 +347,56 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
             timer = setInterval(() => {
                 setRecordingTime(prev => prev + 1);
             }, 1000);
+            startRecording();
         } else {
             setRecordingTime(0);
+            stopRecording();
         }
-        return () => clearInterval(timer);
+        return () => {
+            if (timer) clearInterval(timer);
+        };
     }, [isRecording]);
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorderRef.current = new MediaRecorder(stream);
+            audioChunksRef.current = [];
+
+            mediaRecorderRef.current.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
+            };
+
+            mediaRecorderRef.current.onstop = () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                const reader = new FileReader();
+                reader.readAsDataURL(audioBlob);
+                reader.onloadend = () => {
+                    const base64Audio = reader.result;
+                    setSelectedImage(base64Audio); // Reusing media state
+                    setAttachedFileType('audio');
+                    setAttachedFileName('Voice Note');
+                    setAttachedFileSize(audioBlob.size);
+                    setImagePreview(null); // No preview for audio
+                };
+            };
+
+            mediaRecorderRef.current.start();
+        } catch (err) {
+            console.error("Error accessing microphone:", err);
+            setIsRecording(false);
+            alert("Could not access microphone.");
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop();
+            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+        }
+    };
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -116,13 +461,6 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
             clearInterval(interval);
         };
     }, [selectedContact?._id]);
-
-    // Auto-scroll to bottom when messages change
-    useEffect(() => {
-        if (messagesContainerRef.current) {
-            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-        }
-    }, [messages]);
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -388,11 +726,19 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
         setAttachedFileSize(0);
     };
 
+    const scrollToBottom = () => {
+        if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+    };
+
     const handleSendMessage = async () => {
         if ((!message.trim() && !selectedImage) || !selectedContact?._id) return;
 
         const text = message.trim();
         const imageToSend = selectedImage;
+        const typeToSend = attachedFileType;
+
         setMessage('');
         clearImagePreview();
 
@@ -407,6 +753,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
             _optimistic: true,
         };
         setMessages(prev => [...prev, optimisticMsg]);
+        setTimeout(scrollToBottom, 50);
 
         if (imageToSend) setSendingImage(true);
 
@@ -414,6 +761,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
             const payload = {};
             if (text) payload.text = text;
             if (imageToSend) payload.image = imageToSend;
+            if (imageToSend && attachedFileType === 'audio') payload.text = 'Voice';
             const res = await sendMessage(selectedContact._id, payload);
             // Replace optimistic message with real one
             setMessages(prev =>
@@ -723,7 +1071,15 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                                                 onContextMenu={(e) => {
                                                     e.preventDefault();
                                                     e.stopPropagation();
-                                                    setContextMenu({ x: e.clientX, y: e.clientY, type: 'message', msgId: msg._id, msgText: msg.text, msgSenderId: msg.senderId });
+                                                    setContextMenu({
+                                                        x: e.clientX,
+                                                        y: e.clientY,
+                                                        type: 'message',
+                                                        msgId: msg._id,
+                                                        msgText: msg.text,
+                                                        msgSenderId: msg.senderId,
+                                                        fullMsg: msg
+                                                    });
                                                 }}
                                             >
                                                 {/* Selection checkbox */}
@@ -744,7 +1100,9 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                                                     <div className={`w-[4px] ${barRounding} bg-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.18)]`} />
                                                     <div className="flex flex-col gap-0.5 py-[2px]">
                                                         {showTimestamp && <div className="text-[12px] text-gray-400/75 mb-0.5">Received • {formatTime(msg.createdAt)}</div>}
-                                                        <div className="text-[15px] leading-snug text-white/85 max-w-[720px]">{msg.text}</div>
+                                                        {msg.text?.toLowerCase() !== 'voice' && (
+                                                            <div className="text-[15px] leading-snug text-white/85 max-w-[720px]">{msg.text}</div>
+                                                        )}
                                                         {msg.image && (
                                                             isDocumentUrl(msg.image) ? (
                                                                 <div
@@ -754,28 +1112,17 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                                                                     <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex shrink-0 items-center justify-center">
                                                                         <FileIcon size={20} className="text-blue-400" />
                                                                     </div>
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <div className="text-[13px] font-medium text-white/90 truncate">Document Attachment</div>
-                                                                        <div className="text-[11px] text-white/50">Click to download</div>
+                                                                    <div className="flex-1 min-w-0 flex items-center">
+                                                                        <div className="text-[14px] font-medium text-white/90 truncate">Document</div>
                                                                     </div>
                                                                     <div className="w-8 h-8 rounded-full bg-white/5 flex shrink-0 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                                         <Download size={14} className="text-white/70" />
                                                                     </div>
                                                                 </div>
-                                                            ) : msg.image.includes('/video/upload/') || msg.image.includes('.mp4') || msg.image.includes('.mov') || msg.image.includes('.webm') ? (
-                                                                <div className="relative group mt-2 max-w-[300px]">
-                                                                    <video
-                                                                        src={msg.image}
-                                                                        controls
-                                                                        className="w-full max-h-[280px] rounded-xl border border-white/10 shadow-lg"
-                                                                    />
-                                                                    <button
-                                                                        onClick={(e) => { e.stopPropagation(); downloadAttachment(msg.image); }}
-                                                                        className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70 border border-white/20 z-10"
-                                                                    >
-                                                                        <Download size={14} className="text-white" />
-                                                                    </button>
-                                                                </div>
+                                                            ) : (msg.image.toLowerCase().includes('.mp3') || msg.image.toLowerCase().includes('.wav') || msg.image.toLowerCase().includes('.ogg') || msg.image.toLowerCase().includes('.m4a') || msg.image.toLowerCase().includes('audio/') || (msg.image.toLowerCase().includes('base64') && msg.image.toLowerCase().startsWith('data:audio')) || msg.text?.toLowerCase().includes('voice')) ? (
+                                                                <CustomAudioPlayer src={msg.image} />
+                                                            ) : (msg.image.toLowerCase().includes('.mp4') || msg.image.toLowerCase().includes('.mov') || msg.image.toLowerCase().includes('.webm') || msg.image.toLowerCase().includes('/video/upload/')) ? (
+                                                                <CustomVideoPlayer src={msg.image} />
                                                             ) : (
                                                                 <div className="relative group cursor-pointer mt-2 max-w-[300px]">
                                                                     <img
@@ -820,7 +1167,15 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                                                 onContextMenu={(e) => {
                                                     e.preventDefault();
                                                     e.stopPropagation();
-                                                    setContextMenu({ x: e.clientX, y: e.clientY, type: 'message', msgId: msg._id, msgText: msg.text, msgSenderId: msg.senderId });
+                                                    setContextMenu({
+                                                        x: e.clientX,
+                                                        y: e.clientY,
+                                                        type: 'message',
+                                                        msgId: msg._id,
+                                                        msgText: msg.text,
+                                                        msgSenderId: msg.senderId,
+                                                        fullMsg: msg
+                                                    });
                                                 }}
                                             >
                                                 <div className={[
@@ -831,7 +1186,9 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                                                 ].filter(Boolean).join(' ')}>
                                                     <div className="flex flex-col gap-0.5 items-end py-[2px]">
                                                         {showTimestamp && <div className="text-[12px] text-gray-400/70 mb-0.5">{formatTime(msg.createdAt)}</div>}
-                                                        <div className="text-[15px] leading-snug text-white/85 text-right">{msg.text}</div>
+                                                        {msg.text?.toLowerCase() !== 'voice' && (
+                                                            <div className="text-[15px] leading-snug text-white/85 text-right">{msg.text}</div>
+                                                        )}
                                                         {msg.image && (
                                                             isDocumentUrl(msg.image) ? (
                                                                 <div
@@ -841,28 +1198,17 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                                                                     <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex shrink-0 items-center justify-center">
                                                                         <FileIcon size={20} className="text-blue-400" />
                                                                     </div>
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <div className="text-[13px] font-medium text-white/90 truncate">Document Attachment</div>
-                                                                        <div className="text-[11px] text-white/50">Click to download</div>
+                                                                    <div className="flex-1 min-w-0 flex items-center">
+                                                                        <div className="text-[14px] font-medium text-white/90 truncate">Document</div>
                                                                     </div>
                                                                     <div className="w-8 h-8 rounded-full bg-white/5 flex shrink-0 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                                         <Download size={14} className="text-white/70" />
                                                                     </div>
                                                                 </div>
-                                                            ) : msg.image.includes('/video/upload/') || msg.image.includes('.mp4') || msg.image.includes('.mov') || msg.image.includes('.webm') ? (
-                                                                <div className="relative group mt-2 max-w-[300px]">
-                                                                    <video
-                                                                        src={msg.image}
-                                                                        controls
-                                                                        className="w-full max-h-[280px] rounded-xl border border-white/10 shadow-lg"
-                                                                    />
-                                                                    <button
-                                                                        onClick={(e) => { e.stopPropagation(); downloadAttachment(msg.image); }}
-                                                                        className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70 border border-white/20 z-10"
-                                                                    >
-                                                                        <Download size={14} className="text-white" />
-                                                                    </button>
-                                                                </div>
+                                                            ) : (msg.image.toLowerCase().includes('.mp3') || msg.image.toLowerCase().includes('.wav') || msg.image.toLowerCase().includes('.ogg') || msg.image.toLowerCase().includes('.m4a') || msg.image.toLowerCase().includes('audio/') || (msg.image.toLowerCase().includes('base64') && msg.image.toLowerCase().startsWith('data:audio')) || msg.text === 'Voice') ? (
+                                                                <CustomAudioPlayer src={msg.image} />
+                                                            ) : (msg.image.toLowerCase().includes('/video/upload/') || msg.image.toLowerCase().includes('.mp4') || msg.image.toLowerCase().includes('.mov') || msg.image.toLowerCase().includes('.webm')) ? (
+                                                                <CustomVideoPlayer src={msg.image} />
                                                             ) : (
                                                                 <div className="relative group cursor-pointer mt-2 max-w-[300px]">
                                                                     <img
@@ -981,12 +1327,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                                         >
                                             <StopIcon size={18} fill="currentColor" />
                                         </button>
-                                        <button
-                                            onClick={() => { setIsRecording(false); /* send logic */ }}
-                                            className="w-[40px] h-[40px] rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-900 transition-all flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
-                                        >
-                                            <SendHorizontal size={18} />
-                                        </button>
+                                        {/* Send button removed here because stopRecording sets the selectedImage and we send from there */}
                                     </div>
                                 </div>
                             ) : (
@@ -1037,109 +1378,110 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
             </div>
 
             {/* Profile Panel Overlay */}
-            {showProfile && (
-                <>
-                    {/* Backdrop */}
-                    <div
-                        onClick={() => setShowProfile(false)}
-                        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[4px] animate-[fadeIn_0.2s_ease-out]"
-                    />
+            {
+                showProfile && (
+                    <>
+                        {/* Backdrop */}
+                        <div
+                            onClick={() => setShowProfile(false)}
+                            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[4px] animate-[fadeIn_0.2s_ease-out]"
+                        />
 
-                    {/* Profile Panel */}
-                    <div
-                        className="fixed right-0 top-0 h-full z-50 w-[360px] bg-[rgba(15,23,42,0.95)] backdrop-blur-2xl border-l border-white/10 shadow-[-10px_0_50px_rgba(0,0,0,0.5)] animate-[slideInRight_0.25s_ease-out]"
-                    >
-                        <div className="h-full flex flex-col px-6 py-5">
-                            {/* Header */}
-                            <div className="flex items-center justify-between mb-6">
-                                <button
-                                    onClick={() => setShowProfile(false)}
-                                    className="p-2 rounded-lg border-0 bg-transparent text-white/60 cursor-pointer flex items-center justify-center hover:bg-white/10 hover:text-white/90 transition-colors"
-                                >
-                                    <ArrowLeft size={20} />
-                                </button>
-                                <span className="text-[16px] font-medium text-white/90">
-                                    Profile
-                                </span>
-                                <button
-                                    onClick={() => setShowProfile(false)}
-                                    className="p-2 rounded-lg border-0 bg-transparent text-white/60 cursor-pointer flex items-center justify-center hover:bg-white/10 hover:text-white/90 transition-colors"
-                                >
-                                    <X size={20} />
-                                </button>
-                            </div>
+                        {/* Profile Panel */}
+                        <div
+                            className="fixed right-0 top-0 h-full z-50 w-[360px] bg-[rgba(15,23,42,0.95)] backdrop-blur-2xl border-l border-white/10 shadow-[-10px_0_50px_rgba(0,0,0,0.5)] animate-[slideInRight_0.25s_ease-out]"
+                        >
+                            <div className="h-full flex flex-col px-6 py-5">
+                                {/* Header */}
+                                <div className="flex items-center justify-between mb-6">
+                                    <button
+                                        onClick={() => setShowProfile(false)}
+                                        className="p-2 rounded-lg border-0 bg-transparent text-white/60 cursor-pointer flex items-center justify-center hover:bg-white/10 hover:text-white/90 transition-colors"
+                                    >
+                                        <ArrowLeft size={20} />
+                                    </button>
+                                    <span className="text-[16px] font-medium text-white/90">
+                                        Profile
+                                    </span>
+                                    <button
+                                        onClick={() => setShowProfile(false)}
+                                        className="p-2 rounded-lg border-0 bg-transparent text-white/60 cursor-pointer flex items-center justify-center hover:bg-white/10 hover:text-white/90 transition-colors"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
 
-                            {/* Avatar Section */}
-                            <div className="flex flex-col items-center mb-6">
-                                <div className="relative mb-4">
-                                    <div className="w-[90px] h-[90px] rounded-full p-[3px] bg-[linear-gradient(135deg,#30FBE6,#a855f7)] shadow-[0_0_25px_rgba(48,251,230,0.3)]">
-                                        <div className="w-full h-full rounded-full bg-[rgba(15,23,42,0.95)] flex items-center justify-center overflow-hidden">
-                                            {selectedContact.profilePic ? (
-                                                <img src={selectedContact.profilePic} alt={selectedContact.fullName} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <User size={36} className="text-white/50" />
-                                            )}
+                                {/* Avatar Section */}
+                                <div className="flex flex-col items-center mb-6">
+                                    <div className="relative mb-4">
+                                        <div className="w-[90px] h-[90px] rounded-full p-[3px] bg-[linear-gradient(135deg,#30FBE6,#a855f7)] shadow-[0_0_25px_rgba(48,251,230,0.3)]">
+                                            <div className="w-full h-full rounded-full bg-[rgba(15,23,42,0.95)] flex items-center justify-center overflow-hidden">
+                                                {selectedContact.profilePic ? (
+                                                    <img src={selectedContact.profilePic} alt={selectedContact.fullName} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <User size={36} className="text-white/50" />
+                                                )}
+                                            </div>
                                         </div>
+                                        <div className="absolute bottom-[2px] right-[2px] w-[18px] h-[18px] rounded-full bg-green-500 border-[3px] border-[rgba(15,23,42,0.95)] shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
                                     </div>
-                                    <div className="absolute bottom-[2px] right-[2px] w-[18px] h-[18px] rounded-full bg-green-500 border-[3px] border-[rgba(15,23,42,0.95)] shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                                </div>
-                                <h2 className="text-[22px] font-normal text-white/95 mb-1.5 text-center">
-                                    {selectedContact.fullName}
-                                </h2>
-                                <div className="flex items-center gap-1.5 text-[12px] text-green-500">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                    Online
-                                </div>
-                            </div>
-
-                            {/* Divider */}
-                            <div className="h-px bg-[linear-gradient(to_right,transparent,rgba(255,255,255,0.1),transparent)] mb-5" />
-
-                            {/* Profile Details */}
-                            <div className="flex flex-col gap-3 flex-1 overflow-auto">
-                                {/* Email */}
-                                <div
-                                    className="px-4 py-3.5 rounded-[12px] bg-white/5 border border-white/10 cursor-pointer transition-all hover:bg-white/10 hover:border-white/20"
-                                >
-                                    <div className="flex items-center gap-2.5 mb-1">
-                                        <Mail size={14} className="text-[#30FBE6]" />
-                                        <span className="text-[11px] uppercase tracking-[0.05em] text-white/50">Email</span>
+                                    <h2 className="text-[22px] font-normal text-white/95 mb-1.5 text-center">
+                                        {selectedContact.fullName}
+                                    </h2>
+                                    <div className="flex items-center gap-1.5 text-[12px] text-green-500">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                        Online
                                     </div>
-                                    <p className="text-[13px] text-white/80 ml-6">{selectedContact.email}</p>
                                 </div>
 
-                                {/* Member Since */}
-                                <div
-                                    className="px-4 py-3.5 rounded-[12px] bg-white/5 border border-white/10 cursor-pointer transition-all hover:bg-white/10 hover:border-white/20"
-                                >
-                                    <div className="flex items-center gap-2.5 mb-1">
-                                        <User size={14} className="text-[#a855f7]" />
-                                        <span className="text-[11px] uppercase tracking-[0.05em] text-white/50">Member Since</span>
+                                {/* Divider */}
+                                <div className="h-px bg-[linear-gradient(to_right,transparent,rgba(255,255,255,0.1),transparent)] mb-5" />
+
+                                {/* Profile Details */}
+                                <div className="flex flex-col gap-3 flex-1 overflow-auto">
+                                    {/* Email */}
+                                    <div
+                                        className="px-4 py-3.5 rounded-[12px] bg-white/5 border border-white/10 cursor-pointer transition-all hover:bg-white/10 hover:border-white/20"
+                                    >
+                                        <div className="flex items-center gap-2.5 mb-1">
+                                            <Mail size={14} className="text-[#30FBE6]" />
+                                            <span className="text-[11px] uppercase tracking-[0.05em] text-white/50">Email</span>
+                                        </div>
+                                        <p className="text-[13px] text-white/80 ml-6">{selectedContact.email}</p>
                                     </div>
-                                    <p className="text-[13px] text-white/80 ml-6">
-                                        {selectedContact.createdAt ? new Date(selectedContact.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Unknown'}
-                                    </p>
-                                </div>
-                            </div>
 
-                            {/* Bottom Actions */}
-                            <div className="flex flex-col gap-2.5 mt-5">
-                                <button
-                                    onClick={() => setShowProfile(false)}
-                                    className="w-full py-3 rounded-[10px] border border-cyan-400/30 bg-cyan-400/10 text-[#30FBE6] text-[13px] font-medium cursor-pointer transition-colors hover:bg-cyan-400/20"
-                                >
-                                    Send Message
-                                </button>
-                                <button
-                                    className="w-full py-3 rounded-[10px] border border-white/10 bg-white/5 text-white/60 text-[13px] cursor-pointer transition-colors hover:bg-white/10 hover:text-white/80"
-                                >
-                                    Block User
-                                </button>
+                                    {/* Member Since */}
+                                    <div
+                                        className="px-4 py-3.5 rounded-[12px] bg-white/5 border border-white/10 cursor-pointer transition-all hover:bg-white/10 hover:border-white/20"
+                                    >
+                                        <div className="flex items-center gap-2.5 mb-1">
+                                            <User size={14} className="text-[#a855f7]" />
+                                            <span className="text-[11px] uppercase tracking-[0.05em] text-white/50">Member Since</span>
+                                        </div>
+                                        <p className="text-[13px] text-white/80 ml-6">
+                                            {selectedContact.createdAt ? new Date(selectedContact.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Unknown'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Bottom Actions */}
+                                <div className="flex flex-col gap-2.5 mt-5">
+                                    <button
+                                        onClick={() => setShowProfile(false)}
+                                        className="w-full py-3 rounded-[10px] border border-cyan-400/30 bg-cyan-400/10 text-[#30FBE6] text-[13px] font-medium cursor-pointer transition-colors hover:bg-cyan-400/20"
+                                    >
+                                        Send Message
+                                    </button>
+                                    <button
+                                        className="w-full py-3 rounded-[10px] border border-white/10 bg-white/5 text-white/60 text-[13px] cursor-pointer transition-colors hover:bg-white/10 hover:text-white/80"
+                                    >
+                                        Block User
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </>
-            )
+                    </>
+                )
             }
 
             {/* Context Menu */}
@@ -1164,6 +1506,12 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                                         label: 'Select', icon: <CheckSquare size={16} />, onClick: () => {
                                             setSelectMode(true);
                                             setSelectedMessages(prev => prev.includes(contextMenu.msgId) ? prev : [...prev, contextMenu.msgId]);
+                                        }
+                                    },
+                                    {
+                                        label: 'View Info', icon: <Info size={16} />, onClick: () => {
+                                            setSelectedInfoMessage(contextMenu.fullMsg);
+                                            setShowInfoModal(true);
                                         }
                                     },
                                     ...(contextMenu.msgSenderId === authUser._id ? [{
@@ -1208,202 +1556,308 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                 )
             }
 
-            {/* Large Modals Cleanup */}
-            {showForwardModal && (
+            {/* Message Info Modal */}
+            {showInfoModal && selectedInfoMessage && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
-                    onClick={() => setShowForwardModal(false)}
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200"
+                    onClick={() => setShowInfoModal(false)}
                 >
                     <div
-                        className="w-full max-w-[440px] max-h-[85vh] flex flex-col bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+                        className="w-full max-w-[400px] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* Modal Header */}
-                        <div className="shrink-0 px-6 py-5 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center justify-center">
-                                    <Forward size={24} className="text-cyan-400" />
+                        {/* Header */}
+                        <div className="px-6 py-5 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
+                                    <Info size={20} className="text-cyan-400" />
                                 </div>
-                                <div>
-                                    <h3 className="text-[17px] font-semibold text-white/90">Forward Message</h3>
-                                    <p className="text-[12px] text-white/40">{selectedMessages.length} item{selectedMessages.length > 1 ? 's' : ''} selected</p>
-                                </div>
+                                <h3 className="text-[18px] font-bold text-white/90">Message Info</h3>
                             </div>
                             <button
-                                onClick={() => setShowForwardModal(false)}
+                                onClick={() => setShowInfoModal(false)}
                                 className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:bg-white/5 hover:text-white transition-all"
                             >
                                 <X size={20} />
                             </button>
                         </div>
 
-                        {/* Search Box */}
-                        <div className="shrink-0 px-6 py-5 bg-white/[0.01]">
-                            <div className="relative group">
-                                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-cyan-400 transition-colors" />
-                                <input
-                                    type="text"
-                                    placeholder="Search contacts..."
-                                    value={forwardSearch}
-                                    onChange={(e) => setForwardSearch(e.target.value)}
-                                    className="w-full h-11 bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 text-[14px] text-white/90 placeholder-white/20 outline-none focus:border-cyan-500/30 focus:bg-white/[0.07] transition-all"
-                                />
+                        {/* Content */}
+                        <div className="p-6 space-y-6">
+                            {/* Sent At */}
+                            <div>
+                                <label className="text-[11px] uppercase tracking-[0.05em] text-white/30 font-semibold mb-2 block">Sent At</label>
+                                <div className="flex items-center gap-3 text-white/80">
+                                    <div className="p-2 rounded-lg bg-white/5 border border-white/10">
+                                        <Phone size={14} className="text-blue-400 rotate-90" /> {/* Just a clock-like icon if Clock is not imported */}
+                                    </div>
+                                    <span className="text-[14px]">
+                                        {new Date(selectedInfoMessage.createdAt).toLocaleString('en-US', {
+                                            weekday: 'long',
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit'
+                                        })}
+                                    </span>
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Contacts List */}
-                        <div className="flex-1 overflow-y-auto px-6 pb-6 min-h-0 space-y-1">
-                            {forwardContacts
-                                .filter(c => c.fullName.toLowerCase().includes(forwardSearch.toLowerCase()))
-                                .map(contact => {
-                                    const isSelected = forwardSelectedUsers.includes(contact._id);
-                                    return (
-                                        <div
-                                            key={contact._id}
-                                            onClick={() => {
-                                                setForwardSelectedUsers(prev =>
-                                                    isSelected ? prev.filter(id => id !== contact._id) : [...prev, contact._id]
-                                                );
-                                            }}
-                                            className={`group flex items-center gap-4 py-2.5 px-3 rounded-lg cursor-pointer transition-all ${isSelected ? 'bg-cyan-500/10 border border-cyan-500/20' : 'hover:bg-white/5 border border-transparent'}`}
-                                        >
-                                            <div className="relative">
-                                                {contact.profilePic ? (
-                                                    <img src={contact.profilePic} alt="" className="w-11 h-11 rounded-lg object-cover" />
-                                                ) : (
-                                                    <div className="w-11 h-11 rounded-lg bg-slate-800 flex items-center justify-center text-white/40 font-medium">
-                                                        {getInitials(contact.fullName)}
-                                                    </div>
-                                                )}
-                                                {isSelected && (
-                                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-cyan-500 rounded-full border-2 border-slate-900 flex items-center justify-center shadow-lg">
-                                                        <Check size={12} className="text-slate-900 stroke-[3]" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className={`text-[14px] font-medium truncate ${isSelected ? 'text-white' : 'text-white/80'}`}>{contact.fullName}</h4>
-                                                <p className="text-[12px] text-white/30 truncate">{contact.email}</p>
-                                            </div>
+                            {/* Message Type */}
+                            <div>
+                                <label className="text-[11px] uppercase tracking-[0.05em] text-white/30 font-semibold mb-2 block">Message Type</label>
+                                <div className="flex items-center gap-3 text-white/80">
+                                    <div className="p-2 rounded-lg bg-white/5 border border-white/10">
+                                        <MessageSquare size={14} className="text-purple-400" />
+                                    </div>
+                                    <span className="text-[14px] capitalize">
+                                        {selectedInfoMessage.image ? (
+                                            isDocumentUrl(selectedInfoMessage.image) ? 'Document' :
+                                                (selectedInfoMessage.image.toLowerCase().includes('.mp3') || selectedInfoMessage.image.toLowerCase().includes('audio') || selectedInfoMessage.text === 'Voice') ? 'Voice Note' :
+                                                    (selectedInfoMessage.image.toLowerCase().includes('.mp4') || selectedInfoMessage.image.toLowerCase().includes('video')) ? 'Video' : 'Image'
+                                        ) : 'Text Message'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Additional Details for Attachments */}
+                            {selectedInfoMessage.image && (
+                                <div className="pt-4 border-t border-white/5">
+                                    <label className="text-[11px] uppercase tracking-[0.05em] text-white/30 font-semibold mb-2 block">Attachment Details</label>
+                                    <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 space-y-3">
+                                        <div className="flex justify-between text-[13px]">
+                                            <span className="text-white/40">Source</span>
+                                            <span className="text-cyan-400/80 font-mono truncate max-w-[200px]">Cloudinary</span>
                                         </div>
-                                    );
-                                })}
+                                        <div className="flex justify-between text-[13px]">
+                                            <span className="text-white/40">Status</span>
+                                            <span className="text-green-400 flex items-center gap-1.5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                                                Uploaded
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Multi-Forward Footer */}
-                        <div className="shrink-0 px-6 py-5 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
-                            <span className="text-[14px] text-white/40 font-medium whitespace-nowrap">
-                                {forwardSelectedUsers.length} selected
-                            </span>
+                        {/* Footer */}
+                        <div className="px-6 py-4 bg-white/[0.02] border-t border-white/5 flex justify-end">
                             <button
-                                onClick={handleForwardSubmit}
-                                disabled={forwardSelectedUsers.length === 0}
-                                className="px-6 py-3 bg-cyan-500 hover:bg-cyan-400 disabled:bg-white/5 disabled:text-white/20 text-slate-900 font-semibold rounded-xl text-[14px] transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/10 active:scale-95 whitespace-nowrap"
+                                onClick={() => setShowInfoModal(false)}
+                                className="px-5 py-2 bg-white/5 hover:bg-white/10 text-white/90 text-[13px] font-semibold rounded-lg transition-all"
                             >
-                                <Forward size={18} />
-                                Forward Now
+                                Close
                             </button>
                         </div>
                     </div>
                 </div>
             )}
+
+            {/* Large Modals Cleanup */}
+            {
+                showForwardModal && (
+                    <div
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+                        onClick={() => setShowForwardModal(false)}
+                    >
+                        <div
+                            className="w-full max-w-[440px] max-h-[85vh] flex flex-col bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Modal Header */}
+                            <div className="shrink-0 px-6 py-5 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center justify-center">
+                                        <Forward size={24} className="text-cyan-400" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-[17px] font-semibold text-white/90">Forward Message</h3>
+                                        <p className="text-[12px] text-white/40">{selectedMessages.length} item{selectedMessages.length > 1 ? 's' : ''} selected</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setShowForwardModal(false)}
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:bg-white/5 hover:text-white transition-all"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            {/* Search Box */}
+                            <div className="shrink-0 px-6 py-5 bg-white/[0.01]">
+                                <div className="relative group">
+                                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-cyan-400 transition-colors" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search contacts..."
+                                        value={forwardSearch}
+                                        onChange={(e) => setForwardSearch(e.target.value)}
+                                        className="w-full h-11 bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 text-[14px] text-white/90 placeholder-white/20 outline-none focus:border-cyan-500/30 focus:bg-white/[0.07] transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Contacts List */}
+                            <div className="flex-1 overflow-y-auto px-6 pb-6 min-h-0 space-y-1">
+                                {forwardContacts
+                                    .filter(c => c.fullName.toLowerCase().includes(forwardSearch.toLowerCase()))
+                                    .map(contact => {
+                                        const isSelected = forwardSelectedUsers.includes(contact._id);
+                                        return (
+                                            <div
+                                                key={contact._id}
+                                                onClick={() => {
+                                                    setForwardSelectedUsers(prev =>
+                                                        isSelected ? prev.filter(id => id !== contact._id) : [...prev, contact._id]
+                                                    );
+                                                }}
+                                                className={`group flex items-center gap-4 py-2.5 px-3 rounded-lg cursor-pointer transition-all ${isSelected ? 'bg-cyan-500/10 border border-cyan-500/20' : 'hover:bg-white/5 border border-transparent'}`}
+                                            >
+                                                <div className="relative">
+                                                    {contact.profilePic ? (
+                                                        <img src={contact.profilePic} alt="" className="w-11 h-11 rounded-lg object-cover" />
+                                                    ) : (
+                                                        <div className="w-11 h-11 rounded-lg bg-slate-800 flex items-center justify-center text-white/40 font-medium">
+                                                            {getInitials(contact.fullName)}
+                                                        </div>
+                                                    )}
+                                                    {isSelected && (
+                                                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-cyan-500 rounded-full border-2 border-slate-900 flex items-center justify-center shadow-lg">
+                                                            <Check size={12} className="text-slate-900 stroke-[3]" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className={`text-[14px] font-medium truncate ${isSelected ? 'text-white' : 'text-white/80'}`}>{contact.fullName}</h4>
+                                                    <p className="text-[12px] text-white/30 truncate">{contact.email}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+
+                            {/* Multi-Forward Footer */}
+                            <div className="shrink-0 px-6 py-5 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
+                                <span className="text-[14px] text-white/40 font-medium whitespace-nowrap">
+                                    {forwardSelectedUsers.length} selected
+                                </span>
+                                <button
+                                    onClick={handleForwardSubmit}
+                                    disabled={forwardSelectedUsers.length === 0}
+                                    className="px-6 py-3 bg-cyan-500 hover:bg-cyan-400 disabled:bg-white/5 disabled:text-white/20 text-slate-900 font-semibold rounded-xl text-[14px] transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/10 active:scale-95 whitespace-nowrap"
+                                >
+                                    <Forward size={18} />
+                                    Forward Now
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
 
             {/* Delete Modal */}
-            {showDeleteModal && (
-                <div
-                    className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
-                    onClick={() => setShowDeleteModal(false)}
-                >
+            {
+                showDeleteModal && (
                     <div
-                        className="w-full max-w-[400px] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-8 flex flex-col items-center text-center animate-in zoom-in-95 duration-200"
-                        onClick={(e) => e.stopPropagation()}
+                        className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+                        onClick={() => setShowDeleteModal(false)}
                     >
-                        <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mb-6 border border-red-500/20">
-                            <Trash2 size={32} className="text-red-500" />
-                        </div>
-                        <h3 className="text-[20px] font-bold text-white/90 mb-2">Delete Messages?</h3>
-                        <p className="text-[14px] text-white/40 mb-8 max-w-[280px]">
-                            This action cannot be undone. Are you sure you want to delete {selectedMessages.length} message{selectedMessages.length > 1 ? 's' : ''}?
-                        </p>
+                        <div
+                            className="w-full max-w-[400px] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-8 flex flex-col items-center text-center animate-in zoom-in-95 duration-200"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mb-6 border border-red-500/20">
+                                <Trash2 size={32} className="text-red-500" />
+                            </div>
+                            <h3 className="text-[20px] font-bold text-white/90 mb-2">Delete Messages?</h3>
+                            <p className="text-[14px] text-white/40 mb-8 max-w-[280px]">
+                                This action cannot be undone. Are you sure you want to delete {selectedMessages.length} message{selectedMessages.length > 1 ? 's' : ''}?
+                            </p>
 
-                        <div className="w-full space-y-3">
-                            {selectedMessages.every(id => messages.find(m => m._id === id)?.senderId === authUser._id) && (
+                            <div className="w-full space-y-3">
+                                {selectedMessages.every(id => messages.find(m => m._id === id)?.senderId === authUser._id) && (
+                                    <button
+                                        onClick={() => executeDelete('everyone')}
+                                        className="w-full py-3.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl text-[14px] transition-all shadow-lg shadow-red-500/20 active:scale-95 flex items-center justify-center gap-2"
+                                    >
+                                        Delete for Everyone
+                                    </button>
+                                )}
                                 <button
-                                    onClick={() => executeDelete('everyone')}
-                                    className="w-full py-3.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl text-[14px] transition-all shadow-lg shadow-red-500/20 active:scale-95 flex items-center justify-center gap-2"
+                                    onClick={() => executeDelete('me')}
+                                    className="w-full py-3.5 bg-white/5 hover:bg-white/10 text-white/90 font-semibold rounded-xl text-[14px] border border-white/10 transition-all active:scale-95"
                                 >
-                                    Delete for Everyone
+                                    Delete for Me
                                 </button>
-                            )}
-                            <button
-                                onClick={() => executeDelete('me')}
-                                className="w-full py-3.5 bg-white/5 hover:bg-white/10 text-white/90 font-semibold rounded-xl text-[14px] border border-white/10 transition-all active:scale-95"
-                            >
-                                Delete for Me
-                            </button>
-                            <button
-                                onClick={() => setShowDeleteModal(false)}
-                                className="w-full py-2 text-[14px] text-white/30 hover:text-white/60 transition-all mt-2"
-                            >
-                                Cancel
-                            </button>
+                                <button
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className="w-full py-2 text-[14px] text-white/30 hover:text-white/60 transition-all mt-2"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Edit Modal */}
-            {showEditModal && (
-                <div
-                    className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
-                    onClick={() => setShowEditModal(false)}
-                >
+            {
+                showEditModal && (
                     <div
-                        className="w-full max-w-[500px] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200"
-                        onClick={(e) => e.stopPropagation()}
+                        className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+                        onClick={() => setShowEditModal(false)}
                     >
-                        <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
-                                    <MessageSquare size={20} className="text-cyan-400" />
+                        <div
+                            className="w-full max-w-[500px] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
+                                        <MessageSquare size={20} className="text-cyan-400" />
+                                    </div>
+                                    <h3 className="text-[18px] font-bold text-white/90">Edit Message</h3>
                                 </div>
-                                <h3 className="text-[18px] font-bold text-white/90">Edit Message</h3>
-                            </div>
-                            <button
-                                onClick={() => setShowEditModal(false)}
-                                className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:bg-white/5 hover:text-white transition-all"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="p-8">
-                            <textarea
-                                value={editMessageText}
-                                onChange={(e) => setEditMessageText(e.target.value)}
-                                className="w-full min-h-[160px] bg-white/5 border border-white/10 rounded-xl p-5 text-[15px] text-white/90 placeholder-white/20 outline-none focus:border-cyan-500/30 focus:bg-white/[0.07] transition-all resize-none shadow-inner"
-                                placeholder="Type your message..."
-                                autoFocus
-                            />
-                            <div className="flex items-center justify-end gap-3 mt-8">
                                 <button
                                     onClick={() => setShowEditModal(false)}
-                                    className="px-6 py-2.5 text-[14px] font-medium text-white/40 hover:text-white/80 transition-all"
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:bg-white/5 hover:text-white transition-all"
                                 >
-                                    Discard
+                                    <X size={20} />
                                 </button>
-                                <button
-                                    onClick={handleEditSubmit}
-                                    disabled={!editMessageText.trim() || editMessageText === messages.find(m => m._id === editingMessageId)?.text}
-                                    className="px-8 py-2.5 bg-cyan-500 hover:bg-cyan-400 disabled:bg-white/5 disabled:text-white/20 text-slate-900 font-bold rounded-xl text-[14px] transition-all shadow-lg shadow-cyan-500/10 active:scale-95"
-                                >
-                                    Save Changes
-                                </button>
+                            </div>
+
+                            <div className="p-8">
+                                <textarea
+                                    value={editMessageText}
+                                    onChange={(e) => setEditMessageText(e.target.value)}
+                                    className="w-full min-h-[160px] bg-white/5 border border-white/10 rounded-xl p-5 text-[15px] text-white/90 placeholder-white/20 outline-none focus:border-cyan-500/30 focus:bg-white/[0.07] transition-all resize-none shadow-inner"
+                                    placeholder="Type your message..."
+                                    autoFocus
+                                />
+                                <div className="flex items-center justify-end gap-3 mt-8">
+                                    <button
+                                        onClick={() => setShowEditModal(false)}
+                                        className="px-6 py-2.5 text-[14px] font-medium text-white/40 hover:text-white/80 transition-all"
+                                    >
+                                        Discard
+                                    </button>
+                                    <button
+                                        onClick={handleEditSubmit}
+                                        disabled={!editMessageText.trim() || editMessageText === messages.find(m => m._id === editingMessageId)?.text}
+                                        className="px-8 py-2.5 bg-cyan-500 hover:bg-cyan-400 disabled:bg-white/5 disabled:text-white/20 text-slate-900 font-bold rounded-xl text-[14px] transition-all shadow-lg shadow-cyan-500/10 active:scale-95"
+                                    >
+                                        Save Changes
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
             {/* Image Lightbox */}
             {
                 lightboxImage && (

@@ -438,6 +438,84 @@
     box-shadow: 0 0 10px rgba(138, 43, 226, 0.6);
 }
 
+/* Document Card */
+.doc-card {
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+}
+
+.doc-card:hover {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+}
+
+.doc-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    margin: 4px;
+    flex: 1;
+}
+
+.doc-icon {
+    color: #60a5fa;
+    background: rgba(59, 130, 246, 0.15);
+    padding: 10px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.doc-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    gap: 2px;
+}
+
+.doc-info span {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.95);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.doc-info small {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* Custom Audio Slider Styles */
+.audio-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    height: 4px;
+    border-radius: 2px;
+}
+
+.audio-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    background: #30FBE6;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(48, 251, 230, 0.4);
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .stream-panel {

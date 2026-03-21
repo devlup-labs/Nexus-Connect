@@ -39,15 +39,10 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
   };
 
   return (
-    <div style={{ flex: 1, minWidth: 0, height: '100%', background: 'transparent', position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingRight: '24px', paddingBottom: '24px' }}>
+    <div className="flex flex-col flex-1 h-full mr-12 min-w-[840px] mb-2">
       {/* Title */}
-      <div style={{ padding: "10px 10px 20px 10px" }}>
-        <h2
-          className="text-[24px] font-medium text-white/90 tracking-[0.5px]"
-          style={{ fontFamily: "'Inter', sans-serif" }}
-        >
-          Settings
-        </h2>
+      <div className="pt-[60px] pb-0 pl-2 flex justify-between items-end mb-[-30px] relative z-20">
+        <h2 className="text-[24px] font-medium text-white/90 tracking-[0.5px] font-sans leading-none pb-0">Settings</h2>
       </div>
 
       {/* Main Glass Panel */}
@@ -94,21 +89,34 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
                   background: "linear-gradient(135deg, #30FBE6, #a855f7)",
                   boxShadow: "0 0 20px rgba(48, 251, 230, 0.25)",
                 }}>
-                  <div style={{
-                    width: "100%",
-                    height: "100%",
-                    borderRadius: "50%",
-                    background: "rgba(15, 23, 42, 0.95)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "18px",
-                    fontWeight: 600,
-                    color: "rgba(255, 255, 255, 0.7)",
-                    fontFamily: "'Inter', sans-serif",
-                  }}>
-                    TB
-                  </div>
+                  {authUser?.profilePic ? (
+                    <img
+                      src={authUser.profilePic}
+                      alt="Profile"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        objectCover: "cover",
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: "50%",
+                      background: "rgba(15, 23, 42, 0.95)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "18px",
+                      fontWeight: 600,
+                      color: "rgba(255, 255, 255, 0.7)",
+                      fontFamily: "'Inter', sans-serif",
+                    }}>
+                      {getInitials(authUser?.fullName)}
+                    </div>
+                  )}
                 </div>
                 <button style={{
                   position: "absolute",
@@ -131,9 +139,9 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
 
               {/* Fields */}
               <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
-                <Field text="Alex Chen" />
+                <Field text={authUser?.fullName || "User Name"} />
                 <Field
-                  text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod something a mind."
+                  text={authUser?.about || "No bio set yet."}
                   small
                 />
                 <button
@@ -305,7 +313,7 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
 
           {/* Logout */}
           <button
-            onClick={() => console.log("Logging out...")}
+            onClick={() => onLogout && onLogout()}
             style={{
               width: "100%",
               padding: "12px",
