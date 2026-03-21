@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react'
-import Dock from './Components/Dock.jsx'
-import ChatContainer from './Components/ChatContainer.jsx'
-import StreamPanel from './Components/StreamPanel.jsx'
-import SettingsPanel from './Components/Settings.jsx'
-import CallLogPanel from './Components/CallLog.jsx'
-import ContactsPanel from './Components/ContactsPanel.jsx'
-// import Login from './components/Login';
-// import Signup from './components/signup'; // Ensure this matches your filename
-// import { useState } from 'react';
-// import './App.css';
+import Dock from './components/Dock.jsx'
+import ChatContainer from './components/ChatContainer.jsx'
+import StreamPanel from './components/StreamPanel.jsx'
+import SettingsPanel from './components/Settings.jsx'
+import CallLogPanel from './components/CallLog.jsx'
+import ContactsPanel from './components/ContactsPanel.jsx'
+import Login from './components/Login.jsx'
+import Signup from './components/signup.jsx'
+import { checkAuth, logout } from './api'
 
 
 function App() {
@@ -32,7 +31,7 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      await logoutApi();
+      await logout();
     } catch (e) {
       // ignore
     }
@@ -43,7 +42,7 @@ function App() {
   // Loading state while checking auth
   if (authLoading) {
     return (
-      <div className="w-screen h-screen bg-gradient-to-br from-[#050A1F] via-[#0A1535] to-[#02040A] flex items-center justify-center">
+      <div className="w-screen h-screen bg-linear-to-br from-[#050A1F] via-[#0A1535] to-[#02040A] flex items-center justify-center">
         <div style={{
           width: '40px',
           height: '40px',
@@ -100,7 +99,7 @@ function App() {
   };
 
   return (
-    <div className="relative w-screen h-screen bg-gradient-to-br from-[#050A1F] via-[#0A1535] via-[#0F2550] via-[#0A1535] to-[#02040A] overflow-hidden">
+    <div className="relative w-screen h-screen bg-linear-to-br from-[#050A1F] via-[#0F2550] to-[#02040A] overflow-hidden">
       {/* Glow Effects */}
       <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-pulse-slow pointer-events-none opacity-100"
         style={{
@@ -124,6 +123,7 @@ function App() {
       <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '12px', height: '100vh', marginLeft: '100px' }}>
         {activeView === 'contacts' ? <ContactsPanel /> : <StreamPanel />}
         {renderView()}
+      </div>
       </div>
     </div>
   );
