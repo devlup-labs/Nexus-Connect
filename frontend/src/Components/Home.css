@@ -1,0 +1,222 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Tenor+Sans&display=swap');
+
+.nexus-home-container {
+  font-family: 'Tenor Sans', sans-serif;
+  letter-spacing: 0.05em;
+}
+
+.greeting {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  text-transform: capitalize;
+  letter-spacing: -2px;
+  background: linear-gradient(to bottom, #fff 40%, #94a3b8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.nexus-dashboard-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80px 40px;
+}
+
+.greeting {
+  width: 100%;
+  max-width: 650px;
+  font-size: 3.5rem;
+  font-weight: 300;
+  color: white;
+  margin-bottom: 30px;
+}
+
+.ai-summary-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 40px;
+  padding: 50px;
+  width: 100%;
+  max-width: 650px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+}
+
+.summary-content {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+}
+
+.clock-circle {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 2px solid #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.4), 
+              inset 0 0 15px rgba(59, 130, 246, 0.2);
+}
+
+.current-time {
+  font-size: 1.6rem; 
+  font-weight: 700;
+  color: white;
+  display: flex;
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+  justify-content: center;
+  letter-spacing: -0.5px;
+}
+
+
+.current-time small {
+  font-size: 0.65rem; 
+  margin-left: 2px;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+.text-section h3 {
+    color: white;
+  font-size: 1.4rem;
+  margin-bottom: 10px;
+}
+
+.activity-label {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+
+.activity-list {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 20px;
+}
+
+.activity-list li {
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  color: #e2e8f0;
+}
+
+.ai-badge {
+  font-size: 0.75rem;
+  color: #10b981;
+}
+
+.start-chat-btn {
+  margin-top: 35px;
+  width: 100%;
+  max-width: 320px;
+  padding: 18px;
+  background: #2563eb;
+  color: white;
+  border-radius: 18px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.start-chat-btn:hover {
+  background: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.4);
+}
+/* --- TOGGLE SWITCH STYLES --- */
+.header-row {
+  width: 100%;
+  max-width: 650px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px; width: 14px;
+  left: 3px; bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider { background-color: #2563eb; }
+input:checked + .slider:before { transform: translateX(20px); }
+
+/* --- ANALOG CLOCK HANDS --- */
+.analog-clock {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.hand {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  transform-origin: bottom;
+  border-radius: 10px;
+}
+
+.hour {
+  width: 4px; height: 30%;
+  background: white;
+  z-index: 3;
+}
+
+.minute {
+  width: 3px; height: 40%;
+  background: #94a3b8;
+  z-index: 2;
+}
+
+.second {
+  width: 1.5px; height: 45%;
+  background: #3b82f6;
+  z-index: 1;
+}
+
+.center-dot {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 8px; height: 8px;
+  background: #3b82f6;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+}
