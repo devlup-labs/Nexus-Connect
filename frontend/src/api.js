@@ -16,8 +16,8 @@ export const logout = () => API.post("/auth/logout");
 
 export const checkAuth = () => API.get("/auth/check");
 
-export const updateProfile = (profilePic) =>
-  API.put("/auth/update-profile", { profilePic });
+export const updateProfile = (data) =>
+  API.put("/auth/update-profile", data);
 
 // ─── Messages ────────────────────────────────────────
 export const getContacts = () => API.get("/messages/contacts");

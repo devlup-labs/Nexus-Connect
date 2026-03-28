@@ -27,7 +27,7 @@ const statusLabels = {
   offline: "Offline",
 };
 
-const ContactsPanel = () => {
+const ContactsPanel = ({ onSendMessage }) => {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -542,6 +542,12 @@ const ContactsPanel = () => {
               }}
             >
               <button
+                onClick={() => {
+                  if (onSendMessage) {
+                    onSendMessage(selectedContact);
+                    setSelectedContact(null);
+                  }
+                }}
                 style={{
                   width: "100%",
                   padding: "12px",

@@ -6,11 +6,13 @@ const messageSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
     receiverId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
     text: {
       type: String,
@@ -35,9 +37,22 @@ const messageSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    status: {
+      type: String,
+      enum: ["sent", "delivered", "read"],
+      default: "sent",
+      index: true,
+    },
+    readAt: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );
+
+// Compound indexes for faster queries
+messageSchema.index({ senderId: 1, receiverId: 1, createdAt: -1 });
+messageSchema.index({ receiverId: 1, status: 1 });
 
 const Message = mongoose.model("Message", messageSchema);
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AppWindow, MoreHorizontal, Play, Eye, Bookmark, Flag, RefreshCw, PlusCircle, UserPlus, X, Search, Archive, RotateCcw, FileText as FileIcon } from 'lucide-react';
 import ContextMenu from './ContextMenu';
 import { getChatPartners, getContacts, toggleArchiveUser, getArchivedUsers } from '../api';
+import { getSocket } from '../services/socket';
 import './StreamPanel.css';
 
 const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
@@ -18,6 +19,9 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
     const [loadingArchived, setLoadingArchived] = useState(false);
     const [showHeaderMenu, setShowHeaderMenu] = useState(false);
     const headerMenuRef = useRef(null);
+    const [onlineUsers, setOnlineUsers] = useState({});
+    const [unreadCounts, setUnreadCounts] = useState({});
+    const selectedContactIdRef = useRef(selectedContactId);
 
     // Close header menu on outside click
     useEffect(() => {
@@ -77,8 +81,79 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
 
     useEffect(() => {
         fetchChatPartners();
-        const interval = setInterval(fetchChatPartners, 8000);
-        return () => clearInterval(interval);
+    }, []);
+
+    // ── Clear unread badge when a chat is opened ──
+    useEffect(() => {
+        if (selectedContactId) {
+            setUnreadCounts(prev => {
+                if (!prev[selectedContactId]) return prev;
+                const next = { ...prev };
+                delete next[selectedContactId];
+                return next;
+            });
+        }
+    }, [selectedContactId]);
+
+    // Keep the ref in sync with the prop
+    useEffect(() => {
+        selectedContactIdRef.current = selectedContactId;
+    }, [selectedContactId]);
+
+    // ── WebSocket listeners for real-time stream updates ──
+    useEffect(() => {
+        const socket = getSocket();
+        if (!socket) return;
+
+        const handleMessageReceived = (newMessage) => {
+            // Refresh chat partners list when a new message arrives
+            fetchChatPartners();
+
+            // Increment unread badge if this chat isn't currently open
+            const senderId = newMessage.senderId;
+            if (senderId !== selectedContactIdRef.current) {
+                setUnreadCounts(prev => ({
+                    ...prev,
+                    [senderId]: (prev[senderId] || 0) + 1,
+                }));
+            }
+        };
+
+        const handleMessageSentAck = () => {
+            // Refresh chat partners so the sent message preview updates
+            fetchChatPartners();
+        };
+
+        const handleUserStatus = (data) => {
+            setOnlineUsers(prev => ({
+                ...prev,
+                [data.userId]: data.status
+            }));
+        };
+
+        const handleUnreadCounts = (counts) => {
+            setUnreadCounts(counts);
+        };
+
+        const handleActiveUsers = (activeUserIds) => {
+            const onlineMap = {};
+            activeUserIds.forEach(id => { onlineMap[id] = 'online'; });
+            setOnlineUsers(onlineMap);
+        };
+
+        socket.on('message_received', handleMessageReceived);
+        socket.on('message_sent_ack', handleMessageSentAck);
+        socket.on('user_status_update', handleUserStatus);
+        socket.on('unread_counts', handleUnreadCounts);
+        socket.on('active_users', handleActiveUsers);
+
+        return () => {
+            socket.off('message_received', handleMessageReceived);
+            socket.off('message_sent_ack', handleMessageSentAck);
+            socket.off('user_status_update', handleUserStatus);
+            socket.off('unread_counts', handleUnreadCounts);
+            socket.off('active_users', handleActiveUsers);
+        };
     }, []);
 
     const getInitials = (name) => {
@@ -161,15 +236,52 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
 
         const CardHeader = () => (
             <div className="card-header">
-                <div className="avatar" style={contact.profilePic ? {
-                    backgroundImage: `url(${contact.profilePic})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    color: 'transparent'
-                } : {}}>
+                <div className="avatar" style={{
+                    position: 'relative',
+                    ...(contact.profilePic ? {
+                        backgroundImage: `url(${contact.profilePic})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        color: 'transparent'
+                    } : {})
+                }}>
                     {!contact.profilePic && getInitials(contact.fullName)}
+                    {/* Online indicator dot */}
+                    {onlineUsers[contact._id] === 'online' && (
+                        <div style={{
+                            position: 'absolute',
+                            bottom: '-1px',
+                            right: '-1px',
+                            width: '10px',
+                            height: '10px',
+                            borderRadius: '50%',
+                            background: '#22c55e',
+                            border: '2px solid rgba(15, 23, 42, 0.9)',
+                            boxShadow: '0 0 8px rgba(34, 197, 94, 0.5)'
+                        }} />
+                    )}
                 </div>
                 <span className="user-name">{contact.fullName}</span>
+                {/* Unread badge */}
+                {unreadCounts[contact._id] > 0 && (
+                    <div style={{
+                        marginLeft: 'auto',
+                        minWidth: '20px',
+                        height: '20px',
+                        padding: '0 6px',
+                        borderRadius: '10px',
+                        background: '#30FBE6',
+                        color: '#0a0f1e',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                    }}>
+                        {unreadCounts[contact._id]}
+                    </div>
+                )}
             </div>
         );
 
