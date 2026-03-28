@@ -10,12 +10,15 @@ function Dock({ onNavigate, activeView, onLogout }) {
     { icon: Contact2, label: 'Contacts', view: 'contacts' },
     { icon: Phone, label: 'Phone', view: 'call-log' },
     { icon: Settings, label: 'Settings', view: 'settings' },
-    // { icon: LogOut, label: 'Logout', view: 'logout', action: true },
   ];
 
   return (
     <div
-      className="flex flex-col gap-2 bg-white/10 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 z-50"
+      className="flex flex-col gap-2 backdrop-blur-2xl rounded-2xl shadow-2xl z-50"
+      style={{
+        background: 'var(--dock-bg)',
+        border: '1px solid var(--dock-border)',
+      }}
     >
       {dockItems.map((item, index) => {
         const isActive = activeView === item.view;
@@ -33,33 +36,53 @@ function Dock({ onNavigate, activeView, onLogout }) {
               }}
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
-              className={`w-12 h-12 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-300 ease-out relative ${isActive
-                ? 'bg-white shadow-lg'
-                : isHovered
-                  ? 'bg-white/10 backdrop-blur-md border border-white/20 shadow-lg shadow-white/5 scale-105'
-                  : 'hover:bg-white/5'
-                }`}
+              className="w-12 h-12 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-300 ease-out relative"
+              style={{
+                background: isActive
+                  ? 'var(--dock-active-bg)'
+                  : isHovered
+                    ? 'var(--dock-hover-bg)'
+                    : 'transparent',
+                boxShadow: isActive ? '0 4px 12px var(--shadow)' : 'none',
+                transform: isHovered && !isActive ? 'scale(1.05)' : 'scale(1)',
+              }}
             >
               <item.icon
-                className={`w-6 h-6 transition-all duration-300 ${isActive ? 'text-gray-800' : 'text-white/70'} ${isHovered && !isActive ? 'scale-110 text-white' : ''} ${item.label === 'Logout' ? 'text-red-400' : ''}`}
+                className="w-6 h-6 transition-all duration-300"
+                style={{
+                  color: isActive
+                    ? 'var(--dock-active-text)'
+                    : isHovered
+                      ? 'var(--text-primary)'
+                      : 'var(--dock-text)',
+                  transform: isHovered && !isActive ? 'scale(1.1)' : 'scale(1)',
+                }}
                 strokeWidth={2}
               />
             </div>
             {isActive && (
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 w-1 h-7 bg-cyan-400 rounded-full"></div>
+              <div
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 w-1 h-7 rounded-full"
+                style={{ background: 'var(--dock-indicator)' }}
+              ></div>
             )}
             {isHovered && (
               <div
-                className="absolute left-16 top-1/2 -translate-y-1/2 text-white font-semibold rounded-xl whitespace-nowrap pointer-events-none shadow-2xl border border-white/30 transition-opacity duration-200"
+                className="absolute left-16 top-1/2 -translate-y-1/2 font-semibold rounded-xl whitespace-nowrap pointer-events-none shadow-2xl transition-opacity duration-200"
                 style={{
-                  background: 'rgba(0, 0, 0, 0.75)',
+                  background: 'var(--surface, rgba(0, 0, 0, 0.75))',
                   backdropFilter: 'blur(40px) saturate(180%)',
                   padding: '10px 20px',
-                  fontSize: '15px'
+                  fontSize: '15px',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border-hover)',
                 }}
               >
                 {item.label}
-                <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[6px]" style={{ borderRightColor: 'rgba(0, 0, 0, 0.75)' }}></div>
+                <div
+                  className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[6px]"
+                  style={{ borderRightColor: 'var(--surface, rgba(0, 0, 0, 0.75))' }}
+                ></div>
               </div>
             )}
           </div>

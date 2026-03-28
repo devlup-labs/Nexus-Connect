@@ -9,7 +9,7 @@
     }
 
     body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-family: var(--font-main, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
         overflow: hidden;
         flex-shrink: 0;
     }
@@ -18,7 +18,7 @@
 .app-container {
     width: 100vw;
     height: 100vh;
-    background: linear-gradient(135deg, #050A1F 0%, #0A1535 20%, #0F2550 40%, #0A1535 60%, #050A1F 80%, #02040A 100%);
+    background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-via) 50%, var(--bg-gradient-to) 100%);
     position: relative;
     display: flex;
     justify-content: flex-start;
@@ -35,10 +35,10 @@
     width: 200%;
     height: 200%;
     background:
-        radial-gradient(circle at 20% 30%, rgba(30, 64, 175, 0.25) 0%, transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(0, 191, 255, 0.2) 0%, transparent 40%),
-        radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 70% 20%, rgba(14, 165, 233, 0.15) 0%, transparent 35%);
+        radial-gradient(circle at 20% 30%, var(--glow-1) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, var(--glow-2) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, var(--glow-3) 0%, transparent 50%),
+        radial-gradient(circle at 70% 20%, var(--glow-4) 0%, transparent 35%);
     animation: glowPulse 20s ease-in-out infinite;
     pointer-events: none;
 }
@@ -111,10 +111,10 @@
     padding-top: 50px;
     padding-bottom: 0px;
     margin-bottom: 0px;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary);
     letter-spacing: 0.5px;
     text-shadow: none;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-main, 'Inter', sans-serif);
     flex-shrink: 0;
     line-height: 1;
 }
@@ -132,7 +132,7 @@
     background: transparent;
     backdrop-filter: none;
     border: none;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
@@ -144,7 +144,7 @@
 .icon-button:hover {
     background: transparent;
     border-color: transparent;
-    color: rgba(255, 255, 255, 1);
+    color: var(--text-primary);
     transform: none;
 }
 
@@ -181,20 +181,20 @@
 }
 
 .stream-feed-masonry::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--scrollbar-thumb);
     border-radius: 3px;
     isolation: isolate;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px var(--shadow);
 }
 
 /* Base Stream Card - FROSTED GLASS */
 .stream-card {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--surface);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid var(--border-hover);
     border-radius: 14px;
     padding: 16px;
     cursor: pointer;
@@ -204,22 +204,22 @@
     isolation: isolate;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px var(--shadow);
 }
 
 .stream-card:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: var(--surface-hover);
+    border-color: var(--border-hover);
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 24px var(--shadow);
 }
 
 .stream-card.active {
-    background: rgba(48, 251, 230, 0.12);
+    background: var(--surface-active);
     box-shadow:
-        0 0 30px rgba(48, 251, 230, 0.2),
-        0 8px 28px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        0 0 30px rgba(var(--accent-rgb), 0.2),
+        0 8px 28px var(--shadow),
+        inset 0 1px 0 var(--border-hover);
 }
 
 .stream-card.active::after {
@@ -229,7 +229,7 @@
     top: 0;
     bottom: 0;
     width: 3px;
-    background: linear-gradient(to bottom, #30FBE6, rgba(48, 251, 230, 0.5));
+    background: linear-gradient(to bottom, var(--accent), rgba(var(--accent-rgb), 0.5));
     border-radius: 18px 0 0 18px;
     z-index: 0;
 }
@@ -247,24 +247,24 @@
 .user-name {
     font-size: 12px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.9);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    color: var(--text-primary);
+    text-shadow: none;
 }
 
 .avatar {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(48, 251, 230, 0.3), rgba(138, 43, 226, 0.3));
+    background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.3), rgba(var(--accent-secondary-rgb), 0.3));
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 10px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.95);
+    color: var(--text-primary);
     flex-shrink: 0;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-hover);
+    box-shadow: 0 2px 8px var(--shadow);
 }
 
 /* Card Content */
@@ -275,20 +275,18 @@
 
 .card-text {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--text-primary);
     line-height: 1.5;
     margin-bottom: 4px;
     word-wrap: break-word;
     overflow-wrap: break-word;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .card-timestamp {
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-secondary);
     font-weight: 400;
     display: block;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* Text Card */
@@ -307,12 +305,12 @@
     width: 100%;
     height: 120px;
     border-radius: 14px;
-    background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(30, 144, 255, 0.2));
+    background: linear-gradient(135deg, rgba(var(--accent-secondary-rgb), 0.2), rgba(var(--accent-rgb), 0.2));
     position: relative;
     overflow: hidden;
     margin-bottom: 6px;
     z-index: 1;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border);
 }
 
 .media-preview::before {
@@ -366,10 +364,10 @@
 
 .wave-bar-mini {
     flex: 1;
-    background: linear-gradient(to top, rgba(138, 43, 226, 0.7), rgba(147, 51, 234, 0.4));
+    background: linear-gradient(to top, rgba(var(--accent-secondary-rgb), 0.7), rgba(var(--accent-secondary-rgb), 0.4));
     border-radius: 2px;
     min-width: 2px;
-    box-shadow: 0 0 8px rgba(138, 43, 226, 0.5);
+    box-shadow: 0 0 8px rgba(var(--accent-secondary-rgb), 0.5);
 }
 
 /* Large Media Card */
@@ -382,12 +380,12 @@
     width: 100%;
     height: 140px;
     border-radius: 14px;
-    background: linear-gradient(135deg, rgba(138, 43, 226, 0.25), rgba(30, 144, 255, 0.25));
+    background: linear-gradient(135deg, rgba(var(--accent-secondary-rgb), 0.25), rgba(var(--accent-rgb), 0.25));
     position: relative;
     overflow: hidden;
     margin-bottom: 6px;
     z-index: 1;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border);
 }
 
 .large-media-preview::before {
@@ -426,31 +424,31 @@
 
 .wave-bar {
     flex: 1;
-    background: linear-gradient(to top, rgba(138, 43, 226, 0.6), rgba(147, 51, 234, 0.3));
+    background: linear-gradient(to top, rgba(var(--accent-secondary-rgb), 0.6), rgba(var(--accent-secondary-rgb), 0.3));
     border-radius: 2px;
     min-width: 2px;
     transition: all 0.3s ease;
-    box-shadow: 0 0 6px rgba(138, 43, 226, 0.4);
+    box-shadow: 0 0 6px rgba(var(--accent-secondary-rgb), 0.4);
 }
 
 .audio-card:hover .wave-bar {
-    background: linear-gradient(to top, rgba(138, 43, 226, 0.8), rgba(147, 51, 234, 0.5));
-    box-shadow: 0 0 10px rgba(138, 43, 226, 0.6);
+    background: linear-gradient(to top, rgba(var(--accent-secondary-rgb), 0.8), rgba(var(--accent-secondary-rgb), 0.5));
+    box-shadow: 0 0 10px rgba(var(--accent-secondary-rgb), 0.6);
 }
 
 /* Document Card */
 .doc-card {
-    background: rgba(59, 130, 246, 0.08);
-    border: 1px solid rgba(59, 130, 246, 0.2);
+    background: rgba(var(--accent-rgb), 0.08);
+    border: 1px solid rgba(var(--accent-rgb), 0.2);
     min-height: 100px;
     display: flex;
     flex-direction: column;
 }
 
 .doc-card:hover {
-    background: rgba(59, 130, 246, 0.12);
-    border-color: rgba(59, 130, 246, 0.4);
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+    background: rgba(var(--accent-rgb), 0.12);
+    border-color: rgba(var(--accent-rgb), 0.4);
+    box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.1);
 }
 
 .doc-content {
@@ -458,15 +456,15 @@
     align-items: center;
     gap: 12px;
     padding: 12px;
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--surface);
     border-radius: 12px;
     margin: 4px;
     flex: 1;
 }
 
 .doc-icon {
-    color: #60a5fa;
-    background: rgba(59, 130, 246, 0.15);
+    color: var(--accent);
+    background: rgba(var(--accent-rgb), 0.15);
     padding: 10px;
     border-radius: 10px;
     flex-shrink: 0;
@@ -485,7 +483,7 @@
 .doc-info span {
     font-size: 13px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.95);
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -493,14 +491,14 @@
 
 .doc-info small {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-tertiary);
 }
 
 /* Custom Audio Slider Styles */
 .audio-slider {
     -webkit-appearance: none;
     appearance: none;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--border);
     height: 4px;
     border-radius: 2px;
 }
@@ -510,10 +508,10 @@
     appearance: none;
     width: 12px;
     height: 12px;
-    background: #30FBE6;
+    background: var(--accent);
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 0 10px rgba(48, 251, 230, 0.4);
+    box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.4);
 }
 
 /* Responsive adjustments */

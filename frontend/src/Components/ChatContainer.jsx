@@ -64,23 +64,23 @@ const CustomAudioPlayer = ({ src }) => {
     };
 
     return (
-        <div className="flex items-center gap-3 bg-white/5 border border-white/10 p-2.5 px-4 rounded-2xl min-w-[320px] mt-2 group/audio backdrop-blur-md shadow-2xl transition-all duration-300 hover:border-white/20">
+        <div className="flex items-center gap-3 bg-[var(--surface)] border border-[var(--border)] p-2.5 px-4 rounded-2xl min-w-[320px] mt-2 group/audio backdrop-blur-md shadow-2xl transition-all duration-300 hover:border-[var(--border-hover)]">
             <button
                 onClick={togglePlay}
-                className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center hover:bg-cyan-500/30 transition-all duration-300 shrink-0 border border-cyan-500/30 shadow-[0_0_15px_rgba(34,211,238,0.1)]"
+                className="w-10 h-10 rounded-full bg-[rgba(var(--accent-rgb),0.2)] flex items-center justify-center hover:bg-[rgba(var(--accent-rgb),0.3)] transition-all duration-300 shrink-0 border border-[rgba(var(--accent-rgb),0.3)] shadow-[0_0_15px_var(--shadow-glow)]"
             >
                 {isPlaying ? (
                     <div className="flex gap-1 items-center">
-                        <div className="w-0.5 h-3 bg-cyan-400 rounded-full animate-bounce [animation-duration:0.6s]" />
-                        <div className="w-0.5 h-3 bg-cyan-400 rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.1s]" />
-                        <div className="w-0.5 h-3 bg-cyan-400 rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.2s]" />
+                        <div className="w-0.5 h-3 bg-[var(--accent)] rounded-full animate-bounce [animation-duration:0.6s]" />
+                        <div className="w-0.5 h-3 bg-[var(--accent)] rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.1s]" />
+                        <div className="w-0.5 h-3 bg-[var(--accent)] rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.2s]" />
                     </div>
                 ) : (
-                    <Play size={18} className="text-cyan-400 fill-cyan-400 ml-0.5" />
+                    <Play size={18} className="text-[var(--accent)] fill-cyan-400 ml-0.5" />
                 )}
             </button>
             <div className="flex-1 flex items-center gap-2.5">
-                <span className="text-[10px] text-white/40 font-bold tabular-nums min-w-[28px]">{formatTime(currentTime)}</span>
+                <span className="text-[10px] text-[var(--text-tertiary)] font-bold tabular-nums min-w-[28px]">{formatTime(currentTime)}</span>
                 <div className="flex-1 relative h-6 flex items-center">
                     <input
                         type="range"
@@ -89,14 +89,14 @@ const CustomAudioPlayer = ({ src }) => {
                         step="0.01"
                         value={currentTime}
                         onChange={handleSeek}
-                        className="audio-slider w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400 z-10"
+                        className="audio-slider w-full h-1 bg-[var(--surface-hover)] rounded-lg appearance-none cursor-pointer accent-[var(--accent)] z-10"
                     />
                 </div>
-                <span className="text-[10px] text-white/40 font-bold tabular-nums min-w-[28px] text-right">{formatTime(duration)}</span>
+                <span className="text-[10px] text-[var(--text-tertiary)] font-bold tabular-nums min-w-[28px] text-right">{formatTime(duration)}</span>
             </div>
             <button
                 onClick={toggleSpeed}
-                className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[11px] font-black text-cyan-400/80 hover:bg-white/10 hover:text-cyan-400 transition-all shrink-0 hover:scale-105 active:scale-95"
+                className="w-10 h-10 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[11px] font-black text-[var(--accent)] hover:bg-[var(--surface-hover)] hover:text-[var(--accent)] transition-all shrink-0 hover:scale-105 active:scale-95"
             >
                 {playbackRate}x
             </button>
@@ -205,7 +205,7 @@ const CustomVideoPlayer = ({ src }) => {
     return (
         <div
             ref={containerRef}
-            className="relative group mt-2 w-full max-w-[420px] aspect-video overflow-hidden rounded-2xl border border-white/10 bg-black/20 shadow-2xl transition-all duration-300 hover:border-white/20"
+            className="relative group mt-2 w-full max-w-[420px] aspect-video overflow-hidden rounded-2xl border border-[var(--border)] bg-black/20 shadow-2xl transition-all duration-300 hover:border-[var(--border-hover)]"
             onMouseEnter={() => setShowControls(true)}
             onMouseLeave={() => setShowControls(false)}
         >
@@ -225,8 +225,8 @@ const CustomVideoPlayer = ({ src }) => {
                     className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px] cursor-pointer transition-opacity"
                     onClick={togglePlay}
                 >
-                    <div className="w-16 h-16 rounded-full bg-cyan-500/80 flex items-center justify-center animate-pulse shadow-[0_0_30px_rgba(34,211,238,0.4)]">
-                        <Play size={32} className="text-slate-900 fill-slate-900 ml-1" />
+                    <div className="w-16 h-16 rounded-full bg-[var(--accent)] flex items-center justify-center animate-pulse shadow-[0_0_30px_var(--shadow-glow)]">
+                        <Play size={32} className="text-[var(--text-on-accent)] fill-[var(--text-on-accent)] ml-1" />
                     </div>
                 </div>
             )}
@@ -243,17 +243,17 @@ const CustomVideoPlayer = ({ src }) => {
                         value={currentTime}
                         onChange={handleSeek}
                         onClick={(e) => e.stopPropagation()}
-                        className="audio-slider absolute inset-0 w-full h-full bg-white/20 rounded-full appearance-none cursor-pointer accent-cyan-400 z-10"
+                        className="audio-slider absolute inset-0 w-full h-full bg-[var(--surface-hover)] rounded-full appearance-none cursor-pointer accent-[var(--accent)] z-10"
                     />
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                        <button onClick={togglePlay} className="text-white hover:text-cyan-400 transition-colors">
+                        <button onClick={togglePlay} className="text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors">
                             {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
                         </button>
                         <div className="flex items-center gap-1.5 ml-2">
-                            <button onClick={toggleMute} className="text-white hover:text-cyan-400 transition-colors">
+                            <button onClick={toggleMute} className="text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors">
                                 {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
                             </button>
                             <input
@@ -266,10 +266,10 @@ const CustomVideoPlayer = ({ src }) => {
                                     setIsMuted(v === 0);
                                 }}
                                 onClick={(e) => e.stopPropagation()}
-                                className="w-16 h-1 bg-white/30 rounded-full appearance-none cursor-pointer accent-white hover:accent-cyan-400 hidden sm:block"
+                                className="w-16 h-1 bg-[var(--surface-hover)] rounded-full appearance-none cursor-pointer accent-[var(--text-primary)] hover:accent-[var(--accent)] hidden sm:block"
                             />
                         </div>
-                        <span className="text-[10px] text-white/90 font-medium tabular-nums ml-1 shrink-0 bg-white/5 px-1.5 py-0.5 rounded-md border border-white/5">
+                        <span className="text-[10px] text-[var(--text-primary)] font-medium tabular-nums ml-1 shrink-0 bg-[var(--surface)] px-1.5 py-0.5 rounded-md border border-[var(--border)]">
                             {formatTime(currentTime)} / {formatTime(duration)}
                         </span>
                     </div>
@@ -277,11 +277,11 @@ const CustomVideoPlayer = ({ src }) => {
                     <div className="flex items-center gap-2 shrink-0">
                         <button
                             onClick={toggleSpeed}
-                            className="px-1.5 py-0.5 rounded bg-white/10 text-[9px] font-black text-cyan-400/90 border border-white/10 hover:bg-white/20 transition-all"
+                            className="px-1.5 py-0.5 rounded bg-[var(--surface-hover)] text-[9px] font-black text-[var(--accent)]/90 border border-[var(--border)] hover:bg-[var(--surface-hover)] transition-all"
                         >
                             {playbackRate}x
                         </button>
-                        <button onClick={toggleFullscreen} className="text-white hover:text-cyan-400 transition-colors p-1 rounded-lg hover:bg-white/5">
+                        <button onClick={toggleFullscreen} className="text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors p-1 rounded-lg hover:bg-[var(--surface)]">
                             {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
                         </button>
                     </div>
@@ -290,9 +290,9 @@ const CustomVideoPlayer = ({ src }) => {
 
             <button
                 onClick={(e) => { e.stopPropagation(); downloadAttachment(src); }}
-                className="absolute top-3 right-3 w-9 h-9 rounded-xl bg-black/60 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-black/80 border border-white/20 shadow-xl"
+                className="absolute top-3 right-3 w-9 h-9 rounded-xl bg-black/60 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-black/80 border border-[var(--border-hover)] shadow-xl"
             >
-                <Download size={16} className="text-white" />
+                <Download size={16} className="text-[var(--text-primary)]" />
             </button>
         </div>
     );
@@ -938,15 +938,15 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
         return (
             <div className="flex flex-col flex-1 h-full mr-12 min-w-[840px] mb-2">
                 <div className="pt-[60px] pb-0 pl-2 flex justify-between items-end mb-[-30px] relative z-20">
-                    <h2 className="text-[24px] font-medium text-white/90 tracking-[0.5px] font-sans leading-none pb-0">Canvas</h2>
+                    <h2 style={{ fontSize: '24px', fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '0.5px', fontFamily: 'var(--font-main)', lineHeight: 1 }}>Canvas</h2>
                 </div>
-                <div className="relative flex-1 rounded-[14px] border border-white/8 overflow-hidden backdrop-blur-3xl bg-gradient-to-br from-[#0b1220]/40 via-[#2b1b3a]/20 to-[#091021]/40 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+                <div className="relative flex-1 rounded-[14px] border border-[var(--border)] overflow-hidden backdrop-blur-3xl bg-[var(--surface-panel)] shadow-[0_8px_32px_var(--shadow)]">
                     <div className="flex flex-col items-center justify-center h-full gap-4">
-                        <MessageSquare size={64} className="text-[rgba(48,251,230,0.2)]" />
-                        <h3 className="text-[20px] font-light text-[rgba(255,255,255,0.5)] font-sans">
+                        <MessageSquare size={64} className="text-[rgba(var(--accent-rgb),0.2)]" />
+                        <h3 className="text-[20px] font-light text-[var(--text-secondary)] font-sans">
                             Select a contact to start chatting
                         </h3>
-                        <p className="text-[13px] text-[rgba(255,255,255,0.25)] max-w-[300px] text-center">
+                        <p className="text-[13px] text-[var(--text-tertiary)] max-w-[300px] text-center">
                             Choose a person from the panel on the left to begin your conversation
                         </p>
                     </div>
@@ -964,11 +964,11 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
     return (
         <div className="flex flex-col flex-1 h-full mr-12 min-w-[840px] mb-2">
             <div className="pt-[60px] pb-0 pl-2 flex justify-between items-end mb-[-30px] relative z-20">
-                <h2 className="text-[24px] font-medium text-white/90 tracking-[0.5px] font-sans leading-none pb-0">Canvas</h2>
+                <h2 style={{ fontSize: '24px', fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '0.5px', fontFamily: 'var(--font-main)', lineHeight: 1 }}>Canvas</h2>
             </div>
 
             {/* Main Glass Panel */}
-            <div className="relative flex-1 rounded-[14px] border border-white/8 overflow-hidden backdrop-blur-3xl bg-gradient-to-br from-[#0b1220]/40 via-[#2b1b3a]/20 to-[#091021]/40 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+            <div className="relative flex-1 rounded-[14px] border border-[var(--border)] overflow-hidden backdrop-blur-3xl bg-[var(--surface-panel)] shadow-[0_8px_32px_var(--shadow)]">
 
                 {/* subtle noise */}
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay chat-noise-bg" />
@@ -980,15 +980,15 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                     {/* Contact header / Selection header */}
                     {selectMode ? (
                         /* Selection Header - WhatsApp style */
-                        <div className="flex items-center justify-between mt-3 mx-8 mb-4 px- py-3 rounded-[12px] bg-[rgba(15,23,42,0.9)] border border-white/10">
+                        <div className="flex items-center justify-between mt-3 mx-8 mb-4 px- py-3 rounded-[12px] bg-[var(--surface-input)] border border-[var(--border)]">
                             <div className="flex items-center gap-4">
                                 <button
                                     onClick={exitSelectMode}
-                                    className="p-2 rounded-lg bg-transparent text-white/70 cursor-pointer flex items-center justify-center hover:bg-white/10 transition-colors"
+                                    className="p-2 rounded-lg bg-transparent text-[var(--text-secondary)] cursor-pointer flex items-center justify-center hover:bg-[var(--surface-hover)] transition-colors"
                                 >
                                     <X size={20} />
                                 </button>
-                                <span className="text-[16px] font-medium text-[#30FBE6]">
+                                <span className="text-[16px] font-medium text-[var(--accent)]">
                                     {selectedMessages.length} selected
                                 </span>
                             </div>
@@ -997,8 +997,8 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                     onClick={handleCopySelected}
                                     disabled={selectedMessages.length === 0}
                                     className={`p-2.5 rounded-lg border-0 bg-transparent flex items-center justify-center transition-colors ${selectedMessages.length > 0
-                                        ? 'text-white/70 cursor-pointer hover:bg-white/10'
-                                        : 'text-white/30 cursor-not-allowed'
+                                        ? 'text-[var(--text-secondary)] cursor-pointer hover:bg-[var(--surface-hover)]'
+                                        : 'text-[var(--text-tertiary)] cursor-not-allowed'
                                         }`}
                                     title="Copy"
                                 >
@@ -1008,8 +1008,8 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                     onClick={handleForwardSelected}
                                     disabled={selectedMessages.length === 0}
                                     className={`p-2.5 rounded-lg border-0 bg-transparent flex items-center justify-center transition-colors ${selectedMessages.length > 0
-                                        ? 'text-white/70 cursor-pointer hover:bg-white/10'
-                                        : 'text-white/30 cursor-not-allowed'
+                                        ? 'text-[var(--text-secondary)] cursor-pointer hover:bg-[var(--surface-hover)]'
+                                        : 'text-[var(--text-tertiary)] cursor-not-allowed'
                                         }`}
                                     title="Forward"
                                 >
@@ -1020,7 +1020,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                     disabled={selectedMessages.length === 0}
                                     className={`p-2.5 rounded-lg border-0 bg-transparent flex items-center justify-center transition-colors ${selectedMessages.length > 0
                                         ? 'text-red-500 cursor-pointer hover:bg-red-500/10'
-                                        : 'text-white/30 cursor-not-allowed'
+                                        : 'text-[var(--text-tertiary)] cursor-not-allowed'
                                         }`}
                                     title="Delete"
                                 >
@@ -1032,25 +1032,25 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                         /* Normal Contact header */
                         <div className="flex items-center justify-between mt-4 pt-0 px-8">
                             <div className="">
-                                <h2 className="text-[36px] leading-none font-medium text-white/95 tracking-tight mt-2">
+                                <h2 style={{ fontSize: '36px', lineHeight: 1, fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '-0.025em', marginTop: '8px', fontFamily: 'var(--font-main)' }}>
                                     {selectedContact.fullName}
                                 </h2>
                                 <div className="flex items-center gap-3 mt-1 mb-0">
-                                    <div className={`w-2.5 h-2.5 rounded-full ${contactOnlineStatus === 'online' ? 'bg-green-400 shadow-[0_0_10px_rgba(34,197,94,0.45)]' : 'bg-gray-500'}`} />
-                                    <span className="text-[12px] text-gray-400/80">{contactOnlineStatus === 'online' ? 'Online' : 'Offline'}</span>
+                                    <div className={`w-2.5 h-2.5 rounded-full ${contactOnlineStatus === 'online' ? 'bg-[var(--status-online)] shadow-[0_0_10px_var(--status-online-shadow)]' : 'bg-[var(--text-tertiary)]'}`} />
+                                    <span className="text-[12px] text-[var(--text-secondary)]">{contactOnlineStatus === 'online' ? 'Online' : 'Offline'}</span>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-4 relative mt-[-60px]" ref={menuRef}>
-                                <button className="text-gray-300/70 hover:text-white/95 transition-colors" onClick={() => onStartCall?.('voice')}>
+                                <button className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" onClick={() => onStartCall?.('voice')}>
                                     <Phone size={18} strokeWidth={1.5} />
                                 </button>
-                                <button className="text-gray-300/70 hover:text-white/95 transition-colors" onClick={() => onStartCall?.('video')}>
+                                <button className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" onClick={() => onStartCall?.('video')}>
                                     <Video size={18} strokeWidth={1.5} />
                                 </button>
                                 <button
                                     onClick={() => setShowMenu(!showMenu)}
-                                    className="text-gray-300/70 hover:text-white/95 transition-colors"
+                                    className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                                 >
                                     <MoreHorizontal size={18} strokeWidth={1.5} />
                                 </button>
@@ -1058,28 +1058,28 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                 {/* Dropdown Menu */}
                                 {showMenu && (
                                     <div
-                                        className="absolute right-0 top-10 z-50 w-[180px] rounded-[12px] overflow-hidden bg-[rgba(15,23,42,0.95)] backdrop-blur-2xl border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] animate-[fadeSlideIn_0.15s_ease-out]"
+                                        className="absolute right-0 top-10 z-50 w-[180px] rounded-[12px] overflow-hidden bg-[var(--bg-base)] backdrop-blur-2xl border border-[var(--border)] shadow-[0_10px_40px_var(--shadow)] animate-[fadeSlideIn_0.15s_ease-out]"
                                     >
                                         <div className="p-1.5">
                                             <button
                                                 onClick={() => handleMenuOption('search')}
-                                                className="menu-item w-full flex items-center gap-[10px] px-3 py-2.5 rounded-[8px] border-0 bg-transparent text-[13px] text-white/85 cursor-pointer transition-colors hover:bg-white/10"
+                                                className="menu-item w-full flex items-center gap-[10px] px-3 py-2.5 rounded-[8px] border-0 bg-transparent text-[13px] text-[var(--text-primary)] cursor-pointer transition-colors hover:bg-[var(--surface-hover)]"
                                             >
-                                                <Search size={15} className="text-[#30FBE6] shrink-0" />
+                                                <Search size={15} className="text-[var(--accent)] shrink-0" />
                                                 <span>Search Messages</span>
                                             </button>
                                             <button
                                                 onClick={() => handleMenuOption('select')}
-                                                className="menu-item w-full flex items-center gap-[10px] px-3 py-2.5 rounded-[8px] border-0 bg-transparent text-[13px] text-white/85 cursor-pointer transition-colors hover:bg-white/10"
+                                                className="menu-item w-full flex items-center gap-[10px] px-3 py-2.5 rounded-[8px] border-0 bg-transparent text-[13px] text-[var(--text-primary)] cursor-pointer transition-colors hover:bg-[var(--surface-hover)]"
                                             >
-                                                <CheckSquare size={15} className="text-[#30FBE6] shrink-0" />
+                                                <CheckSquare size={15} className="text-[var(--accent)] shrink-0" />
                                                 <span>{selectMode ? 'Cancel Selection' : 'Select Message'}</span>
                                             </button>
                                             <button
                                                 onClick={() => handleMenuOption('profile')}
-                                                className="menu-item w-full flex items-center gap-[10px] px-3 py-2.5 rounded-[8px] border-0 bg-transparent text-[13px] text-white/85 cursor-pointer transition-colors hover:bg-white/10"
+                                                className="menu-item w-full flex items-center gap-[10px] px-3 py-2.5 rounded-[8px] border-0 bg-transparent text-[13px] text-[var(--text-primary)] cursor-pointer transition-colors hover:bg-[var(--surface-hover)]"
                                             >
-                                                <User size={15} className="text-[#a855f7] shrink-0" />
+                                                <User size={15} className="text-[var(--accent-secondary)] shrink-0" />
                                                 <span>View Profile</span>
                                             </button>
                                         </div>
@@ -1091,19 +1091,19 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
 
                     {/* Search Bar */}
                     {searchMode && (
-                        <div className="flex items-center gap-3 mx-8 mb-3 px-4 py-2.5 rounded-[12px] bg-[rgba(15,23,42,0.8)] border border-cyan-400/20 shadow-[0_0_20px_rgba(48,251,230,0.05)] animate-[fadeSlideIn_0.2s_ease-out]">
-                            <Search size={16} className="text-[#30FBE6] shrink-0" />
+                        <div className="flex items-center gap-3 mx-8 mb-3 px-4 py-2.5 rounded-[12px] bg-[var(--surface-input)] border border-[var(--border-accent)] shadow-[0_0_20px_var(--shadow-glow)] animate-[fadeSlideIn_0.2s_ease-out]">
+                            <Search size={16} className="text-[var(--accent)] shrink-0" />
                             <input
                                 ref={searchInputRef}
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search messages..."
-                                className="flex-1 bg-transparent border-0 outline-none text-white/90 text-[14px] caret-[#30FBE6] font-sans"
+                                className="flex-1 bg-transparent border-0 outline-none text-[var(--text-primary)] text-[14px] caret-[var(--accent)] font-sans"
                             />
                             {searchQuery && (
-                                <div className="flex items-center gap-2 border-l border-white/10 pl-2 pr-1">
-                                    <span className="text-[12px] text-white/50 whitespace-nowrap min-w-[40px] text-center">
+                                <div className="flex items-center gap-2 border-l border-[var(--border)] pl-2 pr-1">
+                                    <span className="text-[12px] text-[var(--text-secondary)] whitespace-nowrap min-w-[40px] text-center">
                                         {matchingMessageIds.length > 0
                                             ? `${currentMatchIndex + 1} of ${matchingMessageIds.length}`
                                             : '0 found'}
@@ -1112,14 +1112,14 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                         <button
                                             onClick={prevMatch}
                                             disabled={matchingMessageIds.length === 0}
-                                            className="p-0.5 rounded bg-white/5 border-0 text-white/80 cursor-pointer leading-none hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+                                            className="p-0.5 rounded bg-[var(--surface)] border-0 text-[var(--text-primary)] cursor-pointer leading-none hover:bg-[var(--surface-hover)] disabled:opacity-40 disabled:cursor-not-allowed"
                                         >
                                             <ChevronUp size={12} />
                                         </button>
                                         <button
                                             onClick={nextMatch}
                                             disabled={matchingMessageIds.length === 0}
-                                            className="p-0.5 rounded bg-white/5 border-0 text-white/80 cursor-pointer leading-none hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+                                            className="p-0.5 rounded bg-[var(--surface)] border-0 text-[var(--text-primary)] cursor-pointer leading-none hover:bg-[var(--surface-hover)] disabled:opacity-40 disabled:cursor-not-allowed"
                                         >
                                             <ChevronDown size={12} />
                                         </button>
@@ -1128,7 +1128,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                             )}
                             <button
                                 onClick={closeSearch}
-                                className="p-1 rounded-md border-0 bg-transparent text-white/50 cursor-pointer flex items-center justify-center shrink-0 hover:text-white/90 transition-colors"
+                                className="p-1 rounded-md border-0 bg-transparent text-[var(--text-secondary)] cursor-pointer flex items-center justify-center shrink-0 hover:text-[var(--text-primary)] transition-colors"
                             >
                                 <X size={16} />
                             </button>
@@ -1145,19 +1145,15 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                         }}
                     >
 
-                        {/* large faint watermark behind messages - centered */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none">
-                            <span className="text-[120px] font-bold text-white/[0.03] blur-[1px] whitespace-nowrap">{selectedContact.fullName}</span>
-                        </div>
 
                         {loadingMsgs ? (
                             <div className="flex justify-center py-[20px]">
-                                <div className="w-8 h-8 rounded-full border-[3px] border-cyan-400/15 border-t-[#30FBE6] animate-[chatSpin_0.8s_linear_infinite]" />
+                                <div className="w-8 h-8 rounded-full border-[3px] border-[var(--border-accent)] border-t-[var(--accent)] animate-[chatSpin_0.8s_linear_infinite]" />
                             </div>
                         ) : processedMessages.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-[20px] gap-2">
-                                <MessageSquare size={32} className="text-white/15" />
-                                <span className="text-white/30 text-[14px]">No messages yet. Say hello!</span>
+                                <MessageSquare size={32} className="text-[var(--text-tertiary)]" />
+                                <span className="text-[var(--text-tertiary)] text-[14px]">No messages yet. Say hello!</span>
                             </div>
                         ) : (
                             <div className="relative z-10 pb-4 px-8 mt-1">
@@ -1200,7 +1196,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                     marginTop,
                                                     selectMode ? 'cursor-pointer' : '',
                                                     '-mx-4 px-4',
-                                                    isSelected ? 'bg-[rgba(48,251,230,0.08)]' : 'bg-transparent',
+                                                    isSelected ? 'bg-[var(--surface-selected)]' : 'bg-transparent',
                                                     isSelected ? (prevSelected ? 'pt-1' : 'pt-2') : 'pt-0',
                                                     isSelected ? (nextSelected ? 'pb-1' : 'pb-2') : 'pb-0',
                                                     getSelectionRadiusClass(),
@@ -1224,7 +1220,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                 {selectMode && (
                                                     <div className={[
                                                         'w-[22px] h-[22px] rounded-full flex items-center justify-center shrink-0 transition-all duration-150 ease-out',
-                                                        isSelected ? 'bg-[#30FBE6] border-0' : 'bg-transparent border-2 border-white/30',
+                                                        isSelected ? 'bg-[var(--accent)] border-0' : 'bg-transparent border-2 border-[var(--border-hover)]',
                                                     ].join(' ')}>
                                                         {isSelected && <Check size={14} className="text-black" />}
                                                     </div>
@@ -1233,14 +1229,14 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                     'flex items-stretch gap-6 max-w-[70%] rounded-[12px] transition-all duration-300',
                                                     'ease-[cubic-bezier(0.4,0,0.2,1)] origin-left',
                                                     searchMode && searchQuery && !isSearchMatch ? 'opacity-30' : 'opacity-100',
-                                                    isCurrentMatch ? 'scale-[1.02] shadow-[0_0_20px_rgba(48,251,230,0.15)]' : 'scale-100 shadow-none',
+                                                    isCurrentMatch ? 'scale-[1.02] shadow-[0_0_20px_var(--shadow-glow)]' : 'scale-100 shadow-none',
                                                 ].filter(Boolean).join(' ')}>
-                                                    <div className={`w-[4px] ${barRounding} bg-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.18)]`} />
+                                                    <div className={`w-[4px] ${barRounding} bg-[var(--accent-secondary)] shadow-[0_0_12px_rgba(var(--accent-secondary-rgb),0.18)]`} />
                                                     <div className="flex flex-col gap-0.5 py-[2px]">
-                                                        {showTimestamp && <div className="text-[12px] text-gray-400/75 mb-0.5">{formatTime(msg.createdAt)}</div>}
+                                                        {showTimestamp && <div className="text-[12px] text-[var(--text-secondary)] mb-0.5">{formatTime(msg.createdAt)}</div>}
                                                         {msg.replyTo && (
                                                             <div
-                                                                className="flex items-stretch gap-2 mb-1.5 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] cursor-pointer hover:bg-white/[0.07] transition-colors max-w-[400px]"
+                                                                className="flex items-stretch gap-2 mb-1.5 px-3 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] cursor-pointer hover:bg-[var(--surface-hover)] transition-colors max-w-[400px]"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     const replyId = msg.replyTo._id || msg.replyTo;
@@ -1251,39 +1247,39 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                                         const containerHeight = container.clientHeight;
                                                                         container.scrollTo({ top: elementTop - containerHeight / 2 + el.offsetHeight / 2, behavior: 'smooth' });
                                                                         el.style.transition = 'background 0.3s';
-                                                                        el.style.background = 'rgba(48,251,230,0.08)';
+                                                                        el.style.background = 'var(--surface-selected)';
                                                                         setTimeout(() => { el.style.background = 'transparent'; }, 1500);
                                                                     }
                                                                 }}
                                                             >
                                                                 <div className="w-[3px] rounded-full bg-purple-400/60 shrink-0" />
                                                                 <div className="flex flex-col gap-0.5 min-w-0">
-                                                                    <span className="text-[11px] font-semibold text-purple-400/80">
+                                                                    <span className="text-[11px] font-semibold text-[var(--accent-secondary)]/80">
                                                                         {msg.replyTo.senderId === authUser._id ? 'You' : selectedContact?.fullName}
                                                                     </span>
-                                                                    <span className="text-[12px] text-white/40 truncate">
+                                                                    <span className="text-[12px] text-[var(--text-tertiary)] truncate">
                                                                         {msg.replyTo.text || (msg.replyTo.image ? '📎 Media' : 'Message')}
                                                                     </span>
                                                                 </div>
                                                             </div>
                                                         )}
                                                         {msg.text?.toLowerCase() !== 'voice' && (
-                                                            <div className="text-[15px] leading-snug text-white/85 max-w-[720px]">{msg.text}</div>
+                                                            <div className="text-[15px] leading-snug text-[var(--text-primary)] max-w-[720px]">{msg.text}</div>
                                                         )}
                                                         {msg.image && (
                                                             isDocumentUrl(msg.image) ? (
                                                                 <div
-                                                                    className="flex items-center gap-3 p-3 mt-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors w-[260px] cursor-pointer group"
+                                                                    className="flex items-center gap-3 p-3 mt-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--surface-hover)] transition-colors w-[260px] cursor-pointer group"
                                                                     onClick={() => downloadAttachment(msg.image)}
                                                                 >
                                                                     <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex shrink-0 items-center justify-center">
                                                                         <FileIcon size={20} className="text-blue-400" />
                                                                     </div>
                                                                     <div className="flex-1 min-w-0 flex items-center">
-                                                                        <div className="text-[14px] font-medium text-white/90 truncate">Document</div>
+                                                                        <div className="text-[14px] font-medium text-[var(--text-primary)] truncate">Document</div>
                                                                     </div>
-                                                                    <div className="w-8 h-8 rounded-full bg-white/5 flex shrink-0 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                        <Download size={14} className="text-white/70" />
+                                                                    <div className="w-8 h-8 rounded-full bg-[var(--surface)] flex shrink-0 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        <Download size={14} className="text-[var(--text-secondary)]" />
                                                                     </div>
                                                                 </div>
                                                             ) : (msg.image.toLowerCase().includes('.mp3') || msg.image.toLowerCase().includes('.wav') || msg.image.toLowerCase().includes('.ogg') || msg.image.toLowerCase().includes('.m4a') || msg.image.toLowerCase().includes('audio/') || (msg.image.toLowerCase().includes('base64') && msg.image.toLowerCase().startsWith('data:audio')) || msg.text?.toLowerCase().includes('voice')) ? (
@@ -1296,18 +1292,18 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                                         src={msg.image}
                                                                         alt="attachment"
                                                                         onClick={() => setLightboxImage(msg.image)}
-                                                                        className="w-full max-h-[280px] rounded-[10px] object-cover border border-white/10 transition-transform duration-200 hover:scale-[1.02]"
+                                                                        className="w-full max-h-[280px] rounded-[10px] object-cover border border-[var(--border)] transition-transform duration-200 hover:scale-[1.02]"
                                                                     />
                                                                     <button
                                                                         onClick={(e) => { e.stopPropagation(); downloadAttachment(msg.image); }}
-                                                                        className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70 border border-white/20"
+                                                                        className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70 border border-[var(--border-hover)]"
                                                                     >
-                                                                        <Download size={14} className="text-white" />
+                                                                        <Download size={14} className="text-[var(--text-primary)]" />
                                                                     </button>
                                                                 </div>
                                                             )
                                                         )}
-                                                        {msg.isEdited && <span className="text-[10px] text-gray-500 italic">edited</span>}
+                                                        {msg.isEdited && <span className="text-[10px] text-[var(--text-tertiary)] italic">edited</span>}
                                                     </div>
                                                 </div>
                                             </div>
@@ -1324,7 +1320,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                     marginTop,
                                                     selectMode ? 'cursor-pointer' : '',
                                                     '-mx-4 px-4',
-                                                    isSelected ? 'bg-[rgba(48,251,230,0.08)]' : 'bg-transparent',
+                                                    isSelected ? 'bg-[var(--surface-selected)]' : 'bg-transparent',
                                                     isSelected ? (prevSelected ? 'pt-1' : 'pt-2') : 'pt-0',
                                                     isSelected ? (nextSelected ? 'pb-1' : 'pb-2') : 'pb-0',
                                                     getSelectionRadiusClass(),
@@ -1349,13 +1345,13 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                     'flex items-stretch gap-6 max-w-[70%] rounded-[12px] transition-all duration-300',
                                                     'ease-[cubic-bezier(0.4,0,0.2,1)] origin-right',
                                                     searchMode && searchQuery && !isSearchMatch ? 'opacity-30' : 'opacity-100',
-                                                    isCurrentMatch ? 'scale-[1.02] shadow-[0_0_20px_rgba(48,251,230,0.15)]' : 'scale-100 shadow-none',
+                                                    isCurrentMatch ? 'scale-[1.02] shadow-[0_0_20px_var(--shadow-glow)]' : 'scale-100 shadow-none',
                                                 ].filter(Boolean).join(' ')}>
                                                     <div className="flex flex-col gap-0.5 items-end py-[2px]">
-                                                        {showTimestamp && <div className="text-[12px] text-gray-400/70 mb-0.5">{formatTime(msg.createdAt)}</div>}
+                                                        {showTimestamp && <div className="text-[12px] text-[var(--text-secondary)] mb-0.5">{formatTime(msg.createdAt)}</div>}
                                                         {msg.replyTo && (
                                                             <div
-                                                                className="flex items-stretch gap-2 mb-1.5 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] cursor-pointer hover:bg-white/[0.07] transition-colors max-w-[400px] self-end"
+                                                                className="flex items-stretch gap-2 mb-1.5 px-3 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] cursor-pointer hover:bg-[var(--surface-hover)] transition-colors max-w-[400px] self-end"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     const replyId = msg.replyTo._id || msg.replyTo;
@@ -1366,39 +1362,39 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                                         const containerHeight = container.clientHeight;
                                                                         container.scrollTo({ top: elementTop - containerHeight / 2 + el.offsetHeight / 2, behavior: 'smooth' });
                                                                         el.style.transition = 'background 0.3s';
-                                                                        el.style.background = 'rgba(48,251,230,0.08)';
+                                                                        el.style.background = 'var(--surface-selected)';
                                                                         setTimeout(() => { el.style.background = 'transparent'; }, 1500);
                                                                     }
                                                                 }}
                                                             >
-                                                                <div className="w-[3px] rounded-full bg-cyan-400/60 shrink-0" />
+                                                                <div className="w-[3px] rounded-full bg-[var(--accent)]/60 shrink-0" />
                                                                 <div className="flex flex-col gap-0.5 min-w-0 items-end">
-                                                                    <span className="text-[11px] font-semibold text-cyan-400/80">
+                                                                    <span className="text-[11px] font-semibold text-[var(--accent)]">
                                                                         {msg.replyTo.senderId === authUser._id ? 'You' : selectedContact?.fullName}
                                                                     </span>
-                                                                    <span className="text-[12px] text-white/40 truncate max-w-[300px]">
+                                                                    <span className="text-[12px] text-[var(--text-tertiary)] truncate max-w-[300px]">
                                                                         {msg.replyTo.text || (msg.replyTo.image ? '📎 Media' : 'Message')}
                                                                     </span>
                                                                 </div>
                                                             </div>
                                                         )}
                                                         {msg.text?.toLowerCase() !== 'voice' && (
-                                                            <div className="text-[15px] leading-snug text-white/85 text-right">{msg.text}</div>
+                                                            <div className="text-[15px] leading-snug text-[var(--text-primary)] text-right">{msg.text}</div>
                                                         )}
                                                         {msg.image && (
                                                             isDocumentUrl(msg.image) ? (
                                                                 <div
-                                                                    className="flex items-center gap-3 p-3 mt-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors w-[260px] cursor-pointer group"
+                                                                    className="flex items-center gap-3 p-3 mt-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--surface-hover)] transition-colors w-[260px] cursor-pointer group"
                                                                     onClick={() => downloadAttachment(msg.image)}
                                                                 >
                                                                     <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex shrink-0 items-center justify-center">
                                                                         <FileIcon size={20} className="text-blue-400" />
                                                                     </div>
                                                                     <div className="flex-1 min-w-0 flex items-center">
-                                                                        <div className="text-[14px] font-medium text-white/90 truncate">Document</div>
+                                                                        <div className="text-[14px] font-medium text-[var(--text-primary)] truncate">Document</div>
                                                                     </div>
-                                                                    <div className="w-8 h-8 rounded-full bg-white/5 flex shrink-0 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                        <Download size={14} className="text-white/70" />
+                                                                    <div className="w-8 h-8 rounded-full bg-[var(--surface)] flex shrink-0 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        <Download size={14} className="text-[var(--text-secondary)]" />
                                                                     </div>
                                                                 </div>
                                                             ) : (msg.image.toLowerCase().includes('.mp3') || msg.image.toLowerCase().includes('.wav') || msg.image.toLowerCase().includes('.ogg') || msg.image.toLowerCase().includes('.m4a') || msg.image.toLowerCase().includes('audio/') || (msg.image.toLowerCase().includes('base64') && msg.image.toLowerCase().startsWith('data:audio')) || msg.text === 'Voice') ? (
@@ -1411,26 +1407,26 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                                         src={msg.image}
                                                                         alt="attachment"
                                                                         onClick={() => setLightboxImage(msg.image)}
-                                                                        className="w-full max-h-[280px] rounded-[10px] object-cover border border-white/10 transition-transform duration-200 hover:scale-[1.02]"
+                                                                        className="w-full max-h-[280px] rounded-[10px] object-cover border border-[var(--border)] transition-transform duration-200 hover:scale-[1.02]"
                                                                     />
                                                                     <button
                                                                         onClick={(e) => { e.stopPropagation(); downloadAttachment(msg.image); }}
-                                                                        className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70 border border-white/20"
+                                                                        className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70 border border-[var(--border-hover)]"
                                                                     >
-                                                                        <Download size={14} className="text-white" />
+                                                                        <Download size={14} className="text-[var(--text-primary)]" />
                                                                     </button>
                                                                 </div>
                                                             )
                                                         )}
-                                                        {msg.isEdited && <span className="text-[10px] text-gray-500 italic">edited</span>}
+                                                        {msg.isEdited && <span className="text-[10px] text-[var(--text-tertiary)] italic">edited</span>}
                                                     </div>
-                                                    <div className={`w-[4px] ${barRounding} ${msg.status === 'read' ? 'bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.14)]' : 'bg-gray-500 shadow-none'}`} />
+                                                    <div className={`w-[4px] ${barRounding} ${msg.status === 'read' ? 'bg-[var(--accent)] shadow-[0_0_12px_var(--shadow-glow)]' : 'bg-[var(--text-tertiary)] shadow-none'}`} />
                                                 </div>
                                                 {/* Selection checkbox */}
                                                 {selectMode && (
                                                     <div className={[
                                                         'w-[22px] h-[22px] rounded-full flex items-center justify-center shrink-0 transition-all duration-150 ease-out',
-                                                        isSelected ? 'bg-[#30FBE6] border-0' : 'bg-transparent border-2 border-white/30',
+                                                        isSelected ? 'bg-[var(--accent)] border-0' : 'bg-transparent border-2 border-[var(--border-hover)]',
                                                     ].join(' ')}>
                                                         {isSelected && <Check size={14} className="text-black" />}
                                                     </div>
@@ -1449,11 +1445,11 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                     {isContactTyping && (
                         <div className="flex items-center gap-2 px-8 py-2">
                             <div className="flex gap-1 items-center">
-                                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:0s] [animation-duration:0.6s]" />
-                                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:0.15s] [animation-duration:0.6s]" />
-                                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:0.3s] [animation-duration:0.6s]" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-bounce [animation-delay:0s] [animation-duration:0.6s]" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-bounce [animation-delay:0.15s] [animation-duration:0.6s]" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-bounce [animation-delay:0.3s] [animation-duration:0.6s]" />
                             </div>
-                            <span className="text-[12px] text-cyan-400/70 italic">{selectedContact.fullName} is typing...</span>
+                            <span className="text-[12px] text-[var(--accent)] italic">{selectedContact.fullName} is typing...</span>
                         </div>
                     )}
 
@@ -1470,19 +1466,19 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                     <div className="flex flex-col justify-center mt-auto pt-4 pb-5 w-[86%] max-w-[820px] self-center">
                         {/* Reply preview banner */}
                         {replyingTo && (
-                            <div className="flex items-stretch gap-3 px-[18px] py-3 mb-2.5 rounded-[14px] bg-[rgba(15,23,42,0.9)] border border-white/15 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] animate-[slideUp_0.15s_ease-out]">
-                                <div className={`w-[4px] rounded-full shrink-0 ${replyingTo.senderId === authUser._id ? 'bg-cyan-400' : 'bg-purple-500'}`} />
+                            <div className="flex items-stretch gap-3 px-[18px] py-3 mb-2.5 rounded-[14px] bg-[var(--surface-input)] border border-[var(--border)] backdrop-blur-2xl shadow-[0_8px_32px_var(--shadow)] animate-[slideUp_0.15s_ease-out]">
+                                <div className={`w-[4px] rounded-full shrink-0 ${replyingTo.senderId === authUser._id ? 'bg-[var(--accent)]' : 'bg-[var(--accent-secondary)]'}`} />
                                 <div className="flex-1 min-w-0">
-                                    <div className={`text-[12px] font-semibold mb-0.5 ${replyingTo.senderId === authUser._id ? 'text-cyan-400' : 'text-purple-400'}`}>
+                                    <div className={`text-[12px] font-semibold mb-0.5 ${replyingTo.senderId === authUser._id ? 'text-[var(--accent)]' : 'text-[var(--accent-secondary)]'}`}>
                                         {replyingTo.senderId === authUser._id ? 'You' : selectedContact?.fullName}
                                     </div>
-                                    <div className="text-[13px] text-white/50 truncate">
+                                    <div className="text-[13px] text-[var(--text-secondary)] truncate">
                                         {replyingTo.text || (replyingTo.image ? '📎 Media' : 'Message')}
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => setReplyingTo(null)}
-                                    className="w-8 h-8 rounded-full flex items-center justify-center bg-white/5 text-white/40 hover:bg-red-500/20 hover:text-red-400 transition-all self-center"
+                                    className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--surface)] text-[var(--text-tertiary)] hover:bg-red-500/20 hover:text-red-400 transition-all self-center"
                                 >
                                     <X size={14} />
                                 </button>
@@ -1490,14 +1486,14 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                         )}
                         {/* Attachment preview bar */}
                         {selectedImage && (
-                            <div className="flex items-center gap-3 px-[18px] py-3 mb-2.5 rounded-[14px] bg-[rgba(15,23,42,0.9)] border border-white/15 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+                            <div className="flex items-center gap-3 px-[18px] py-3 mb-2.5 rounded-[14px] bg-[var(--surface-input)] border border-[var(--border)] backdrop-blur-2xl shadow-[0_8px_32px_var(--shadow)]">
                                 {attachedFileType === 'image' && imagePreview ? (
-                                    <img src={imagePreview} alt="preview" className="w-[44px] h-[44px] rounded-lg object-cover border border-white/20" />
+                                    <img src={imagePreview} alt="preview" className="w-[44px] h-[44px] rounded-lg object-cover border border-[var(--border-hover)]" />
                                 ) : attachedFileType === 'video' && imagePreview ? (
                                     <div className="relative">
-                                        <video src={imagePreview} className="w-[44px] h-[44px] rounded-lg object-cover border border-white/20" />
+                                        <video src={imagePreview} className="w-[44px] h-[44px] rounded-lg object-cover border border-[var(--border-hover)]" />
                                         <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg">
-                                            <Video size={14} className="text-white" />
+                                            <Video size={14} className="text-[var(--text-primary)]" />
                                         </div>
                                     </div>
                                 ) : (
@@ -1506,21 +1502,21 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                     </div>
                                 )}
                                 <div className="flex-1 min-w-0">
-                                    <div className="text-[13px] text-white/90 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                                    <div className="text-[13px] text-[var(--text-primary)] font-medium whitespace-nowrap overflow-hidden text-ellipsis">
                                         {attachedFileType === 'image' ? 'Image attached' : attachedFileType === 'video' ? 'Video attached' : attachedFileName}
                                     </div>
                                     <div className="flex items-center gap-2 mt-1">
                                         {sendingImage && (
-                                            <div className="w-3 h-3 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+                                            <div className="w-3 h-3 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
                                         )}
-                                        <span className="text-[11px] text-white/40">
+                                        <span className="text-[11px] text-[var(--text-tertiary)]">
                                             {sendingImage ? 'Processing & Uploading...' : `${formatFileSize(attachedFileSize)} • Ready to send`}
                                         </span>
                                     </div>
                                 </div>
                                 <button
                                     onClick={clearImagePreview}
-                                    className="w-8 h-8 rounded-full flex items-center justify-center bg-white/5 text-white/40 hover:bg-red-500/20 hover:text-red-400 transition-all"
+                                    className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--surface)] text-[var(--text-tertiary)] hover:bg-red-500/20 hover:text-red-400 transition-all"
                                 >
                                     <X size={14} />
                                 </button>
@@ -1528,7 +1524,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                         )}
 
                         <div
-                            className="w-full h-[60px] bg-slate-900/40 backdrop-blur-2xl border border-white/10 shadow-2xl flex items-center relative rounded-[16px] pl-2 pr-[10px]"
+                            className="w-full h-[60px] bg-[var(--surface-input)] backdrop-blur-2xl border border-[var(--border)] shadow-2xl flex items-center relative rounded-[16px] pl-2 pr-[10px]"
                         >
                             {isRecording ? (
                                 /* Recording UI */
@@ -1536,7 +1532,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                     <div className="flex items-center gap-4">
                                         <button
                                             onClick={() => setIsRecording(false)}
-                                            className="text-slate-400 hover:text-red-400 transition-colors"
+                                            className="text-[var(--text-tertiary)] hover:text-red-400 transition-colors"
                                             title="Cancel Recording"
                                         >
                                             <Trash2 size={20} />
@@ -1563,7 +1559,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                 <>
                                     <button
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="w-[44px] h-[44px] flex items-center justify-center text-slate-400 hover:text-cyan-400 hover:bg-cyan-400/10 rounded-xl transition-all shrink-0 ml-1"
+                                        className="w-[44px] h-[44px] flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--accent)] hover:bg-[rgba(var(--accent-rgb),0.1)] rounded-xl transition-all shrink-0 ml-1"
                                         title="Attach file"
                                     >
                                         <Paperclip size={22} strokeWidth={1.5} />
@@ -1587,14 +1583,14 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                         }}
                                         onKeyPress={handleKeyPress}
                                         placeholder="Type a message..."
-                                        className="flex-1 bg-transparent text-white/90 text-[15px] placeholder-white/30 outline-none px-3 h-full"
+                                        className="flex-1 bg-transparent text-[var(--text-primary)] text-[15px] placeholder-[var(--text-tertiary)] outline-none px-3 h-full"
                                     />
 
                                     <div className="flex items-center gap-2">
                                         {!message.trim() && !selectedImage && (
                                             <button
                                                 onClick={() => setIsRecording(true)}
-                                                className="w-[44px] h-[44px] flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all shrink-0"
+                                                className="w-[44px] h-[44px] flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] rounded-xl transition-all shrink-0"
                                             >
                                                 <Mic size={22} strokeWidth={1.5} />
                                             </button>
@@ -1602,7 +1598,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                         {(message.trim() || selectedImage) && (
                                             <button
                                                 onClick={handleSendMessage}
-                                                className={`w-[44px] h-[44px] rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-900 transition-all flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.4)] transform hover:scale-105 active:scale-95`}
+                                                className={`w-[44px] h-[44px] rounded-xl bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--text-on-accent)] transition-all flex items-center justify-center shrink-0 shadow-[0_0_15px_var(--shadow-glow)] transform hover:scale-105 active:scale-95`}
                                                 aria-label="Send"
                                             >
                                                 <SendHorizontal size={20} strokeWidth={2} />
@@ -1629,23 +1625,23 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
 
                         {/* Profile Panel */}
                         <div
-                            className="fixed right-0 top-0 h-full z-50 w-[360px] bg-[rgba(15,23,42,0.95)] backdrop-blur-2xl border-l border-white/10 shadow-[-10px_0_50px_rgba(0,0,0,0.5)] animate-[slideInRight_0.25s_ease-out]"
+                            className="fixed right-0 top-0 h-full z-50 w-[360px] bg-[var(--bg-base)] backdrop-blur-2xl border-l border-[var(--border)] shadow-[-10px_0_50px_var(--shadow)] animate-[slideInRight_0.25s_ease-out]"
                         >
                             <div className="h-full flex flex-col px-6 py-5">
                                 {/* Header */}
                                 <div className="flex items-center justify-between mb-6">
                                     <button
                                         onClick={() => setShowProfile(false)}
-                                        className="p-2 rounded-lg border-0 bg-transparent text-white/60 cursor-pointer flex items-center justify-center hover:bg-white/10 hover:text-white/90 transition-colors"
+                                        className="p-2 rounded-lg border-0 bg-transparent text-[var(--text-secondary)] cursor-pointer flex items-center justify-center hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] transition-colors"
                                     >
                                         <ArrowLeft size={20} />
                                     </button>
-                                    <span className="text-[16px] font-medium text-white/90">
+                                    <span className="text-[16px] font-medium text-[var(--text-primary)]">
                                         Profile
                                     </span>
                                     <button
                                         onClick={() => setShowProfile(false)}
-                                        className="p-2 rounded-lg border-0 bg-transparent text-white/60 cursor-pointer flex items-center justify-center hover:bg-white/10 hover:text-white/90 transition-colors"
+                                        className="p-2 rounded-lg border-0 bg-transparent text-[var(--text-secondary)] cursor-pointer flex items-center justify-center hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] transition-colors"
                                     >
                                         <X size={20} />
                                     </button>
@@ -1655,64 +1651,65 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                 <div className="flex flex-col items-center mb-6">
                                     <div className="relative mb-4">
                                         <div
-                                            className="w-[90px] h-[90px] rounded-full p-[3px] bg-[linear-gradient(135deg,#30FBE6,#a855f7)] shadow-[0_0_25px_rgba(48,251,230,0.3)] cursor-pointer transition-transform hover:scale-105"
+                                            className="w-[90px] h-[90px] rounded-full p-[3px] cursor-pointer transition-transform hover:scale-105"
+                                            style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-secondary))', boxShadow: '0 0 25px var(--shadow-glow)' }}
                                             onClick={() => selectedContact.profilePic && setLightboxImage(selectedContact.profilePic)}
                                         >
-                                            <div className="w-full h-full rounded-full bg-[rgba(15,23,42,0.95)] flex items-center justify-center overflow-hidden">
+                                            <div className="w-full h-full rounded-full flex items-center justify-center overflow-hidden" style={{ background: 'var(--surface-input)' }}>
                                                 {selectedContact.profilePic ? (
                                                     <img src={selectedContact.profilePic} alt={selectedContact.fullName} className="w-full h-full object-cover" />
                                                 ) : (
-                                                    <User size={36} className="text-white/50" />
+                                                    <User size={36} className="text-[var(--text-secondary)]" />
                                                 )}
                                             </div>
                                         </div>
-                                        <div className={`absolute bottom-[2px] right-[2px] w-[18px] h-[18px] rounded-full border-[3px] border-[rgba(15,23,42,0.95)] ${contactOnlineStatus === 'online' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-gray-500'}`} />
+                                        <div className={`absolute bottom-[2px] right-[2px] w-[18px] h-[18px] rounded-full border-[3px] border-[var(--bg-base)] ${contactOnlineStatus === 'online' ? 'bg-[var(--status-online)] shadow-[0_0_8px_var(--status-online-shadow)]' : 'bg-[var(--text-tertiary)]'}`} />
                                     </div>
-                                    <h2 className="text-[22px] font-normal text-white/95 mb-1.5 text-center">
+                                    <h2 className="text-[22px] font-normal mb-1.5 text-center" style={{ color: 'var(--text-primary)' }}>
                                         {selectedContact.fullName}
                                     </h2>
-                                    <div className={`flex items-center gap-1.5 text-[12px] ${contactOnlineStatus === 'online' ? 'text-green-500' : 'text-gray-400'}`}>
-                                        <div className={`w-1.5 h-1.5 rounded-full ${contactOnlineStatus === 'online' ? 'bg-green-500' : 'bg-gray-500'}`} />
+                                    <div className={`flex items-center gap-1.5 text-[12px] ${contactOnlineStatus === 'online' ? 'text-[var(--status-online)]' : 'text-[var(--text-tertiary)]'}`}>
+                                        <div className={`w-1.5 h-1.5 rounded-full ${contactOnlineStatus === 'online' ? 'bg-[var(--status-online)]' : 'bg-[var(--text-tertiary)]'}`} />
                                         {contactOnlineStatus === 'online' ? 'Online' : 'Offline'}
                                     </div>
                                 </div>
 
                                 {/* Divider */}
-                                <div className="h-px bg-[linear-gradient(to_right,transparent,rgba(255,255,255,0.1),transparent)] mb-5" />
+                                <div className="h-px bg-[linear-gradient(to_right,transparent,var(--border),transparent)] mb-5" />
 
                                 {/* Profile Details */}
                                 <div className="flex flex-col gap-3 flex-1 overflow-auto">
                                     {/* About / Bio */}
                                     <div
-                                        className="px-4 py-3.5 rounded-[12px] bg-white/5 border border-white/10 transition-all"
+                                        className="px-4 py-3.5 rounded-[12px] bg-[var(--surface)] border border-[var(--border)] transition-all"
                                     >
                                         <div className="flex items-center gap-2.5 mb-1">
-                                            <Info size={14} className="text-[#a855f7]" />
-                                            <span className="text-[11px] uppercase tracking-[0.05em] text-white/50">About</span>
+                                            <Info size={14} className="text-[var(--accent-secondary)]" />
+                                            <span className="text-[11px] uppercase tracking-[0.05em] text-[var(--text-secondary)]">About</span>
                                         </div>
-                                        <p className="text-[13px] text-white/80 ml-6 leading-relaxed">{selectedContact.about || 'No bio available'}</p>
+                                        <p className="text-[13px] text-[var(--text-primary)] ml-6 leading-relaxed">{selectedContact.about || 'No bio available'}</p>
                                     </div>
 
                                     {/* Email */}
                                     <div
-                                        className="px-4 py-3.5 rounded-[12px] bg-white/5 border border-white/10 cursor-pointer transition-all hover:bg-white/10 hover:border-white/20"
+                                        className="px-4 py-3.5 rounded-[12px] bg-[var(--surface)] border border-[var(--border)] cursor-pointer transition-all hover:bg-[var(--surface-hover)] hover:border-[var(--border-hover)]"
                                     >
                                         <div className="flex items-center gap-2.5 mb-1">
-                                            <Mail size={14} className="text-[#30FBE6]" />
-                                            <span className="text-[11px] uppercase tracking-[0.05em] text-white/50">Email</span>
+                                            <Mail size={14} className="text-[var(--accent)]" />
+                                            <span className="text-[11px] uppercase tracking-[0.05em] text-[var(--text-secondary)]">Email</span>
                                         </div>
-                                        <p className="text-[13px] text-white/80 ml-6">{selectedContact.email}</p>
+                                        <p className="text-[13px] text-[var(--text-primary)] ml-6">{selectedContact.email}</p>
                                     </div>
 
                                     {/* Member Since */}
                                     <div
-                                        className="px-4 py-3.5 rounded-[12px] bg-white/5 border border-white/10 cursor-pointer transition-all hover:bg-white/10 hover:border-white/20"
+                                        className="px-4 py-3.5 rounded-[12px] bg-[var(--surface)] border border-[var(--border)] cursor-pointer transition-all hover:bg-[var(--surface-hover)] hover:border-[var(--border-hover)]"
                                     >
                                         <div className="flex items-center gap-2.5 mb-1">
-                                            <User size={14} className="text-[#a855f7]" />
-                                            <span className="text-[11px] uppercase tracking-[0.05em] text-white/50">Member Since</span>
+                                            <User size={14} className="text-[var(--accent-secondary)]" />
+                                            <span className="text-[11px] uppercase tracking-[0.05em] text-[var(--text-secondary)]">Member Since</span>
                                         </div>
-                                        <p className="text-[13px] text-white/80 ml-6">
+                                        <p className="text-[13px] text-[var(--text-primary)] ml-6">
                                             {selectedContact.createdAt ? new Date(selectedContact.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Unknown'}
                                         </p>
                                     </div>
@@ -1722,12 +1719,12 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                 <div className="flex flex-col gap-2.5 mt-5">
                                     <button
                                         onClick={() => setShowProfile(false)}
-                                        className="w-full py-3 rounded-[10px] border border-cyan-400/30 bg-cyan-400/10 text-[#30FBE6] text-[13px] font-medium cursor-pointer transition-colors hover:bg-cyan-400/20"
+                                        className="w-full py-3 rounded-[10px] border border-[var(--border-accent-strong)] bg-[rgba(var(--accent-rgb),0.1)] text-[var(--accent)] text-[13px] font-medium cursor-pointer transition-colors hover:bg-[rgba(var(--accent-rgb),0.2)]"
                                     >
                                         Send Message
                                     </button>
                                     <button
-                                        className="w-full py-3 rounded-[10px] border border-white/10 bg-white/5 text-white/60 text-[13px] cursor-pointer transition-colors hover:bg-white/10 hover:text-white/80"
+                                        className="w-full py-3 rounded-[10px] border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] text-[13px] cursor-pointer transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]/80"
                                     >
                                         Block User
                                     </button>
@@ -1777,7 +1774,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                     }] : []),
                                     { divider: true },
                                     {
-                                        label: 'Delete for Me', icon: <Trash2 size={16} />, color: '#ef4444', onClick: async () => {
+                                        label: 'Delete for Me', icon: <Trash2 size={16} />, color: 'var(--status-danger)', onClick: async () => {
                                             try {
                                                 await deleteForMe(contextMenu.msgId);
                                                 setMessages(prev => prev.filter(m => m._id !== contextMenu.msgId));
@@ -1785,7 +1782,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                         }
                                     },
                                     ...(contextMenu.msgSenderId === authUser._id ? [{
-                                        label: 'Delete for Everyone', icon: <Trash2 size={16} />, color: '#ef4444', onClick: async () => {
+                                        label: 'Delete for Everyone', icon: <Trash2 size={16} />, color: 'var(--status-danger)', onClick: async () => {
                                             try {
                                                 await deleteForEveryone(contextMenu.msgId);
                                                 setMessages(prev => prev.filter(m => m._id !== contextMenu.msgId));
@@ -1803,7 +1800,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                         }
                                     },
                                     { divider: true },
-                                    { label: 'Clear Chat', icon: <Trash2 size={16} />, color: '#ef4444', onClick: () => { } },
+                                    { label: 'Clear Chat', icon: <Trash2 size={16} />, color: 'var(--status-danger)', onClick: () => { } },
                                 ]
                         }
                     />
@@ -1817,20 +1814,20 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                     onClick={() => setShowInfoModal(false)}
                 >
                     <div
-                        className="w-full max-w-[400px] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+                        className="w-full max-w-[400px] bg-[var(--bg-base)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}
-                        <div className="px-6 py-5 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+                        <div className="px-6 py-5 border-b border-[var(--border)] bg-[var(--surface)] flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
-                                    <Info size={20} className="text-cyan-400" />
+                                <div className="w-10 h-10 rounded-xl bg-[rgba(var(--accent-rgb),0.1)] flex items-center justify-center border border-[rgba(var(--accent-rgb),0.2)]">
+                                    <Info size={20} className="text-[var(--accent)]" />
                                 </div>
-                                <h3 className="text-[18px] font-bold text-white/90">Message Info</h3>
+                                <h3 className="text-[18px] font-bold text-[var(--text-primary)]">Message Info</h3>
                             </div>
                             <button
                                 onClick={() => setShowInfoModal(false)}
-                                className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:bg-white/5 hover:text-white transition-all"
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-tertiary)] hover:bg-[var(--surface)] hover:text-[var(--text-primary)] transition-all"
                             >
                                 <X size={20} />
                             </button>
@@ -1840,9 +1837,9 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                         <div className="p-6 space-y-6">
                             {/* Sent At */}
                             <div>
-                                <label className="text-[11px] uppercase tracking-[0.05em] text-white/30 font-semibold mb-2 block">Sent At</label>
-                                <div className="flex items-center gap-3 text-white/80">
-                                    <div className="p-2 rounded-lg bg-white/5 border border-white/10">
+                                <label className="text-[11px] uppercase tracking-[0.05em] text-[var(--text-tertiary)] font-semibold mb-2 block">Sent At</label>
+                                <div className="flex items-center gap-3 text-[var(--text-primary)]">
+                                    <div className="p-2 rounded-lg bg-[var(--surface)] border border-[var(--border)]">
                                         <Phone size={14} className="text-blue-400 rotate-90" /> {/* Just a clock-like icon if Clock is not imported */}
                                     </div>
                                     <span className="text-[14px]">
@@ -1861,10 +1858,10 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
 
                             {/* Seen At */}
                             <div>
-                                <label className="text-[11px] uppercase tracking-[0.05em] text-white/30 font-semibold mb-2 block">Seen At</label>
-                                <div className="flex items-center gap-3 text-white/80">
-                                    <div className="p-2 rounded-lg bg-white/5 border border-white/10">
-                                        <Check size={14} className="text-green-400" />
+                                <label className="text-[11px] uppercase tracking-[0.05em] text-[var(--text-tertiary)] font-semibold mb-2 block">Seen At</label>
+                                <div className="flex items-center gap-3 text-[var(--text-primary)]">
+                                    <div className="p-2 rounded-lg bg-[var(--surface)] border border-[var(--border)]">
+                                        <Check size={14} className="text-[var(--status-online)]" />
                                     </div>
                                     <span className="text-[14px]">
                                         {selectedInfoMessage.status === 'read' && selectedInfoMessage.readAt ? new Date(selectedInfoMessage.readAt).toLocaleString('en-US', {
@@ -1882,10 +1879,10 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
 
                             {/* Message Type */}
                             <div>
-                                <label className="text-[11px] uppercase tracking-[0.05em] text-white/30 font-semibold mb-2 block">Message Type</label>
-                                <div className="flex items-center gap-3 text-white/80">
-                                    <div className="p-2 rounded-lg bg-white/5 border border-white/10">
-                                        <MessageSquare size={14} className="text-purple-400" />
+                                <label className="text-[11px] uppercase tracking-[0.05em] text-[var(--text-tertiary)] font-semibold mb-2 block">Message Type</label>
+                                <div className="flex items-center gap-3 text-[var(--text-primary)]">
+                                    <div className="p-2 rounded-lg bg-[var(--surface)] border border-[var(--border)]">
+                                        <MessageSquare size={14} className="text-[var(--accent-secondary)]" />
                                     </div>
                                     <span className="text-[14px] capitalize">
                                         {selectedInfoMessage.image ? (
@@ -1899,17 +1896,17 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
 
                             {/* Additional Details for Attachments */}
                             {selectedInfoMessage.image && (
-                                <div className="pt-4 border-t border-white/5">
-                                    <label className="text-[11px] uppercase tracking-[0.05em] text-white/30 font-semibold mb-2 block">Attachment Details</label>
-                                    <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 space-y-3">
+                                <div className="pt-4 border-t border-[var(--border)]">
+                                    <label className="text-[11px] uppercase tracking-[0.05em] text-[var(--text-tertiary)] font-semibold mb-2 block">Attachment Details</label>
+                                    <div className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] space-y-3">
                                         <div className="flex justify-between text-[13px]">
-                                            <span className="text-white/40">Source</span>
-                                            <span className="text-cyan-400/80 font-mono truncate max-w-[200px]">Cloudinary</span>
+                                            <span className="text-[var(--text-tertiary)]">Source</span>
+                                            <span className="text-[var(--accent)] font-mono truncate max-w-[200px]">Cloudinary</span>
                                         </div>
                                         <div className="flex justify-between text-[13px]">
-                                            <span className="text-white/40">Status</span>
-                                            <span className="text-green-400 flex items-center gap-1.5">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                                            <span className="text-[var(--text-tertiary)]">Status</span>
+                                            <span className="text-[var(--status-online)] flex items-center gap-1.5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-[var(--status-online)]" />
                                                 Uploaded
                                             </span>
                                         </div>
@@ -1919,10 +1916,10 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                         </div>
 
                         {/* Footer */}
-                        <div className="px-6 py-4 bg-white/[0.02] border-t border-white/5 flex justify-end">
+                        <div className="px-6 py-4 bg-[var(--surface)] border-t border-[var(--border)] flex justify-end">
                             <button
                                 onClick={() => setShowInfoModal(false)}
-                                className="px-5 py-2 bg-white/5 hover:bg-white/10 text-white/90 text-[13px] font-semibold rounded-lg transition-all"
+                                className="px-5 py-2 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--text-primary)] text-[13px] font-semibold rounded-lg transition-all"
                             >
                                 Close
                             </button>
@@ -1939,38 +1936,38 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                         onClick={() => setShowForwardModal(false)}
                     >
                         <div
-                            className="w-full max-w-[440px] max-h-[85vh] flex flex-col bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+                            className="w-full max-w-[440px] max-h-[85vh] flex flex-col bg-[var(--bg-base)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Modal Header */}
-                            <div className="shrink-0 px-6 py-5 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+                            <div className="shrink-0 px-6 py-5 border-b border-[var(--border)] bg-[var(--surface)] flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center justify-center">
-                                        <Forward size={24} className="text-cyan-400" />
+                                        <Forward size={24} className="text-[var(--accent)]" />
                                     </div>
                                     <div>
-                                        <h3 className="text-[17px] font-semibold text-white/90">Forward Message</h3>
-                                        <p className="text-[12px] text-white/40">{selectedMessages.length} item{selectedMessages.length > 1 ? 's' : ''} selected</p>
+                                        <h3 className="text-[17px] font-semibold text-[var(--text-primary)]">Forward Message</h3>
+                                        <p className="text-[12px] text-[var(--text-tertiary)]">{selectedMessages.length} item{selectedMessages.length > 1 ? 's' : ''} selected</p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => setShowForwardModal(false)}
-                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:bg-white/5 hover:text-white transition-all"
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-tertiary)] hover:bg-[var(--surface)] hover:text-[var(--text-primary)] transition-all"
                                 >
                                     <X size={20} />
                                 </button>
                             </div>
 
                             {/* Search Box */}
-                            <div className="shrink-0 px-6 py-5 bg-white/[0.01]">
+                            <div className="shrink-0 px-6 py-5 bg-[var(--surface)]">
                                 <div className="relative group">
-                                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-cyan-400 transition-colors" />
+                                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] group-focus-within:text-[var(--accent)] transition-colors" />
                                     <input
                                         type="text"
                                         placeholder="Search contacts..."
                                         value={forwardSearch}
                                         onChange={(e) => setForwardSearch(e.target.value)}
-                                        className="w-full h-11 bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 text-[14px] text-white/90 placeholder-white/20 outline-none focus:border-cyan-500/30 focus:bg-white/[0.07] transition-all"
+                                        className="w-full h-11 bg-[var(--surface)] border border-[var(--border)] rounded-xl pl-12 pr-4 text-[14px] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] outline-none focus:border-[var(--border-accent)] focus:bg-[var(--surface-hover)] transition-all"
                                     />
                                 </div>
                             </div>
@@ -1989,25 +1986,25 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                         isSelected ? prev.filter(id => id !== contact._id) : [...prev, contact._id]
                                                     );
                                                 }}
-                                                className={`group flex items-center gap-4 py-2.5 px-3 rounded-lg cursor-pointer transition-all ${isSelected ? 'bg-cyan-500/10 border border-cyan-500/20' : 'hover:bg-white/5 border border-transparent'}`}
+                                                className={`group flex items-center gap-4 py-2.5 px-3 rounded-lg cursor-pointer transition-all ${isSelected ? 'bg-[rgba(var(--accent-rgb),0.1)] border border-[rgba(var(--accent-rgb),0.2)]' : 'hover:bg-[var(--surface)] border border-transparent'}`}
                                             >
                                                 <div className="relative">
                                                     {contact.profilePic ? (
                                                         <img src={contact.profilePic} alt="" className="w-11 h-11 rounded-lg object-cover" />
                                                     ) : (
-                                                        <div className="w-11 h-11 rounded-lg bg-slate-800 flex items-center justify-center text-white/40 font-medium">
+                                                        <div className="w-11 h-11 rounded-lg bg-[var(--surface)] flex items-center justify-center text-[var(--text-tertiary)] font-medium">
                                                             {getInitials(contact.fullName)}
                                                         </div>
                                                     )}
                                                     {isSelected && (
-                                                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-cyan-500 rounded-full border-2 border-slate-900 flex items-center justify-center shadow-lg">
-                                                            <Check size={12} className="text-slate-900 stroke-[3]" />
+                                                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--accent)] rounded-full border-2 border-[var(--bg-base)] flex items-center justify-center shadow-lg">
+                                                            <Check size={12} className="text-[var(--text-on-accent)] stroke-[3]" />
                                                         </div>
                                                     )}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <h4 className={`text-[14px] font-medium truncate ${isSelected ? 'text-white' : 'text-white/80'}`}>{contact.fullName}</h4>
-                                                    <p className="text-[12px] text-white/30 truncate">{contact.email}</p>
+                                                    <h4 className={`text-[14px] font-medium truncate ${isSelected ? 'text-[var(--text-on-accent)]' : 'text-[var(--text-primary)]'}`}>{contact.fullName}</h4>
+                                                    <p className="text-[12px] text-[var(--text-tertiary)] truncate">{contact.email}</p>
                                                 </div>
                                             </div>
                                         );
@@ -2015,14 +2012,14 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                             </div>
 
                             {/* Multi-Forward Footer */}
-                            <div className="shrink-0 px-6 py-5 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
-                                <span className="text-[14px] text-white/40 font-medium whitespace-nowrap">
+                            <div className="shrink-0 px-6 py-5 border-t border-[var(--border)] bg-[var(--surface)] flex items-center justify-between">
+                                <span className="text-[14px] text-[var(--text-tertiary)] font-medium whitespace-nowrap">
                                     {forwardSelectedUsers.length} selected
                                 </span>
                                 <button
                                     onClick={handleForwardSubmit}
                                     disabled={forwardSelectedUsers.length === 0}
-                                    className="px-6 py-3 bg-cyan-500 hover:bg-cyan-400 disabled:bg-white/5 disabled:text-white/20 text-slate-900 font-semibold rounded-xl text-[14px] transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/10 active:scale-95 whitespace-nowrap"
+                                    className="px-6 py-3 bg-[var(--accent)] hover:bg-[var(--accent)] disabled:bg-[var(--surface)] disabled:text-[var(--text-tertiary)] text-[var(--text-on-accent)] font-semibold rounded-xl text-[14px] transition-all flex items-center gap-2 shadow-lg shadow-[var(--shadow-glow)] active:scale-95 whitespace-nowrap"
                                 >
                                     <Forward size={18} />
                                     Forward Now
@@ -2041,14 +2038,14 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                         onClick={() => setShowDeleteModal(false)}
                     >
                         <div
-                            className="w-full max-w-[400px] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-8 flex flex-col items-center text-center animate-in zoom-in-95 duration-200"
+                            className="w-full max-w-[400px] bg-[var(--bg-base)] border border-[var(--border)] rounded-2xl shadow-2xl p-8 flex flex-col items-center text-center animate-in zoom-in-95 duration-200"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mb-6 border border-red-500/20">
                                 <Trash2 size={32} className="text-red-500" />
                             </div>
-                            <h3 className="text-[20px] font-bold text-white/90 mb-2">Delete Messages?</h3>
-                            <p className="text-[14px] text-white/40 mb-8 max-w-[280px]">
+                            <h3 className="text-[20px] font-bold text-[var(--text-primary)] mb-2">Delete Messages?</h3>
+                            <p className="text-[14px] text-[var(--text-tertiary)] mb-8 max-w-[280px]">
                                 This action cannot be undone. Are you sure you want to delete {selectedMessages.length} message{selectedMessages.length > 1 ? 's' : ''}?
                             </p>
 
@@ -2056,20 +2053,20 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                 {selectedMessages.every(id => messages.find(m => m._id === id)?.senderId === authUser._id) && (
                                     <button
                                         onClick={() => executeDelete('everyone')}
-                                        className="w-full py-3.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl text-[14px] transition-all shadow-lg shadow-red-500/20 active:scale-95 flex items-center justify-center gap-2"
+                                        className="w-full py-3.5 bg-red-500 hover:bg-red-600 text-[var(--text-primary)] font-semibold rounded-xl text-[14px] transition-all shadow-lg shadow-red-500/20 active:scale-95 flex items-center justify-center gap-2"
                                     >
                                         Delete for Everyone
                                     </button>
                                 )}
                                 <button
                                     onClick={() => executeDelete('me')}
-                                    className="w-full py-3.5 bg-white/5 hover:bg-white/10 text-white/90 font-semibold rounded-xl text-[14px] border border-white/10 transition-all active:scale-95"
+                                    className="w-full py-3.5 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--text-primary)] font-semibold rounded-xl text-[14px] border border-[var(--border)] transition-all active:scale-95"
                                 >
                                     Delete for Me
                                 </button>
                                 <button
                                     onClick={() => setShowDeleteModal(false)}
-                                    className="w-full py-2 text-[14px] text-white/30 hover:text-white/60 transition-all mt-2"
+                                    className="w-full py-2 text-[14px] text-[var(--text-tertiary)] hover:text-[var(--text-primary)]/60 transition-all mt-2"
                                 >
                                     Cancel
                                 </button>
@@ -2087,19 +2084,19 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                         onClick={() => setShowEditModal(false)}
                     >
                         <div
-                            className="w-full max-w-[500px] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200"
+                            className="w-full max-w-[500px] bg-[var(--bg-base)] border border-[var(--border)] rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between">
+                            <div className="px-8 py-6 border-b border-[var(--border)] flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
-                                        <MessageSquare size={20} className="text-cyan-400" />
+                                    <div className="w-10 h-10 rounded-xl bg-[rgba(var(--accent-rgb),0.1)] flex items-center justify-center border border-[rgba(var(--accent-rgb),0.2)]">
+                                        <MessageSquare size={20} className="text-[var(--accent)]" />
                                     </div>
-                                    <h3 className="text-[18px] font-bold text-white/90">Edit Message</h3>
+                                    <h3 className="text-[18px] font-bold text-[var(--text-primary)]">Edit Message</h3>
                                 </div>
                                 <button
                                     onClick={() => setShowEditModal(false)}
-                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:bg-white/5 hover:text-white transition-all"
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-tertiary)] hover:bg-[var(--surface)] hover:text-[var(--text-primary)] transition-all"
                                 >
                                     <X size={20} />
                                 </button>
@@ -2109,21 +2106,21 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                 <textarea
                                     value={editMessageText}
                                     onChange={(e) => setEditMessageText(e.target.value)}
-                                    className="w-full min-h-[160px] bg-white/5 border border-white/10 rounded-xl p-5 text-[15px] text-white/90 placeholder-white/20 outline-none focus:border-cyan-500/30 focus:bg-white/[0.07] transition-all resize-none shadow-inner"
+                                    className="w-full min-h-[160px] bg-[var(--surface)] border border-[var(--border)] rounded-xl p-5 text-[15px] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] outline-none focus:border-[var(--border-accent)] focus:bg-[var(--surface-hover)] transition-all resize-none shadow-inner"
                                     placeholder="Type your message..."
                                     autoFocus
                                 />
                                 <div className="flex items-center justify-end gap-3 mt-8">
                                     <button
                                         onClick={() => setShowEditModal(false)}
-                                        className="px-6 py-2.5 text-[14px] font-medium text-white/40 hover:text-white/80 transition-all"
+                                        className="px-6 py-2.5 text-[14px] font-medium text-[var(--text-tertiary)] hover:text-[var(--text-primary)]/80 transition-all"
                                     >
                                         Discard
                                     </button>
                                     <button
                                         onClick={handleEditSubmit}
                                         disabled={!editMessageText.trim() || editMessageText === messages.find(m => m._id === editingMessageId)?.text}
-                                        className="px-8 py-2.5 bg-cyan-500 hover:bg-cyan-400 disabled:bg-white/5 disabled:text-white/20 text-slate-900 font-bold rounded-xl text-[14px] transition-all shadow-lg shadow-cyan-500/10 active:scale-95"
+                                        className="px-8 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent)] disabled:bg-[var(--surface)] disabled:text-[var(--text-tertiary)] text-[var(--text-on-accent)] font-bold rounded-xl text-[14px] transition-all shadow-lg shadow-[var(--shadow-glow)] active:scale-95"
                                     >
                                         Save Changes
                                     </button>
@@ -2145,7 +2142,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                     >
                         <button
                             onClick={(e) => { e.stopPropagation(); setLightboxImage(null); }}
-                            className="absolute top-5 right-6 z-[101] w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center cursor-pointer text-white/80 transition-colors hover:bg-white/20"
+                            className="absolute top-5 right-6 z-[101] w-10 h-10 rounded-full bg-[var(--surface-hover)] border border-[var(--border-hover)] flex items-center justify-center cursor-pointer text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-hover)]"
                         >
                             <X size={20} />
                         </button>
@@ -2153,7 +2150,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                             src={lightboxImage}
                             alt="Full size"
                             onClick={(e) => e.stopPropagation()}
-                            className="max-w-[90vw] max-h-[90vh] object-contain rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] cursor-default animate-[fadeSlideIn_0.25s_ease-out]"
+                            className="max-w-[90vw] max-h-[90vh] object-contain rounded-xl shadow-[0_20px_60px_var(--shadow)] cursor-default animate-[fadeSlideIn_0.25s_ease-out]"
                         />
                     </div>
                 )
