@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AppWindow, MoreHorizontal, Play, Eye, Bookmark, Flag, RefreshCw, PlusCircle, UserPlus, X, Search, Archive, RotateCcw, FileText as FileIcon } from 'lucide-react';
 import ContextMenu from './ContextMenu';
 import { getChatPartners, getContacts, toggleArchiveUser, getArchivedUsers } from '../api';
-import { getSocket } from '../services/socket';
+import { getSocket, getActiveUsers } from '../services/socket';
 import './StreamPanel.css';
 
 const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
@@ -19,7 +19,14 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
     const [loadingArchived, setLoadingArchived] = useState(false);
     const [showHeaderMenu, setShowHeaderMenu] = useState(false);
     const headerMenuRef = useRef(null);
-    const [onlineUsers, setOnlineUsers] = useState({});
+    const [onlineUsers, setOnlineUsers] = useState(() => {
+        const users = getActiveUsers();
+        const map = {};
+        users.forEach((id) => {
+            map[id] = 'online';
+        });
+        return map;
+    });
     const [unreadCounts, setUnreadCounts] = useState({});
     const selectedContactIdRef = useRef(selectedContactId);
 
