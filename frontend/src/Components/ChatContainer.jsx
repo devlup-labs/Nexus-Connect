@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Phone, Video, MoreHorizontal, SendHorizontal, X, Mail, Phone as PhoneIcon, User, Info, ArrowLeft, CheckSquare, Trash2, Forward, Copy, Check, Search, ChevronUp, ChevronDown, Reply, MessageSquare, Paperclip, Mic, Image as ImageIcon, FileText as FileIcon, XCircle, Square as StopIcon, Download, Play, Pause, Maximize, Volume2, VolumeX, Minimize } from 'lucide-react';
 import ContextMenu from './ContextMenu';
 import { getMessages, sendMessage, deleteForMe, deleteForEveryone, editMessage, getContacts } from '../api';
+import { getSocket, emitTyping, emitStoppedTyping, emitMarkAsRead } from '../services/socket';
 
 const CustomAudioPlayer = ({ src }) => {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -335,10 +336,17 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
     const [editMessageText, setEditMessageText] = useState('');
     const attachMenuRef = useRef(null);
     const [showAttachMenu, setShowAttachMenu] = useState(false);
+    const [replyingTo, setReplyingTo] = useState(null);
 
     // New states for Message Info
     const [showInfoModal, setShowInfoModal] = useState(false);
     const [selectedInfoMessage, setSelectedInfoMessage] = useState(null);
+
+    // WebSocket states
+    const [isContactTyping, setIsContactTyping] = useState(false);
+    const [contactOnlineStatus, setContactOnlineStatus] = useState('offline');
+    const typingTimeoutRef = useRef(null);
+    const activeUsersRef = useRef([]);
 
     // Recording timer and click outside effects
     useEffect(() => {
@@ -424,12 +432,23 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
         }
     }, [showForwardModal]);
 
-    // Fetch messages when a contact is selected
+    // Fetch messages when a contact is selected (HTTP for history, no more polling)
     useEffect(() => {
         if (!selectedContact?._id) {
             setMessages([]);
             return;
         }
+
+        // Reset per-chat state when switching contacts
+        setIsContactTyping(false);
+        setMessage('');
+        setReplyingTo(null);
+        setSearchMode(false);
+        setSearchQuery('');
+        setSelectMode(false);
+        setSelectedMessages([]);
+        setShowMenu(false);
+        setShowProfile(false);
         let cancelled = false;
 
         const fetchMessages = async () => {
@@ -438,6 +457,13 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                 const res = await getMessages(selectedContact._id);
                 if (!cancelled) {
                     setMessages(res.data);
+                    // Mark unread messages as read
+                    const unreadMsgIds = res.data
+                        .filter(m => m.receiverId === authUser._id && m.status !== 'read')
+                        .map(m => m._id);
+                    if (unreadMsgIds.length > 0) {
+                        emitMarkAsRead(unreadMsgIds, selectedContact._id);
+                    }
                 }
             } catch (err) {
                 console.error('Failed to fetch messages:', err);
@@ -448,19 +474,116 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
 
         fetchMessages();
 
-        // Poll for new messages every 3 seconds
-        const interval = setInterval(async () => {
-            try {
-                const res = await getMessages(selectedContact._id);
-                if (!cancelled) setMessages(res.data);
-            } catch (err) { /* silently fail */ }
-        }, 3000);
-
         return () => {
             cancelled = true;
-            clearInterval(interval);
         };
     }, [selectedContact?._id]);
+
+    // ── Set initial online status when contact changes using cached active users ──
+    useEffect(() => {
+        if (selectedContact?._id) {
+            setContactOnlineStatus(
+                activeUsersRef.current.includes(selectedContact._id) ? 'online' : 'offline'
+            );
+        } else {
+            setContactOnlineStatus('offline');
+        }
+    }, [selectedContact?._id]);
+
+    // ── WebSocket listeners for real-time updates ──────────
+    useEffect(() => {
+        const socket = getSocket();
+        if (!socket) return;
+
+        const handleMessageReceived = (newMessage) => {
+            // Only add if it's for the current conversation
+            const isFromSelectedContact = newMessage.senderId === selectedContact?._id;
+            const isToSelectedContact = newMessage.receiverId === selectedContact?._id;
+            if (isFromSelectedContact || isToSelectedContact) {
+                setMessages(prev => {
+                    // Avoid duplicates (in case REST already added it)
+                    if (prev.some(m => m._id === newMessage._id)) return prev;
+                    return [...prev, newMessage];
+                });
+                // If incoming, mark as read immediately since we're viewing this chat
+                if (isFromSelectedContact && newMessage.status !== 'read') {
+                    emitMarkAsRead([newMessage._id], selectedContact._id);
+                }
+            }
+        };
+
+        const handleMessageEdited = (data) => {
+            setMessages(prev =>
+                prev.map(m =>
+                    m._id === data.messageId
+                        ? { ...m, text: data.newText, isEdited: true }
+                        : m
+                )
+            );
+        };
+
+        const handleMessageDeleted = (data) => {
+            setMessages(prev => prev.filter(m => m._id !== data.messageId));
+        };
+
+        const handleTypingIndicator = (data) => {
+            if (data.userId === selectedContact?._id) {
+                setIsContactTyping(data.isTyping);
+            }
+        };
+
+        const handleUserStatus = (data) => {
+            // Update the ref so it stays current
+            if (data.status === 'online') {
+                if (!activeUsersRef.current.includes(data.userId)) {
+                    activeUsersRef.current = [...activeUsersRef.current, data.userId];
+                }
+            } else {
+                activeUsersRef.current = activeUsersRef.current.filter(id => id !== data.userId);
+            }
+            if (data.userId === selectedContact?._id) {
+                setContactOnlineStatus(data.status);
+            }
+        };
+
+        const handleMessagesRead = (data) => {
+            setMessages(prev =>
+                prev.map(m =>
+                    data.messageIds.includes(m._id)
+                        ? { ...m, status: 'read', readAt: data.readAt }
+                        : m
+                )
+            );
+        };
+
+        const handleActiveUsers = (activeUserIds) => {
+            // Always update the ref with the latest list
+            activeUsersRef.current = activeUserIds;
+            if (selectedContact?._id) {
+                setContactOnlineStatus(
+                    activeUserIds.includes(selectedContact._id) ? 'online' : 'offline'
+                );
+            }
+        };
+
+        socket.on('message_received', handleMessageReceived);
+        socket.on('message_edited', handleMessageEdited);
+        socket.on('message_deleted', handleMessageDeleted);
+        socket.on('typing_indicator', handleTypingIndicator);
+        socket.on('user_status_update', handleUserStatus);
+        socket.on('messages_read', handleMessagesRead);
+        socket.on('active_users', handleActiveUsers);
+
+        return () => {
+            socket.off('message_received', handleMessageReceived);
+            socket.off('message_edited', handleMessageEdited);
+            socket.off('message_deleted', handleMessageDeleted);
+            socket.off('typing_indicator', handleTypingIndicator);
+            socket.off('user_status_update', handleUserStatus);
+            socket.off('messages_read', handleMessagesRead);
+            socket.off('active_users', handleActiveUsers);
+        };
+    }, [selectedContact?._id, authUser?._id]);
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -738,9 +861,11 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
         const text = message.trim();
         const imageToSend = selectedImage;
         const typeToSend = attachedFileType;
+        const currentReplyTo = replyingTo;
 
         setMessage('');
         clearImagePreview();
+        setReplyingTo(null);
 
         // Optimistic update
         const optimisticMsg = {
@@ -749,6 +874,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
             receiverId: selectedContact._id,
             text: text || undefined,
             image: imagePreview || undefined,
+            replyTo: currentReplyTo || undefined,
             createdAt: new Date().toISOString(),
             _optimistic: true,
         };
@@ -762,6 +888,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
             if (text) payload.text = text;
             if (imageToSend) payload.image = imageToSend;
             if (imageToSend && attachedFileType === 'audio') payload.text = 'Voice';
+            if (currentReplyTo) payload.replyTo = currentReplyTo._id;
             const res = await sendMessage(selectedContact._id, payload);
             // Replace optimistic message with real one
             setMessages(prev =>
@@ -772,6 +899,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
             // Remove optimistic message on failure
             setMessages(prev => prev.filter(m => m._id !== optimisticMsg._id));
             if (text) setMessage(text);
+            setReplyingTo(currentReplyTo);
         } finally {
             setSendingImage(false);
         }
@@ -898,8 +1026,8 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                                     {selectedContact.fullName}
                                 </h2>
                                 <div className="flex items-center gap-3 mt-1 mb-0">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-green-400 shadow-[0_0_10px_rgba(34,197,94,0.45)]" />
-                                    <span className="text-[12px] text-gray-400/80" >You messaged {selectedContact.fullName}</span>
+                                    <div className={`w-2.5 h-2.5 rounded-full ${contactOnlineStatus === 'online' ? 'bg-green-400 shadow-[0_0_10px_rgba(34,197,94,0.45)]' : 'bg-gray-500'}`} />
+                                    <span className="text-[12px] text-gray-400/80">{contactOnlineStatus === 'online' ? 'Online' : 'Offline'}</span>
                                 </div>
                             </div>
 
@@ -1100,6 +1228,35 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                                                     <div className={`w-[4px] ${barRounding} bg-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.18)]`} />
                                                     <div className="flex flex-col gap-0.5 py-[2px]">
                                                         {showTimestamp && <div className="text-[12px] text-gray-400/75 mb-0.5">Received • {formatTime(msg.createdAt)}</div>}
+                                                        {msg.replyTo && (
+                                                            <div
+                                                                className="flex items-stretch gap-2 mb-1.5 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] cursor-pointer hover:bg-white/[0.07] transition-colors max-w-[400px]"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const replyId = msg.replyTo._id || msg.replyTo;
+                                                                    const el = document.getElementById(`msg-${replyId}`);
+                                                                    const container = messagesContainerRef.current;
+                                                                    if (el && container) {
+                                                                        const elementTop = el.offsetTop - container.offsetTop;
+                                                                        const containerHeight = container.clientHeight;
+                                                                        container.scrollTo({ top: elementTop - containerHeight / 2 + el.offsetHeight / 2, behavior: 'smooth' });
+                                                                        el.style.transition = 'background 0.3s';
+                                                                        el.style.background = 'rgba(48,251,230,0.08)';
+                                                                        setTimeout(() => { el.style.background = 'transparent'; }, 1500);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <div className="w-[3px] rounded-full bg-purple-400/60 shrink-0" />
+                                                                <div className="flex flex-col gap-0.5 min-w-0">
+                                                                    <span className="text-[11px] font-semibold text-purple-400/80">
+                                                                        {msg.replyTo.senderId === authUser._id ? 'You' : selectedContact?.fullName}
+                                                                    </span>
+                                                                    <span className="text-[12px] text-white/40 truncate">
+                                                                        {msg.replyTo.text || (msg.replyTo.image ? '📎 Media' : 'Message')}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                         {msg.text?.toLowerCase() !== 'voice' && (
                                                             <div className="text-[15px] leading-snug text-white/85 max-w-[720px]">{msg.text}</div>
                                                         )}
@@ -1186,6 +1343,35 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                                                 ].filter(Boolean).join(' ')}>
                                                     <div className="flex flex-col gap-0.5 items-end py-[2px]">
                                                         {showTimestamp && <div className="text-[12px] text-gray-400/70 mb-0.5">{formatTime(msg.createdAt)}</div>}
+                                                        {msg.replyTo && (
+                                                            <div
+                                                                className="flex items-stretch gap-2 mb-1.5 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] cursor-pointer hover:bg-white/[0.07] transition-colors max-w-[400px] self-end"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const replyId = msg.replyTo._id || msg.replyTo;
+                                                                    const el = document.getElementById(`msg-${replyId}`);
+                                                                    const container = messagesContainerRef.current;
+                                                                    if (el && container) {
+                                                                        const elementTop = el.offsetTop - container.offsetTop;
+                                                                        const containerHeight = container.clientHeight;
+                                                                        container.scrollTo({ top: elementTop - containerHeight / 2 + el.offsetHeight / 2, behavior: 'smooth' });
+                                                                        el.style.transition = 'background 0.3s';
+                                                                        el.style.background = 'rgba(48,251,230,0.08)';
+                                                                        setTimeout(() => { el.style.background = 'transparent'; }, 1500);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <div className="w-[3px] rounded-full bg-cyan-400/60 shrink-0" />
+                                                                <div className="flex flex-col gap-0.5 min-w-0 items-end">
+                                                                    <span className="text-[11px] font-semibold text-cyan-400/80">
+                                                                        {msg.replyTo.senderId === authUser._id ? 'You' : selectedContact?.fullName}
+                                                                    </span>
+                                                                    <span className="text-[12px] text-white/40 truncate max-w-[300px]">
+                                                                        {msg.replyTo.text || (msg.replyTo.image ? '📎 Media' : 'Message')}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                         {msg.text?.toLowerCase() !== 'voice' && (
                                                             <div className="text-[15px] leading-snug text-white/85 text-right">{msg.text}</div>
                                                         )}
@@ -1249,6 +1435,18 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                         )}
                     </div>
 
+                    {/* Typing indicator */}
+                    {isContactTyping && (
+                        <div className="flex items-center gap-2 px-8 py-2">
+                            <div className="flex gap-1 items-center">
+                                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:0s] [animation-duration:0.6s]" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:0.15s] [animation-duration:0.6s]" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:0.3s] [animation-duration:0.6s]" />
+                            </div>
+                            <span className="text-[12px] text-cyan-400/70 italic">{selectedContact.fullName} is typing...</span>
+                        </div>
+                    )}
+
                     {/* Bottom centered input */}
                     {/* Hidden file input */}
                     <input
@@ -1260,6 +1458,26 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                     />
 
                     <div className="flex flex-col justify-center mt-auto pt-4 pb-5 w-[86%] max-w-[820px] self-center">
+                        {/* Reply preview banner */}
+                        {replyingTo && (
+                            <div className="flex items-stretch gap-3 px-[18px] py-3 mb-2.5 rounded-[14px] bg-[rgba(15,23,42,0.9)] border border-white/15 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] animate-[slideUp_0.15s_ease-out]">
+                                <div className={`w-[4px] rounded-full shrink-0 ${replyingTo.senderId === authUser._id ? 'bg-cyan-400' : 'bg-purple-500'}`} />
+                                <div className="flex-1 min-w-0">
+                                    <div className={`text-[12px] font-semibold mb-0.5 ${replyingTo.senderId === authUser._id ? 'text-cyan-400' : 'text-purple-400'}`}>
+                                        {replyingTo.senderId === authUser._id ? 'You' : selectedContact?.fullName}
+                                    </div>
+                                    <div className="text-[13px] text-white/50 truncate">
+                                        {replyingTo.text || (replyingTo.image ? '📎 Media' : 'Message')}
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setReplyingTo(null)}
+                                    className="w-8 h-8 rounded-full flex items-center justify-center bg-white/5 text-white/40 hover:bg-red-500/20 hover:text-red-400 transition-all self-center"
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        )}
                         {/* Attachment preview bar */}
                         {selectedImage && (
                             <div className="flex items-center gap-3 px-[18px] py-3 mb-2.5 rounded-[14px] bg-[rgba(15,23,42,0.9)] border border-white/15 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
@@ -1344,7 +1562,19 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                                     <input
                                         type="text"
                                         value={message}
-                                        onChange={(e) => setMessage(e.target.value)}
+                                        onChange={(e) => {
+                                            setMessage(e.target.value);
+                                            // Emit typing indicator
+                                            if (e.target.value.length > 0 && selectedContact) {
+                                                emitTyping(selectedContact._id);
+                                                clearTimeout(typingTimeoutRef.current);
+                                                typingTimeoutRef.current = setTimeout(() => {
+                                                    emitStoppedTyping(selectedContact._id);
+                                                }, 2000);
+                                            } else if (selectedContact) {
+                                                emitStoppedTyping(selectedContact._id);
+                                            }
+                                        }}
                                         onKeyPress={handleKeyPress}
                                         placeholder="Type a message..."
                                         className="flex-1 bg-transparent text-white/90 text-[15px] placeholder-white/30 outline-none px-3 h-full"
@@ -1439,6 +1669,17 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
 
                                 {/* Profile Details */}
                                 <div className="flex flex-col gap-3 flex-1 overflow-auto">
+                                    {/* About / Bio */}
+                                    <div
+                                        className="px-4 py-3.5 rounded-[12px] bg-white/5 border border-white/10 transition-all"
+                                    >
+                                        <div className="flex items-center gap-2.5 mb-1">
+                                            <Info size={14} className="text-[#a855f7]" />
+                                            <span className="text-[11px] uppercase tracking-[0.05em] text-white/50">About</span>
+                                        </div>
+                                        <p className="text-[13px] text-white/80 ml-6 leading-relaxed">{selectedContact.about || 'No bio available'}</p>
+                                    </div>
+
                                     {/* Email */}
                                     <div
                                         className="px-4 py-3.5 rounded-[12px] bg-white/5 border border-white/10 cursor-pointer transition-all hover:bg-white/10 hover:border-white/20"
@@ -1494,7 +1735,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                         items={
                             contextMenu.type === 'message'
                                 ? [
-                                    { label: 'Reply', icon: <Reply size={16} />, onClick: () => { } },
+                                    { label: 'Reply', icon: <Reply size={16} />, onClick: () => { setReplyingTo(contextMenu.fullMsg); } },
                                     { label: 'Copy', icon: <Copy size={16} />, onClick: () => navigator.clipboard.writeText(contextMenu.msgText) },
                                     {
                                         label: 'Forward', icon: <Forward size={16} />, onClick: () => {
