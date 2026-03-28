@@ -2,67 +2,33 @@ import mongoose from "mongoose";
 
 const callSchema = new mongoose.Schema(
     {
-        callId: {
-            type: String,
-            required: true,
-            unique: true,
-            index: true,
-        },
         callerId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
-            index: true,
         },
         receiverId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
-            index: true,
         },
-        callType: {
-            type: String,
-            enum: ["voice", "video"],
+        startTime: {
+            type: Date,
             required: true,
         },
-        status: {
-            type: String,
-            enum: ["ringing", "answered", "rejected", "missed", "canceled", "ended", "failed"],
-            default: "ringing",
-            index: true,
-        },
-        startedAt: {
+        endTime: {
             type: Date,
-            default: Date.now,
+            required: true,
         },
-        answeredAt: {
-            type: Date,
-            default: null,
-        },
-        endedAt: {
-            type: Date,
-            default: null,
-        },
-        durationSec: {
+        type: {
             type: Number,
-            default: 0,
-        },
-        endedBy: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            default: null,
-        },
-        endReason: {
-            type: String,
-            enum: ["hangup", "reject", "missed", "cancel", "network", "error"],
-            default: null,
+            required: true,
+            enum: [0, 1], //0 = voice, 1 = video
         },
     },
-    { timestamps: true }
+
 );
 
-callSchema.index({ callerId: 1, startedAt: -1 });
-callSchema.index({ receiverId: 1, startedAt: -1 });
-
 const Call = mongoose.model("Call", callSchema);
+
 export default Call;
