@@ -44,6 +44,7 @@ export const signup = async (req, res) => {
         fullName: newUser.fullName,
         email: newUser.email,
         profilePic: newUser.profilePic,
+        about: newUser.about,
       });
 
       // try {
@@ -82,6 +83,7 @@ export const login = async (req, res) => {
       fullName: user.fullName,
       email: user.email,
       profilePic: user.profilePic,
+      about: user.about,
     });
   } catch (error) {
     console.error("Error in login controller:", error);
@@ -96,7 +98,7 @@ export const logout = (_, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { profilePic, fullName } = req.body;
+    const { profilePic, fullName, about } = req.body;
     const userId = req.user._id;
 
     const updates = {};
@@ -108,6 +110,10 @@ export const updateProfile = async (req, res) => {
           .json({ message: "Name must be at least 2 characters" });
       }
       updates.fullName = fullName.trim();
+    }
+
+    if (typeof about === "string") {
+      updates.about = about.trim();
     }
 
     if (profilePic) {

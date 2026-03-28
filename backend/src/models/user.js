@@ -20,6 +20,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    about: {
+      type: String,
+      default: "",
+    },
     archivedUsers: [
       {
         type: mongoose.Schema.Types.ObjectId,

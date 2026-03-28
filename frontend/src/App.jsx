@@ -8,6 +8,7 @@ import Login from './Components/Login.jsx'
 import Signup from './Components/signup.jsx'
 import ContactsPanel from './Components/ContactsPanel.jsx'
 import { checkAuth, logout as logoutApi } from './api'
+import { initializeSocket, disconnectSocket } from './services/socket'
 
 
 
@@ -27,6 +28,16 @@ function App() {
       .finally(() => setAuthLoading(false));
   }, []);
 
+  // Initialize WebSocket when user is authenticated
+  useEffect(() => {
+    if (authUser?._id) {
+      initializeSocket(authUser._id);
+    }
+    return () => {
+      // Socket cleanup handled on logout
+    };
+  }, [authUser]);
+
   const handleAuth = (user) => {
     setAuthUser(user);
   };
@@ -37,6 +48,7 @@ function App() {
     } catch (e) {
       // ignore
     }
+    disconnectSocket();
     setAuthUser(null);
     setSelectedContact(null);
   };
@@ -123,7 +135,7 @@ function App() {
         <Dock onNavigate={setActiveView} activeView={activeView} onLogout={handleLogout} />
 
         <div className="flex items-center gap-3 h-full">
-          {activeView === 'contacts' ? <ContactsPanel /> : <StreamPanel
+          {activeView === 'contacts' ? <ContactsPanel onSendMessage={(contact) => { setSelectedContact(contact); setActiveView('messages'); }} /> : <StreamPanel
             authUser={authUser}
             selectedContactId={selectedContact?._id}
             onSelectContact={(contact) => { setSelectedContact(contact); setActiveView('messages'); }}

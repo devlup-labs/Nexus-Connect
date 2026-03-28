@@ -1,6 +1,7 @@
 import cloudinary from "../lib/cloudinary.js";
 import Message from "../models/message.js";
 import User from "../models/user.js";
+import { getIO, getActiveUsers } from "../lib/socket.js";
 
 export const getAllContacts = async (req, res) => {
   try {
@@ -25,7 +26,7 @@ export const getMessagesByUserId = async (req, res) => {
         { senderId: userToChatId, receiverId: myId },
       ],
       deletedBy: { $ne: myId },
-    });
+    }).sort({ createdAt: 1 }).populate('replyTo', 'text image senderId');
 
     res.status(200).json(messages);
   } catch (error) {
@@ -36,7 +37,7 @@ export const getMessagesByUserId = async (req, res) => {
 
 export const sendMessage = async (req, res) => {
   try {
-    const { text, image } = req.body;
+    const { text, image, replyTo } = req.body;
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
 
@@ -59,14 +60,36 @@ export const sendMessage = async (req, res) => {
       imageUrl = uploadResponse.secure_url;
     }
 
+    // Determine initial status based on receiver's online state
+    const activeUsers = getActiveUsers();
+    const initialStatus = activeUsers.has(receiverId.toString()) ? "delivered" : "sent";
+
     const newMessage = new Message({
       senderId,
       receiverId,
       text,
       image: imageUrl,
+      replyTo: replyTo || null,
+      status: initialStatus,
     });
 
     await newMessage.save();
+
+    // Populate replyTo so the response includes the referenced message data
+    if (newMessage.replyTo) {
+      await newMessage.populate('replyTo', 'text image senderId');
+    }
+
+    // Emit real-time event to receiver via WebSocket
+    try {
+      const io = getIO();
+      io.to(`user_${receiverId}`).emit("message_received", newMessage.toObject());
+      // Also notify the sender so their stream panel updates the preview
+      io.to(`user_${senderId}`).emit("message_sent_ack", newMessage.toObject());
+    } catch (socketErr) {
+      // Socket not critical for REST response
+      console.error("Socket emit error:", socketErr.message);
+    }
 
     res.status(201).json(newMessage);
   } catch (error) {
@@ -142,6 +165,20 @@ export const editMessage = async (req, res) => {
     message.isEdited = true;
     await message.save();
 
+    // Emit real-time edit event to the receiver
+    try {
+      const io = getIO();
+      const receiverId = message.receiverId.toString();
+      io.to(`user_${receiverId}`).emit("message_edited", {
+        messageId: id,
+        newText: text,
+        isEdited: true,
+        editedAt: new Date(),
+      });
+    } catch (socketErr) {
+      console.error("Socket emit error:", socketErr.message);
+    }
+
     res.status(200).json(message);
   } catch (error) {
     console.log("Error in editMessage controller:", error.message);
@@ -161,7 +198,19 @@ export const deleteForEveryone = async (req, res) => {
       return res.status(403).json({ message: "Action not allowed" });
     }
 
+    const receiverId = message.receiverId.toString();
     await Message.findByIdAndDelete(id);
+
+    // Emit real-time delete event to the receiver
+    try {
+      const io = getIO();
+      io.to(`user_${receiverId}`).emit("message_deleted", {
+        messageId: id,
+      });
+    } catch (socketErr) {
+      console.error("Socket emit error:", socketErr.message);
+    }
+
     res.status(200).json({ message: "Deleted for everyone" });
   } catch (error) {
     console.log("Error in deleteForEveryone:", error.message);
