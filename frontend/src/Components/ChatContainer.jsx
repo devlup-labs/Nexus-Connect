@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Phone, Video, MoreHorizontal, SendHorizontal, X, Mail, Phone as PhoneIcon, User, Info, ArrowLeft, CheckSquare, Trash2, Forward, Copy, Check, Search, ChevronUp, ChevronDown, Reply, MessageSquare, Paperclip, Mic, Image as ImageIcon, FileText as FileIcon, XCircle, Square as StopIcon, Download, Play, Pause, Maximize, Volume2, VolumeX, Minimize } from 'lucide-react';
 import ContextMenu from './ContextMenu';
 import { getMessages, sendMessage, deleteForMe, deleteForEveryone, editMessage, getContacts } from '../api';
-import { getSocket, emitTyping, emitStoppedTyping, emitMarkAsRead } from '../services/socket';
+import { getSocket, emitTyping, emitStoppedTyping, emitMarkAsRead, getActiveUsers } from '../services/socket';
 
 const CustomAudioPlayer = ({ src }) => {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -346,7 +346,17 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
     const [isContactTyping, setIsContactTyping] = useState(false);
     const [contactOnlineStatus, setContactOnlineStatus] = useState('offline');
     const typingTimeoutRef = useRef(null);
-    const activeUsersRef = useRef([]);
+    const activeUsersRef = useRef(getActiveUsers());
+
+    useEffect(() => {
+        if (selectedContact?._id) {
+            setContactOnlineStatus(
+                getActiveUsers().includes(selectedContact._id) ? 'online' : 'offline'
+            );
+        } else {
+            setContactOnlineStatus('offline');
+        }
+    }, [selectedContact?._id]);
 
     // Recording timer and click outside effects
     useEffect(() => {
@@ -1227,7 +1237,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                                                 ].filter(Boolean).join(' ')}>
                                                     <div className={`w-[4px] ${barRounding} bg-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.18)]`} />
                                                     <div className="flex flex-col gap-0.5 py-[2px]">
-                                                        {showTimestamp && <div className="text-[12px] text-gray-400/75 mb-0.5">Received • {formatTime(msg.createdAt)}</div>}
+                                                        {showTimestamp && <div className="text-[12px] text-gray-400/75 mb-0.5">{formatTime(msg.createdAt)}</div>}
                                                         {msg.replyTo && (
                                                             <div
                                                                 className="flex items-stretch gap-2 mb-1.5 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] cursor-pointer hover:bg-white/[0.07] transition-colors max-w-[400px]"
@@ -1414,7 +1424,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                                                         )}
                                                         {msg.isEdited && <span className="text-[10px] text-gray-500 italic">edited</span>}
                                                     </div>
-                                                    <div className={`w-[4px] ${barRounding} bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.14)]`} />
+                                                    <div className={`w-[4px] ${barRounding} ${msg.status === 'read' ? 'bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.14)]' : 'bg-gray-500 shadow-none'}`} />
                                                 </div>
                                                 {/* Selection checkbox */}
                                                 {selectMode && (
@@ -1644,7 +1654,10 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                                 {/* Avatar Section */}
                                 <div className="flex flex-col items-center mb-6">
                                     <div className="relative mb-4">
-                                        <div className="w-[90px] h-[90px] rounded-full p-[3px] bg-[linear-gradient(135deg,#30FBE6,#a855f7)] shadow-[0_0_25px_rgba(48,251,230,0.3)]">
+                                        <div
+                                            className="w-[90px] h-[90px] rounded-full p-[3px] bg-[linear-gradient(135deg,#30FBE6,#a855f7)] shadow-[0_0_25px_rgba(48,251,230,0.3)] cursor-pointer transition-transform hover:scale-105"
+                                            onClick={() => selectedContact.profilePic && setLightboxImage(selectedContact.profilePic)}
+                                        >
                                             <div className="w-full h-full rounded-full bg-[rgba(15,23,42,0.95)] flex items-center justify-center overflow-hidden">
                                                 {selectedContact.profilePic ? (
                                                     <img src={selectedContact.profilePic} alt={selectedContact.fullName} className="w-full h-full object-cover" />
@@ -1653,14 +1666,14 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="absolute bottom-[2px] right-[2px] w-[18px] h-[18px] rounded-full bg-green-500 border-[3px] border-[rgba(15,23,42,0.95)] shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+                                        <div className={`absolute bottom-[2px] right-[2px] w-[18px] h-[18px] rounded-full border-[3px] border-[rgba(15,23,42,0.95)] ${contactOnlineStatus === 'online' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-gray-500'}`} />
                                     </div>
                                     <h2 className="text-[22px] font-normal text-white/95 mb-1.5 text-center">
                                         {selectedContact.fullName}
                                     </h2>
-                                    <div className="flex items-center gap-1.5 text-[12px] text-green-500">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                        Online
+                                    <div className={`flex items-center gap-1.5 text-[12px] ${contactOnlineStatus === 'online' ? 'text-green-500' : 'text-gray-400'}`}>
+                                        <div className={`w-1.5 h-1.5 rounded-full ${contactOnlineStatus === 'online' ? 'bg-green-500' : 'bg-gray-500'}`} />
+                                        {contactOnlineStatus === 'online' ? 'Online' : 'Offline'}
                                     </div>
                                 </div>
 
@@ -1842,6 +1855,27 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                                             minute: '2-digit',
                                             second: '2-digit'
                                         })}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Seen At */}
+                            <div>
+                                <label className="text-[11px] uppercase tracking-[0.05em] text-white/30 font-semibold mb-2 block">Seen At</label>
+                                <div className="flex items-center gap-3 text-white/80">
+                                    <div className="p-2 rounded-lg bg-white/5 border border-white/10">
+                                        <Check size={14} className="text-green-400" />
+                                    </div>
+                                    <span className="text-[14px]">
+                                        {selectedInfoMessage.status === 'read' && selectedInfoMessage.readAt ? new Date(selectedInfoMessage.readAt).toLocaleString('en-US', {
+                                            weekday: 'long',
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit'
+                                        }) : 'Not seen yet'}
                                     </span>
                                 </div>
                             </div>
