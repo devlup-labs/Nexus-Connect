@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import ContextMenu from "./ContextMenu";
 import { getContacts } from "../api";
+import { getSocket, getActiveUsers } from "../services/socket";
 
 // Mock data removed. Fetching from backend instead.
 
@@ -33,6 +34,15 @@ const ContactsPanel = ({ onSendMessage }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContact, setSelectedContact] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
+  const [onlineUsers, setOnlineUsers] = useState(() => {
+    const users = getActiveUsers();
+    const map = {};
+    users.forEach((id) => {
+      map[id] = "online";
+    });
+    return map;
+  });
+  const [lightboxPic, setLightboxPic] = useState(null);
   const searchInputRef = useRef(null);
 
   useEffect(() => {
@@ -47,6 +57,35 @@ const ContactsPanel = ({ onSendMessage }) => {
       }
     };
     fetchContacts();
+  }, []);
+
+  // ── WebSocket listeners for real-time online status ──
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleUserStatus = (data) => {
+      setOnlineUsers((prev) => ({
+        ...prev,
+        [data.userId]: data.status,
+      }));
+    };
+
+    const handleActiveUsers = (activeUserIds) => {
+      const onlineMap = {};
+      activeUserIds.forEach((id) => {
+        onlineMap[id] = "online";
+      });
+      setOnlineUsers(onlineMap);
+    };
+
+    socket.on("user_status_update", handleUserStatus);
+    socket.on("active_users", handleActiveUsers);
+
+    return () => {
+      socket.off("user_status_update", handleUserStatus);
+      socket.off("active_users", handleActiveUsers);
+    };
   }, []);
 
   const getInitials = (name) => {
@@ -264,6 +303,22 @@ const ContactsPanel = ({ onSendMessage }) => {
                         getInitials(contact.fullName)
                       )}
                     </div>
+                    {/* Online indicator dot */}
+                    {onlineUsers[contact._id] === "online" && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: "-1px",
+                          right: "-1px",
+                          width: "10px",
+                          height: "10px",
+                          borderRadius: "50%",
+                          background: "#22c55e",
+                          border: "2px solid rgba(15, 23, 42, 0.9)",
+                          boxShadow: "0 0 8px rgba(34, 197, 94, 0.5)",
+                        }}
+                      />
+                    )}
                   </div>
 
                   {/* Name & status text */}
@@ -416,6 +471,7 @@ const ContactsPanel = ({ onSendMessage }) => {
             >
               <div style={{ position: "relative", marginBottom: "16px" }}>
                 <div
+                  onClick={() => selectedContact.profilePic && setLightboxPic(selectedContact.profilePic)}
                   style={{
                     width: "90px",
                     height: "90px",
@@ -424,7 +480,11 @@ const ContactsPanel = ({ onSendMessage }) => {
                     background: "linear-gradient(135deg, #30FBE6, #a855f7)",
                     boxShadow: "0 0 25px rgba(48, 251, 230, 0.3)",
                     overflow: "hidden",
+                    cursor: selectedContact.profilePic ? "pointer" : "default",
+                    transition: "transform 0.2s",
                   }}
+                  onMouseEnter={(e) => { if (selectedContact.profilePic) e.currentTarget.style.transform = "scale(1.05)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
                 >
                   {selectedContact.profilePic ? (
                     <img src={selectedContact.profilePic} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
@@ -448,6 +508,20 @@ const ContactsPanel = ({ onSendMessage }) => {
                     </div>
                   )}
                 </div>
+                {/* Online indicator dot on PFP */}
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "2px",
+                    right: "2px",
+                    width: "14px",
+                    height: "14px",
+                    borderRadius: "50%",
+                    background: onlineUsers[selectedContact._id] === "online" ? "#22c55e" : "#6b7280",
+                    border: "3px solid rgba(10, 15, 30, 0.97)",
+                    boxShadow: onlineUsers[selectedContact._id] === "online" ? "0 0 8px rgba(34, 197, 94, 0.5)" : "none",
+                  }}
+                />
               </div>
               <h2
                 style={{
@@ -466,7 +540,7 @@ const ContactsPanel = ({ onSendMessage }) => {
                   alignItems: "center",
                   gap: "6px",
                   fontSize: "12px",
-                  color: statusColors[selectedContact.status],
+                  color: onlineUsers[selectedContact._id] === "online" ? statusColors.online : statusColors.offline,
                 }}
               >
                 <div
@@ -474,10 +548,10 @@ const ContactsPanel = ({ onSendMessage }) => {
                     width: "6px",
                     height: "6px",
                     borderRadius: "50%",
-                    background: statusColors[selectedContact.status],
+                    background: onlineUsers[selectedContact._id] === "online" ? statusColors.online : statusColors.offline,
                   }}
                 />
-                {statusLabels[selectedContact.status]}
+                {onlineUsers[selectedContact._id] === "online" ? statusLabels.online : statusLabels.offline}
               </div>
             </div>
 
@@ -622,6 +696,64 @@ const ContactsPanel = ({ onSendMessage }) => {
           onClose={() => setContextMenu(null)}
           items={getContextMenuItems(contextMenu.contact)}
         />
+      )}
+
+      {/* PFP Lightbox */}
+      {lightboxPic && (
+        <div
+          onClick={() => setLightboxPic(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 200,
+            background: "rgba(0, 0, 0, 0.85)",
+            backdropFilter: "blur(20px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "zoom-out",
+            animation: "fadeIn 0.2s ease-out",
+          }}
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightboxPic(null); }}
+            style={{
+              position: "absolute",
+              top: "20px",
+              right: "24px",
+              zIndex: 201,
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              background: "rgba(255, 255, 255, 0.1)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: "rgba(255, 255, 255, 0.8)",
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)")}
+          >
+            <X size={20} />
+          </button>
+          <img
+            src={lightboxPic}
+            alt="Profile"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              objectFit: "contain",
+              borderRadius: "12px",
+              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.6)",
+              cursor: "default",
+              animation: "fadeIn 0.25s ease-out",
+            }}
+          />
+        </div>
       )}
     </div>
   );
