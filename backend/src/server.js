@@ -1,4 +1,5 @@
 import express from 'express';
+import { createServer } from 'http';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -6,19 +7,25 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 
 import { connectDB } from "./lib/db.js";
+import { initializeSocket } from "./lib/socket.js";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import userRoutes from "./routes/user.route.js";
+import callRoutes from "./routes/call.route.js";
 
 
 dotenv.config();
 
 const app = express();
+const httpServer = createServer(app);
 const _dirname = path.resolve();
 
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json({ limit: "5mb" }));
+// Initialize Socket.IO
+initializeSocket(httpServer);
+
+app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 app.use(
   cors({
@@ -34,6 +41,7 @@ app.get("/health", (req, res) => {  //DO NOT REMOVE THIS ENDPOINT
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/calls", callRoutes);
 
 //This is for deploying the frontend
 if (process.env.NODE_ENV === 'production') {
@@ -44,7 +52,7 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   connectDB();
 });

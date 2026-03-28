@@ -1,27 +1,114 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Dock from './Components/Dock.jsx'
 import ChatContainer from './Components/ChatContainer.jsx'
 import StreamPanel from './Components/StreamPanel.jsx'
 import SettingsPanel from './Components/Settings.jsx'
 import CallLogPanel from './Components/CallLog.jsx'
+import Login from './Components/Login.jsx'
+import Signup from './Components/signup.jsx'
 import ContactsPanel from './Components/ContactsPanel.jsx'
-// import Login from './components/Login';
-// import Signup from './components/signup'; // Ensure this matches your filename
-// import { useState } from 'react';
-// import './App.css';
+import { checkAuth, logout as logoutApi } from './api'
+import { initializeSocket, disconnectSocket } from './services/socket'
+
+
 
 
 function App() {
   const [activeView, setActiveView] = useState('messages');
+  const [authUser, setAuthUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authPage, setAuthPage] = useState('login'); // 'login' | 'signup'
+  const [selectedContact, setSelectedContact] = useState(null);
 
+  // Check if user is already logged in (JWT cookie)
+  useEffect(() => {
+    checkAuth()
+      .then((res) => setAuthUser(res.data))
+      .catch(() => setAuthUser(null))
+      .finally(() => setAuthLoading(false));
+  }, []);
+
+  // Initialize WebSocket when user is authenticated
+  useEffect(() => {
+    if (authUser?._id) {
+      initializeSocket(authUser._id);
+    }
+    return () => {
+      // Socket cleanup handled on logout
+    };
+  }, [authUser]);
+
+  const handleAuth = (user) => {
+    setAuthUser(user);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logoutApi();
+    } catch (e) {
+      // ignore
+    }
+    disconnectSocket();
+    setAuthUser(null);
+    setSelectedContact(null);
+  };
+
+  // Loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="w-screen h-screen bg-gradient-to-br from-[#050A1F] via-[#0A1535] to-[#02040A] flex items-center justify-center">
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid rgba(48, 251, 230, 0.2)',
+          borderTopColor: '#30FBE6',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite'
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  // Not authenticated → show login/signup
+  if (!authUser) {
+    if (authPage === 'signup') {
+      return (
+        <Signup
+          onAuth={handleAuth}
+          onSwitchToLogin={() => setAuthPage('login')}
+        />
+      );
+    }
+    return (
+      <Login
+        onAuth={handleAuth}
+        onSwitchToSignup={() => setAuthPage('signup')}
+      />
+    );
+  }
+
+  // Authenticated → main app
   const renderView = () => {
     switch (activeView) {
       case 'home': return null;
-      case 'messages': return <ChatContainer />;
+      case 'messages': return (
+        <ChatContainer
+          selectedContact={selectedContact}
+          authUser={authUser}
+          onLogout={handleLogout}
+        />
+      );
       case 'contacts': return null;
       case 'call-log': return <CallLogPanel />;
-      case 'settings': return <SettingsPanel />;
-      default: return <ChatContainer />;
+      case 'settings': return <SettingsPanel authUser={authUser} onLogout={handleLogout} onProfileUpdate={(updatedUser) => setAuthUser(updatedUser)} />;
+      default: return (
+        <ChatContainer
+          selectedContact={selectedContact}
+          authUser={authUser}
+          onLogout={handleLogout}
+        />
+      );
     }
   };
 
@@ -44,11 +131,17 @@ function App() {
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E")`
         }}>
       </div>
-      <Dock onNavigate={setActiveView} activeView={activeView} />
+      <div className="relative z-10 flex items-center gap-6 h-screen pl-5">
+        <Dock onNavigate={setActiveView} activeView={activeView} onLogout={handleLogout} />
 
-      <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '12px', height: '100vh', marginLeft: '100px' }}>
-        {activeView === 'contacts' ? <ContactsPanel /> : <StreamPanel />}
-        {renderView()}
+        <div className="flex items-center gap-3 h-full">
+          {activeView === 'contacts' ? <ContactsPanel onSendMessage={(contact) => { setSelectedContact(contact); setActiveView('messages'); }} /> : <StreamPanel
+            authUser={authUser}
+            selectedContactId={selectedContact?._id}
+            onSelectContact={(contact) => { setSelectedContact(contact); setActiveView('messages'); }}
+          />}
+          {renderView()}
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,9 @@
-import React, { useState } from "react";
-import { Edit2, ChevronDown } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Edit2, ChevronDown, Check, X, Camera } from "lucide-react";
+import { updateProfile } from "../api";
 
-function SettingsPanel() {
+function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
+  const fileInputRef = useRef(null);
   const [theme, setTheme] = useState("dark");
   const [sounds, setSounds] = useState(true);
   const [banners, setBanners] = useState(true);
@@ -9,17 +11,67 @@ function SettingsPanel() {
   const [langOpen, setLangOpen] = useState(false);
 
   const languages = ["English", "Hindi", "Spanish", "French"];
+  const [uploadingPic, setUploadingPic] = useState(false);
+
+  // Edit profile state
+  const [editMode, setEditMode] = useState(false);
+  const [editName, setEditName] = useState(authUser?.fullName || "");
+  const [editAbout, setEditAbout] = useState(authUser?.about || "");
+  const [saving, setSaving] = useState(false);
+
+  const getInitials = (name) => {
+    if (!name) return "?";
+    return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  };
+
+  const handleProfilePicUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+      const base64 = reader.result;
+      setUploadingPic(true);
+      try {
+        const res = await updateProfile({ profilePic: base64 });
+        if (onProfileUpdate) onProfileUpdate(res.data);
+      } catch (err) {
+        console.error("Failed to update profile pic:", err);
+      } finally {
+        setUploadingPic(false);
+      }
+    };
+  };
+
+  const handleEditSave = async () => {
+    if (editName.trim().length < 2) return;
+    const nameChanged = editName.trim() !== (authUser?.fullName || "");
+    const aboutChanged = editAbout.trim() !== (authUser?.about || "");
+    if (!nameChanged && !aboutChanged) { setEditMode(false); return; }
+    setSaving(true);
+    try {
+      const res = await updateProfile({ fullName: editName.trim(), about: editAbout.trim() });
+      if (onProfileUpdate) onProfileUpdate(res.data);
+      setEditMode(false);
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEditCancel = () => {
+    setEditName(authUser?.fullName || "");
+    setEditAbout(authUser?.about || "");
+    setEditMode(false);
+  };
 
   return (
-    <div style={{ flex: 1, minWidth: 0, height: '100%', background: 'transparent', position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingRight: '24px', paddingBottom: '24px' }}>
+    <div className="flex flex-col flex-1 h-full mr-12 min-w-[840px] mb-2">
       {/* Title */}
-      <div style={{ padding: "10px 10px 20px 10px" }}>
-        <h2
-          className="text-[24px] font-medium text-white/90 tracking-[0.5px]"
-          style={{ fontFamily: "'Inter', sans-serif" }}
-        >
-          Settings
-        </h2>
+      <div className="pt-[60px] pb-0 pl-2 flex justify-between items-end mb-[-30px] relative z-20">
+        <h2 className="text-[24px] font-medium text-white/90 tracking-[0.5px] font-sans leading-none pb-0">Settings</h2>
       </div>
 
       {/* Main Glass Panel */}
@@ -56,7 +108,7 @@ function SettingsPanel() {
             </h3>
 
             <div style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
-              {/* Avatar */}
+              {/* Avatar with upload */}
               <div style={{ position: "relative", flexShrink: 0 }}>
                 <div style={{
                   width: "56px",
@@ -65,73 +117,217 @@ function SettingsPanel() {
                   padding: "2px",
                   background: "linear-gradient(135deg, #30FBE6, #a855f7)",
                   boxShadow: "0 0 20px rgba(48, 251, 230, 0.25)",
+                  opacity: uploadingPic ? 0.5 : 1,
+                  transition: "opacity 0.2s",
                 }}>
-                  <div style={{
-                    width: "100%",
-                    height: "100%",
+                  {authUser?.profilePic ? (
+                    <img
+                      src={authUser.profilePic}
+                      alt="Profile"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: "50%",
+                      background: "rgba(15, 23, 42, 0.95)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "18px",
+                      fontWeight: 600,
+                      color: "rgba(255, 255, 255, 0.7)",
+                      fontFamily: "'Inter', sans-serif",
+                    }}>
+                      {getInitials(authUser?.fullName)}
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    position: "absolute",
+                    bottom: "-2px",
+                    right: "-2px",
+                    width: "22px",
+                    height: "22px",
                     borderRadius: "50%",
-                    background: "rgba(15, 23, 42, 0.95)",
+                    background: "rgba(48, 251, 230, 0.2)",
+                    border: "2px solid rgba(11, 18, 32, 0.95)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "18px",
-                    fontWeight: 600,
-                    color: "rgba(255, 255, 255, 0.7)",
-                    fontFamily: "'Inter', sans-serif",
+                    cursor: "pointer",
+                    color: "#30FBE6",
                   }}>
-                    TB
-                  </div>
-                </div>
-                <button style={{
-                  position: "absolute",
-                  bottom: "-2px",
-                  right: "-2px",
-                  width: "22px",
-                  height: "22px",
-                  borderRadius: "50%",
-                  background: "rgba(48, 251, 230, 0.2)",
-                  border: "2px solid rgba(11, 18, 32, 0.95)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  color: "#30FBE6",
-                }}>
-                  <Edit2 size={10} />
+                  <Camera size={10} />
                 </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePicUpload}
+                  style={{ display: "none" }}
+                />
               </div>
 
-              {/* Fields */}
+              {/* Fields — editable or static */}
               <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
-                <Field text="Alex Chen" />
-                <Field
-                  text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod something a mind."
-                  small
-                />
-                <button
-                  style={{
-                    marginTop: "4px",
-                    padding: "8px 14px",
-                    borderRadius: "10px",
-                    background: "rgba(48, 251, 230, 0.1)",
-                    border: "1px solid rgba(48, 251, 230, 0.2)",
-                    cursor: "pointer",
-                    fontWeight: 500,
-                    fontSize: "12px",
-                    color: "#30FBE6",
-                    fontFamily: "'Inter', sans-serif",
-                    transition: "all 0.15s ease",
-                    alignSelf: "flex-start",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(48, 251, 230, 0.18)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(48, 251, 230, 0.1)";
-                  }}
-                >
-                  Edit Profile
-                </button>
+                {editMode ? (
+                  <>
+                    {/* Editable Name */}
+                    <div style={{
+                      padding: "8px 12px",
+                      borderRadius: "10px",
+                      background: "rgba(15, 23, 42, 0.6)",
+                      border: "1px solid rgba(48, 251, 230, 0.25)",
+                    }}>
+                      <label style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", fontFamily: "'Inter', sans-serif", textTransform: "uppercase", letterSpacing: "0.05em" }}>Name</label>
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        maxLength={50}
+                        style={{
+                          width: "100%",
+                          background: "transparent",
+                          border: "none",
+                          outline: "none",
+                          color: "rgba(255, 255, 255, 0.9)",
+                          fontSize: "13px",
+                          fontFamily: "'Inter', sans-serif",
+                          caretColor: "#30FBE6",
+                          marginTop: "2px",
+                        }}
+                      />
+                    </div>
+
+                    {/* Editable Bio */}
+                    <div style={{
+                      padding: "8px 12px",
+                      borderRadius: "10px",
+                      background: "rgba(15, 23, 42, 0.6)",
+                      border: "1px solid rgba(48, 251, 230, 0.25)",
+                    }}>
+                      <label style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", fontFamily: "'Inter', sans-serif", textTransform: "uppercase", letterSpacing: "0.05em" }}>Bio</label>
+                      <textarea
+                        value={editAbout}
+                        onChange={(e) => setEditAbout(e.target.value)}
+                        maxLength={200}
+                        rows={2}
+                        placeholder="Write something about yourself..."
+                        style={{
+                          width: "100%",
+                          background: "transparent",
+                          border: "none",
+                          outline: "none",
+                          color: "rgba(255, 255, 255, 0.9)",
+                          fontSize: "12px",
+                          fontFamily: "'Inter', sans-serif",
+                          caretColor: "#30FBE6",
+                          resize: "none",
+                          lineHeight: "1.5",
+                          marginTop: "2px",
+                        }}
+                      />
+                      <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.25)", textAlign: "right" }}>
+                        {editAbout.length}/200
+                      </div>
+                    </div>
+
+                    {/* Save / Cancel */}
+                    <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+                      <button
+                        onClick={handleEditSave}
+                        disabled={saving || editName.trim().length < 2}
+                        style={{
+                          padding: "8px 16px",
+                          borderRadius: "10px",
+                          background: saving ? "rgba(48, 251, 230, 0.05)" : "rgba(48, 251, 230, 0.15)",
+                          border: "1px solid rgba(48, 251, 230, 0.3)",
+                          cursor: saving ? "wait" : "pointer",
+                          fontWeight: 500,
+                          fontSize: "12px",
+                          color: "#30FBE6",
+                          fontFamily: "'Inter', sans-serif",
+                          transition: "all 0.15s ease",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          opacity: (editName.trim().length < 2) ? 0.4 : 1,
+                        }}
+                      >
+                        <Check size={13} />
+                        {saving ? "Saving..." : "Save"}
+                      </button>
+                      <button
+                        onClick={handleEditCancel}
+                        disabled={saving}
+                        style={{
+                          padding: "8px 16px",
+                          borderRadius: "10px",
+                          background: "rgba(255, 255, 255, 0.05)",
+                          border: "1px solid rgba(255, 255, 255, 0.1)",
+                          cursor: "pointer",
+                          fontWeight: 500,
+                          fontSize: "12px",
+                          color: "rgba(255, 255, 255, 0.6)",
+                          fontFamily: "'Inter', sans-serif",
+                          transition: "all 0.15s ease",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                        }}
+                      >
+                        <X size={13} />
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Field text={authUser?.fullName || "User Name"} />
+                    <Field
+                      text={authUser?.about || "No bio set yet."}
+                      small
+                    />
+                    <button
+                      onClick={() => {
+                        setEditName(authUser?.fullName || "");
+                        setEditAbout(authUser?.about || "");
+                        setEditMode(true);
+                      }}
+                      style={{
+                        marginTop: "4px",
+                        padding: "8px 14px",
+                        borderRadius: "10px",
+                        background: "rgba(48, 251, 230, 0.1)",
+                        border: "1px solid rgba(48, 251, 230, 0.2)",
+                        cursor: "pointer",
+                        fontWeight: 500,
+                        fontSize: "12px",
+                        color: "#30FBE6",
+                        fontFamily: "'Inter', sans-serif",
+                        transition: "all 0.15s ease",
+                        alignSelf: "flex-start",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(48, 251, 230, 0.18)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(48, 251, 230, 0.1)";
+                      }}
+                    >
+                      Edit Profile
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -277,7 +473,7 @@ function SettingsPanel() {
 
           {/* Logout */}
           <button
-            onClick={() => console.log("Logging out...")}
+            onClick={() => onLogout && onLogout()}
             style={{
               width: "100%",
               padding: "12px",

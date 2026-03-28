@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Search,
   X,
@@ -13,124 +13,9 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import ContextMenu from "./ContextMenu";
+import { getContacts } from "../api";
 
-const contacts = [
-  {
-    id: 1,
-    name: "Stephen Hawking",
-    status: "online",
-    about:
-      'Theoretical physicist and cosmologist. Author of "A Brief History of Time".',
-    email: "stephen.hawking@cambridge.edu",
-    phone: "+44 1223 337733",
-    joinedDate: "March 2024",
-    initials: "SH",
-    gradient: "linear-gradient(135deg, #30FBE6, #a855f7)",
-  },
-  {
-    id: 2,
-    name: "Marie Curie",
-    status: "online",
-    about:
-      "Pioneer in radioactivity research. First woman to win a Nobel Prize.",
-    email: "marie.curie@sorbonne.fr",
-    phone: "+33 1 44 27 10 00",
-    joinedDate: "January 2024",
-    initials: "MC",
-    gradient: "linear-gradient(135deg, #f472b6, #a855f7)",
-  },
-  {
-    id: 3,
-    name: "Alan Turing",
-    status: "offline",
-    about:
-      "Father of theoretical computer science and artificial intelligence.",
-    email: "alan.turing@bletchley.uk",
-    phone: "+44 1908 640404",
-    joinedDate: "February 2024",
-    initials: "AT",
-    gradient: "linear-gradient(135deg, #22d3ee, #3b82f6)",
-  },
-  {
-    id: 4,
-    name: "Ada Lovelace",
-    status: "online",
-    about: "Mathematician. First computer programmer in history.",
-    email: "ada.lovelace@babbage.co.uk",
-    phone: "+44 20 7946 0958",
-    joinedDate: "April 2024",
-    initials: "AL",
-    gradient: "linear-gradient(135deg, #c084fc, #ec4899)",
-  },
-  {
-    id: 5,
-    name: "Nikola Tesla",
-    status: "offline",
-    about: "Inventor, electrical engineer. Pioneer of AC electricity.",
-    email: "nikola.tesla@wardenclyffe.com",
-    phone: "+1 212 555 0187",
-    joinedDate: "December 2023",
-    initials: "NT",
-    gradient: "linear-gradient(135deg, #fbbf24, #f97316)",
-  },
-  {
-    id: 6,
-    name: "Richard Feynman",
-    status: "online",
-    about: "Quantum electrodynamics pioneer. Nobel laureate in Physics 1965.",
-    email: "richard.feynman@caltech.edu",
-    phone: "+1 626 555 0134",
-    joinedDate: "May 2024",
-    initials: "RF",
-    gradient: "linear-gradient(135deg, #34d399, #22d3ee)",
-  },
-  {
-    id: 7,
-    name: "Emmy Noether",
-    status: "offline",
-    about:
-      "Mathematician known for contributions to abstract algebra and theoretical physics.",
-    email: "emmy.noether@erlangen.de",
-    phone: "+49 9131 85 0",
-    joinedDate: "June 2024",
-    initials: "EN",
-    gradient: "linear-gradient(135deg, #fb923c, #ef4444)",
-  },
-  {
-    id: 8,
-    name: "Carl Sagan",
-    status: "offline",
-    about: "Astronomer, author of Cosmos. Voyager Golden Record curator.",
-    email: "carl.sagan@cornell.edu",
-    phone: "+1 607 555 0199",
-    joinedDate: "July 2024",
-    initials: "CS",
-    gradient: "linear-gradient(135deg, #818cf8, #c084fc)",
-  },
-  {
-    id: 9,
-    name: "Rosalind Franklin",
-    status: "online",
-    about:
-      "Biophysicist. Key contributor to understanding the structure of DNA.",
-    email: "rosalind.franklin@kcl.ac.uk",
-    phone: "+44 20 7836 5454",
-    joinedDate: "August 2024",
-    initials: "RFr",
-    gradient: "linear-gradient(135deg, #f9a8d4, #a78bfa)",
-  },
-  {
-    id: 10,
-    name: "Enrico Fermi",
-    status: "offline",
-    about: "Nuclear physicist. Created the first nuclear reactor.",
-    email: "enrico.fermi@uchicago.edu",
-    phone: "+1 773 555 0142",
-    joinedDate: "September 2024",
-    initials: "EF",
-    gradient: "linear-gradient(135deg, #60a5fa, #34d399)",
-  },
-];
+// Mock data removed. Fetching from backend instead.
 
 const statusColors = {
   online: "#22c55e",
@@ -142,30 +27,48 @@ const statusLabels = {
   offline: "Offline",
 };
 
-const ContactsPanel = () => {
+const ContactsPanel = ({ onSendMessage }) => {
+  const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContact, setSelectedContact] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
   const searchInputRef = useRef(null);
 
-  const filteredContacts = contacts.filter((c) =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  useEffect(() => {
+    const fetchContacts = async () => {
+      try {
+        const res = await getContacts();
+        setContacts(res.data);
+      } catch (err) {
+        console.error("Failed to fetch contacts:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchContacts();
+  }, []);
+
+  const getInitials = (name) => {
+    if (!name) return "?";
+    return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  };
+
+  const filteredContacts = (contacts || []).filter((c) =>
+    (c.fullName || "").toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  // Sort: online first, then offline
-  const sortedContacts = [...filteredContacts].sort((a, b) => {
-    const order = { online: 0, offline: 1 };
-    return order[a.status] - order[b.status];
-  });
+  // Simple sort (real data might not have online/offline status in the same way)
+  const sortedContacts = [...filteredContacts];
 
   const openProfile = (contact) => {
     setSelectedContact(contact);
   };
 
   const getContextMenuItems = (contact) => [
-    { label: "Message", icon: <MessageSquare size={16} />, onClick: () => {} },
-    { label: "Voice Call", icon: <Phone size={16} />, onClick: () => {} },
-    { label: "Video Call", icon: <Video size={16} />, onClick: () => {} },
+    { label: "Message", icon: <MessageSquare size={16} />, onClick: () => { } },
+    { label: "Voice Call", icon: <Phone size={16} />, onClick: () => { } },
+    { label: "Video Call", icon: <Video size={16} />, onClick: () => { } },
     { divider: true },
     {
       label: "View Profile",
@@ -177,23 +80,22 @@ const ContactsPanel = () => {
       label: "Block",
       icon: <UserX size={16} />,
       color: "#f59e0b",
-      onClick: () => {},
+      onClick: () => { },
     },
     {
       label: "Delete Contact",
       icon: <Trash2 size={16} />,
       color: "#ef4444",
-      onClick: () => {},
+      onClick: () => { },
     },
   ];
 
   return (
     <div style={{ width: '420px', maxWidth: '420px', height: '100%', background: 'transparent', position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0 }}>
       {/* Title */}
-      <div style={{ padding: "10px 10px 20px 10px" }}>
+      <div style={{ padding: "10px 10px 0px 10px", marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <h2
-          className="text-[24px] font-medium text-white/90 tracking-[0.5px]"
-          style={{ fontFamily: "'Inter', sans-serif" }}
+          style={{ fontSize: "24px", fontWeight: 500, paddingTop: "50px", paddingBottom: "0px", marginBottom: "0px", color: "rgba(255, 255, 255, 0.9)", letterSpacing: "0.5px", fontFamily: "'Inter', sans-serif", lineHeight: 1 }}
         >
           Contacts
         </h2>
@@ -302,7 +204,7 @@ const ContactsPanel = () => {
             >
               {sortedContacts.map((contact) => (
                 <div
-                  key={contact.id}
+                  key={contact._id}
                   onClick={() => openProfile(contact)}
                   onContextMenu={(e) => {
                     e.preventDefault();
@@ -317,22 +219,22 @@ const ContactsPanel = () => {
                     cursor: "pointer",
                     transition: "all 0.15s ease",
                     background:
-                      selectedContact?.id === contact.id
+                      selectedContact?._id === contact._id
                         ? "rgba(48, 251, 230, 0.06)"
                         : "transparent",
                     border:
-                      selectedContact?.id === contact.id
+                      selectedContact?._id === contact._id
                         ? "1px solid rgba(48, 251, 230, 0.12)"
                         : "1px solid transparent",
                   }}
                   onMouseEnter={(e) => {
-                    if (selectedContact?.id !== contact.id) {
+                    if (selectedContact?._id !== contact._id) {
                       e.currentTarget.style.background =
                         "rgba(255, 255, 255, 0.04)";
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (selectedContact?.id !== contact.id) {
+                    if (selectedContact?._id !== contact._id) {
                       e.currentTarget.style.background = "transparent";
                     }
                   }}
@@ -344,7 +246,7 @@ const ContactsPanel = () => {
                         width: "40px",
                         height: "40px",
                         borderRadius: "50%",
-                        background: contact.gradient,
+                        background: "linear-gradient(135deg, #30FBE6, #a855f7)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -353,27 +255,15 @@ const ContactsPanel = () => {
                         color: "rgba(255, 255, 255, 0.95)",
                         boxShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
                         fontFamily: "'Inter', sans-serif",
+                        overflow: "hidden",
                       }}
                     >
-                      {contact.initials}
+                      {contact.profilePic ? (
+                        <img src={contact.profilePic} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        getInitials(contact.fullName)
+                      )}
                     </div>
-                    {/* Status dot */}
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: "1px",
-                        right: "1px",
-                        width: "10px",
-                        height: "10px",
-                        borderRadius: "50%",
-                        background: statusColors[contact.status],
-                        border: "2px solid rgba(11, 18, 32, 0.95)",
-                        boxShadow:
-                          contact.status === "online"
-                            ? "0 0 6px rgba(34, 197, 94, 0.5)"
-                            : "none",
-                      }}
-                    />
                   </div>
 
                   {/* Name & status text */}
@@ -387,7 +277,7 @@ const ContactsPanel = () => {
                         marginBottom: "2px",
                       }}
                     >
-                      {contact.name}
+                      {contact.fullName}
                     </div>
                     <div
                       style={{
@@ -399,22 +289,9 @@ const ContactsPanel = () => {
                         textOverflow: "ellipsis",
                       }}
                     >
-                      {contact.about}
+                      {contact.about || "No bio available"}
                     </div>
                   </div>
-
-                  {/* Status label */}
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      fontWeight: 500,
-                      color: statusColors[contact.status],
-                      fontFamily: "'Inter', sans-serif",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {statusLabels[contact.status]}
-                  </span>
                 </div>
               ))}
 
@@ -544,44 +421,33 @@ const ContactsPanel = () => {
                     height: "90px",
                     borderRadius: "50%",
                     padding: "3px",
-                    background: selectedContact.gradient,
+                    background: "linear-gradient(135deg, #30FBE6, #a855f7)",
                     boxShadow: "0 0 25px rgba(48, 251, 230, 0.3)",
+                    overflow: "hidden",
                   }}
                 >
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      borderRadius: "50%",
-                      background: "rgba(15, 23, 42, 0.95)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "28px",
-                      fontWeight: 600,
-                      color: "rgba(255, 255, 255, 0.7)",
-                      fontFamily: "'Inter', sans-serif",
-                    }}
-                  >
-                    {selectedContact.initials}
-                  </div>
+                  {selectedContact.profilePic ? (
+                    <img src={selectedContact.profilePic} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                  ) : (
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        background: "rgba(15, 23, 42, 0.95)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "28px",
+                        fontWeight: 600,
+                        color: "rgba(255, 255, 255, 0.7)",
+                        fontFamily: "'Inter', sans-serif",
+                      }}
+                    >
+                      {getInitials(selectedContact.fullName)}
+                    </div>
+                  )}
                 </div>
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "2px",
-                    right: "2px",
-                    width: "18px",
-                    height: "18px",
-                    borderRadius: "50%",
-                    background: statusColors[selectedContact.status],
-                    border: "3px solid rgba(15, 23, 42, 0.95)",
-                    boxShadow:
-                      selectedContact.status === "online"
-                        ? "0 0 8px rgba(34, 197, 94, 0.5)"
-                        : "none",
-                  }}
-                />
               </div>
               <h2
                 style={{
@@ -592,7 +458,7 @@ const ContactsPanel = () => {
                   textAlign: "center",
                 }}
               >
-                {selectedContact.name}
+                {selectedContact.fullName}
               </h2>
               <div
                 style={{
@@ -661,7 +527,7 @@ const ContactsPanel = () => {
               <ProfileField
                 icon={<User size={14} style={{ color: "#a855f7" }} />}
                 label="Member Since"
-                value={selectedContact.joinedDate}
+                value={selectedContact.createdAt ? new Date(selectedContact.createdAt).toLocaleDateString() : "Unknown"}
                 interactive
               />
             </div>
@@ -676,6 +542,12 @@ const ContactsPanel = () => {
               }}
             >
               <button
+                onClick={() => {
+                  if (onSendMessage) {
+                    onSendMessage(selectedContact);
+                    setSelectedContact(null);
+                  }
+                }}
                 style={{
                   width: "100%",
                   padding: "12px",
@@ -690,8 +562,8 @@ const ContactsPanel = () => {
                   fontFamily: "'Inter', sans-serif",
                 }}
                 onMouseEnter={(e) =>
-                  (e.currentTarget.style.background =
-                    "rgba(48, 251, 230, 0.18)")
+                (e.currentTarget.style.background =
+                  "rgba(48, 251, 230, 0.18)")
                 }
                 onMouseLeave={(e) =>
                   (e.currentTarget.style.background = "rgba(48, 251, 230, 0.1)")

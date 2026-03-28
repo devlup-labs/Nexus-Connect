@@ -1,11 +1,12 @@
 import cloudinary from "../lib/cloudinary.js";
 import Message from "../models/message.js";
 import User from "../models/user.js";
+import { getIO, getActiveUsers } from "../lib/socket.js";
 
 export const getAllContacts = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
-    const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select("-password");
+    const filteredUsers = await User.find().select("-password -archivedUsers");
 
     res.status(200).json(filteredUsers);
   } catch (error) {
@@ -25,7 +26,7 @@ export const getMessagesByUserId = async (req, res) => {
         { senderId: userToChatId, receiverId: myId },
       ],
       deletedBy: { $ne: myId },
-    });
+    }).sort({ createdAt: 1 }).populate('replyTo', 'text image senderId');
 
     res.status(200).json(messages);
   } catch (error) {
@@ -36,15 +37,12 @@ export const getMessagesByUserId = async (req, res) => {
 
 export const sendMessage = async (req, res) => {
   try {
-    const { text, image } = req.body;
+    const { text, image, replyTo } = req.body;
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
 
     if (!text && !image) {
       return res.status(400).json({ message: "Text or image is required." });
-    }
-    if (senderId.equals(receiverId)) {
-      return res.status(400).json({ message: "Cannot send messages to yourself." });
     }
     const receiverExists = await User.exists({ _id: receiverId });
     if (!receiverExists) {
@@ -53,19 +51,42 @@ export const sendMessage = async (req, res) => {
 
     let imageUrl;
     if (image) {
-
-      const uploadResponse = await cloudinary.uploader.upload(image);
+      const uploadResponse = await cloudinary.uploader.upload(image, {
+        resource_type: "auto",
+      });
       imageUrl = uploadResponse.secure_url;
     }
+
+    // Determine initial status based on receiver's online state
+    const activeUsers = getActiveUsers();
+    const initialStatus = activeUsers.has(receiverId.toString()) ? "delivered" : "sent";
 
     const newMessage = new Message({
       senderId,
       receiverId,
       text,
       image: imageUrl,
+      replyTo: replyTo || null,
+      status: initialStatus,
     });
 
     await newMessage.save();
+
+    // Populate replyTo so the response includes the referenced message data
+    if (newMessage.replyTo) {
+      await newMessage.populate('replyTo', 'text image senderId');
+    }
+
+    // Emit real-time event to receiver via WebSocket
+    try {
+      const io = getIO();
+      io.to(`user_${receiverId}`).emit("message_received", newMessage.toObject());
+      // Also notify the sender so their stream panel updates the preview
+      io.to(`user_${senderId}`).emit("message_sent_ack", newMessage.toObject());
+    } catch (socketErr) {
+      // Socket not critical for REST response
+      console.error("Socket emit error:", socketErr.message);
+    }
 
     res.status(201).json(newMessage);
   } catch (error) {
@@ -80,25 +101,40 @@ export const getChatPartners = async (req, res) => {
 
     const messages = await Message.find({
       $or: [{ senderId: loggedInUserId }, { receiverId: loggedInUserId }],
+      deletedBy: { $ne: loggedInUserId }
+    }).sort({ createdAt: -1 });
+
+    const chatPartnerMap = new Map();
+
+    messages.forEach((msg) => {
+      const partnerId =
+        msg.senderId.toString() === loggedInUserId.toString()
+          ? msg.receiverId.toString()
+          : msg.senderId.toString();
+
+      if (!chatPartnerMap.has(partnerId)) {
+        chatPartnerMap.set(partnerId, msg);
+      }
     });
 
-    const chatPartnerIds = [
-      ...new Set(
-        messages.map((msg) =>
-          msg.senderId.toString() === loggedInUserId.toString()
-            ? msg.receiverId.toString()
-            : msg.senderId.toString()
-        )
-      ),
-    ];
+    const chatPartnerIds = Array.from(chatPartnerMap.keys());
 
-    const chatPartners = await User.find({ _id: { $in: chatPartnerIds } }).select("-password");
+    const chatPartners = await User.find({ _id: { $in: chatPartnerIds } }).select("-password -archivedUsers");
 
     //don't show archived users
     const user = await User.findById(loggedInUserId);
-    const filteredChatPartners = chatPartners.filter(
-      (partner) => !user.archivedUsers.some((id) => id.toString() === partner._id.toString())
-    );
+    const filteredChatPartners = chatPartners
+      .filter((partner) => !user.archivedUsers.some((id) => id.toString() === partner._id.toString()))
+      .map((partner) => {
+        const pObj = partner.toObject();
+        pObj.lastMessage = chatPartnerMap.get(partner._id.toString());
+        return pObj;
+      })
+      .sort((a, b) => {
+        const dateA = a.lastMessage ? new Date(a.lastMessage.createdAt) : new Date(0);
+        const dateB = b.lastMessage ? new Date(b.lastMessage.createdAt) : new Date(0);
+        return dateB - dateA;
+      });
 
     res.status(200).json(filteredChatPartners);
   } catch (error) {
@@ -126,6 +162,20 @@ export const editMessage = async (req, res) => {
     message.isEdited = true;
     await message.save();
 
+    // Emit real-time edit event to the receiver
+    try {
+      const io = getIO();
+      const receiverId = message.receiverId.toString();
+      io.to(`user_${receiverId}`).emit("message_edited", {
+        messageId: id,
+        newText: text,
+        isEdited: true,
+        editedAt: new Date(),
+      });
+    } catch (socketErr) {
+      console.error("Socket emit error:", socketErr.message);
+    }
+
     res.status(200).json(message);
   } catch (error) {
     console.log("Error in editMessage controller:", error.message);
@@ -145,7 +195,19 @@ export const deleteForEveryone = async (req, res) => {
       return res.status(403).json({ message: "Action not allowed" });
     }
 
+    const receiverId = message.receiverId.toString();
     await Message.findByIdAndDelete(id);
+
+    // Emit real-time delete event to the receiver
+    try {
+      const io = getIO();
+      io.to(`user_${receiverId}`).emit("message_deleted", {
+        messageId: id,
+      });
+    } catch (socketErr) {
+      console.error("Socket emit error:", socketErr.message);
+    }
+
     res.status(200).json({ message: "Deleted for everyone" });
   } catch (error) {
     console.log("Error in deleteForEveryone:", error.message);
@@ -179,3 +241,46 @@ export const deleteForMe = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const replyMessage = async (req, res) => {
+  try {
+    const { id: originalMessageId } = req.params;
+    const { text, image } = req.body;
+    const senderId = req.user._id;
+
+    if (!text && !image) {
+      return res.status(400).json({ message: "Text or image required." });
+    }
+
+    const originalMessage = await Message.findById(originalMessageId);
+    if (!originalMessage) {
+      return res.status(404).json({ message: "Original message not found." });
+    }
+
+    const receiverId = originalMessage.senderId.toString() === senderId.toString()
+      ? originalMessage.receiverId
+      : originalMessage.senderId;
+
+    let imageUrl;
+    if (image) {
+      const uploadResponse = await cloudinary.uploader.upload(image);
+      imageUrl = uploadResponse.secure_url;
+    }
+
+    const newMessage = new Message({
+      senderId,
+      receiverId,
+      text,
+      image: imageUrl,
+      replyTo: originalMessageId,
+    });
+
+    await newMessage.save();
+
+    res.status(201).json(newMessage);
+  } catch (error) {
+    console.log("Error: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+

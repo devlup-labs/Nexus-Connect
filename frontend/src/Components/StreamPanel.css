@@ -1,15 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* In @layer base so Tailwind @layer utilities (e.g. ml-*, mr-*) can override margin/padding */
+@layer base {
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    overflow: hidden;
-    flex-shrink: 0;
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
 }
 
 .app-container {
@@ -91,28 +94,36 @@ body {
 
 /* Stream Header */
 .stream-header {
-    padding: 10px 10px 20px 10px;
+    padding: 10px 10px 0px 10px;
+    margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-end;
     position: relative;
-    z-index: 2;
+    z-index: 50;
     flex-shrink: 0;
+    flex-wrap: nowrap;
 }
 
 .stream-title {
     font-size: 24px;
     font-weight: 500;
+    padding-top: 50px;
+    padding-bottom: 0px;
+    margin-bottom: 0px;
     color: rgba(255, 255, 255, 0.9);
     letter-spacing: 0.5px;
     text-shadow: none;
     font-family: 'Inter', sans-serif;
+    flex-shrink: 0;
+    line-height: 1;
 }
 
 .header-actions {
     display: flex;
     gap: 12px;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .icon-button {
@@ -146,7 +157,7 @@ body {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 10px 4px 100px 4px;
+    padding: 2px 4px 100px 4px;
     position: relative;
     z-index: 2;
     display: flex;
@@ -425,6 +436,84 @@ body {
 .audio-card:hover .wave-bar {
     background: linear-gradient(to top, rgba(138, 43, 226, 0.8), rgba(147, 51, 234, 0.5));
     box-shadow: 0 0 10px rgba(138, 43, 226, 0.6);
+}
+
+/* Document Card */
+.doc-card {
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+}
+
+.doc-card:hover {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+}
+
+.doc-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    margin: 4px;
+    flex: 1;
+}
+
+.doc-icon {
+    color: #60a5fa;
+    background: rgba(59, 130, 246, 0.15);
+    padding: 10px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.doc-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    gap: 2px;
+}
+
+.doc-info span {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.95);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.doc-info small {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* Custom Audio Slider Styles */
+.audio-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    height: 4px;
+    border-radius: 2px;
+}
+
+.audio-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    background: #30FBE6;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(48, 251, 230, 0.4);
 }
 
 /* Responsive adjustments */
