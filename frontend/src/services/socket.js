@@ -9,8 +9,8 @@ export const initializeSocket = (userId) => {
     if (socket) return socket;
 
     // In dev, Vite proxies /socket.io to the backend
-    // In production, same origin serves both
-    const WS_URL = import.meta.env.VITE_WS_URL || "";
+    // In production, same origin serves both, or VITE_URL is used
+    const WS_URL = import.meta.env.VITE_URL || import.meta.env.VITE_WS_URL || "";
 
     socket = io(WS_URL, {
         transports: ["websocket", "polling"],
