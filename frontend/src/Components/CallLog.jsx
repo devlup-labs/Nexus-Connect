@@ -1,24 +1,88 @@
 import { Search, X, Phone, Video, ArrowDownLeft, ArrowUpRight } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { getCallLogs } from "../api";
 
-function CallLogPanel() {
+function CallLogPanel({ authUser, onStartCall }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const searchInputRef = useRef(null);
 
-  const callLogs = [
-    { id: 1, name: "Sarah Jenkins", number: "+1 123 456 789", time: "10:42 PM", date: "04-21", type: "incoming", status: "answered", callType: "voice", initials: "SJ", gradient: "linear-gradient(135deg, #30FBE6, #a855f7)" },
-    { id: 2, name: "Alex Chen", number: "+1 123 456 789", time: "Yesterday", date: "Missed", type: "outgoing", status: "missed", callType: "video", initials: "AC", gradient: "linear-gradient(135deg, #f472b6, #a855f7)" },
-    { id: 3, name: "Sarah Jenkins", number: "+1 123 456 789", time: "Yesterday", date: "04-21", type: "incoming", status: "answered", callType: "voice", initials: "SJ", gradient: "linear-gradient(135deg, #30FBE6, #a855f7)" },
-    { id: 4, name: "Sarah Jenkins", number: "+1 123 456 789", time: "Yesterday", date: "04-21", type: "incoming", status: "answered", callType: "video", initials: "SJ", gradient: "linear-gradient(135deg, #30FBE6, #a855f7)" },
-    { id: 5, name: "Alex Chen", number: "+1 123 456 789", time: "Yesterday", date: "Missed", type: "outgoing", status: "missed", callType: "voice", initials: "AC", gradient: "linear-gradient(135deg, #f472b6, #a855f7)" },
-    { id: 6, name: "Sarah Jenkins", number: "+1 123 456 789", time: "Yesterday", date: "04-21", type: "incoming", status: "answered", callType: "video", initials: "SJ", gradient: "linear-gradient(135deg, #30FBE6, #a855f7)" },
-    { id: 7, name: "Alex Chen", number: "+1 123 456 789", time: "Yesterday", date: "04-21", type: "outgoing", status: "answered", callType: "voice", initials: "AC", gradient: "linear-gradient(135deg, #f472b6, #a855f7)" },
-  ];
+  const [callLogs, setCallLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchLogs();
+  }, []);
+
+  const getGradient = (name) => {
+    const colors = [
+      ["#30FBE6", "#a855f7"],
+      ["#f472b6", "#a855f7"],
+      ["#3b82f6", "#8b5cf6"],
+      ["#10b981", "#3b82f6"],
+      ["#f59e0b", "#ef4444"],
+    ];
+    let hash = 0;
+    for (let i = 0; i < (name || '').length; i++) hash += name.charCodeAt(i);
+    const color = colors[hash % colors.length];
+    return `linear-gradient(135deg, ${color[0]}, ${color[1]})`;
+  };
+
+  const fetchLogs = async () => {
+    try {
+      const res = await getCallLogs();
+      const formatted = res.data.map(call => {
+        const isCaller = call.callerId?._id === authUser?._id;
+        const otherUser = isCaller ? call.receiverId : call.callerId;
+
+        let type = isCaller ? 'outgoing' : 'incoming';
+
+        const dateObj = new Date(call.startedAt || call.createdAt);
+        const time = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        let dateDisplay = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        // Optional: 'Yesterday', 'Today' logic
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (dateObj.toDateString() === today.toDateString()) {
+          dateDisplay = 'Today';
+        } else if (dateObj.toDateString() === yesterday.toDateString()) {
+          dateDisplay = 'Yesterday';
+        }
+
+        if (["missed", "rejected", "canceled", "failed"].includes(call.status)) {
+          dateDisplay = call.status.charAt(0).toUpperCase() + call.status.slice(1);
+        }
+
+        const name = otherUser?.fullName || 'Unknown';
+        const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+        return {
+          id: call._id,
+          name,
+          number: name,
+          time,
+          date: dateDisplay,
+          type,
+          status: call.status,
+          callType: call.type,
+          initials,
+          gradient: getGradient(name),
+          otherUser,
+        };
+      });
+      setCallLogs(formatted);
+    } catch (err) {
+      console.error('Error fetching call logs', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getFilteredCalls = () => {
     let filtered = callLogs;
-    if (activeFilter === "missed") filtered = callLogs.filter(c => c.status === "missed");
+    if (activeFilter === "missed") filtered = callLogs.filter(c => ["missed", "rejected", "canceled", "failed"].includes(c.status));
     else if (activeFilter === "incoming") filtered = callLogs.filter(c => c.type === "incoming");
     else if (activeFilter === "outgoing") filtered = callLogs.filter(c => c.type === "outgoing");
     else if (activeFilter === "voice") filtered = callLogs.filter(c => c.callType === "voice");
@@ -49,7 +113,7 @@ function CallLogPanel() {
       </div>
 
       {/* Main Glass Panel */}
-      <div className="relative flex-1 rounded-[14px] border border-white/8 overflow-hidden backdrop-blur-3xl bg-gradient-to-br from-[#0b1220]/40 via-[#2b1b3a]/20 to-[#091021]/40 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+      <div className="relative flex-1 rounded-[14px] border border-white/8 overflow-hidden backdrop-blur-3xl bg-linear-to-br from-[#0b1220]/40 via-[#2b1b3a]/20 to-[#091021]/40 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
         {/* Noise texture */}
         <div
           className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
@@ -161,7 +225,7 @@ function CallLogPanel() {
               fontFamily: "'Inter', sans-serif",
               letterSpacing: "0.04em",
             }}>
-              {filteredCalls.length} call{filteredCalls.length !== 1 ? "s" : ""}
+              {loading ? "Loading..." : `${filteredCalls.length} call${filteredCalls.length !== 1 ? "s" : ""}`}
             </span>
           </div>
 
@@ -194,24 +258,38 @@ function CallLogPanel() {
                 >
                   {/* Avatar */}
                   <div style={{ position: "relative", flexShrink: 0 }}>
-                    <div
-                      style={{
-                        width: "40px",
-                        height: "40px",
-                        borderRadius: "50%",
-                        background: call.gradient,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        color: "rgba(255, 255, 255, 0.95)",
-                        boxShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
-                        fontFamily: "'Inter', sans-serif",
-                      }}
-                    >
-                      {call.initials}
-                    </div>
+                    {call.otherUser?.profilePic ? (
+                      <img
+                        src={call.otherUser.profilePic}
+                        alt={call.name}
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          borderRadius: "50%",
+                          objectFit: "cover",
+                          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          borderRadius: "50%",
+                          background: call.gradient,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "13px",
+                          fontWeight: 600,
+                          color: "rgba(255, 255, 255, 0.95)",
+                          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
+                          fontFamily: "'Inter', sans-serif",
+                        }}
+                      >
+                        {call.initials}
+                      </div>
+                    )}
                     {/* Call direction indicator */}
                     <div
                       style={{
@@ -282,6 +360,12 @@ function CallLogPanel() {
                   {/* Action buttons */}
                   <div style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
                     <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onStartCall && call.otherUser) {
+                          onStartCall('voice', call.otherUser);
+                        }
+                      }}
                       style={{
                         width: "32px",
                         height: "32px",
@@ -309,6 +393,12 @@ function CallLogPanel() {
                       <Phone size={14} />
                     </button>
                     <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onStartCall && call.otherUser) {
+                          onStartCall('video', call.otherUser);
+                        }
+                      }}
                       style={{
                         width: "32px",
                         height: "32px",

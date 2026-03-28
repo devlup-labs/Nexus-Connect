@@ -1,11 +1,54 @@
 import { Server } from "socket.io";
 import Message from "../models/message.js";
+import Call from "../models/call.js";
+import User from "../models/user.js";
 import mongoose from "mongoose";
+import crypto from "crypto";
 
 let io;
 
 // Store active users: Map<userId, socketId>
 const activeUsers = new Map();
+
+// activeCalls.set(callId, { callerId, receiverId, callType, status, startedAt, answeredAt });
+const activeCalls = new Map();
+
+function getOtherParticipant(callInfo, userId) {
+    if (!callInfo) return null;
+    if (String(callInfo.callerId) === String(userId)) return String(callInfo.receiverId);
+    if (String(callInfo.receiverId) === String(userId)) return String(callInfo.callerId);
+    return null;
+}
+
+async function finalizeCall(io, { callId, endedBy, status, endReason }) {
+    const active = activeCalls.get(callId);
+    if (!active) return;
+
+    if (active.timeoutId) clearTimeout(active.timeoutId);
+
+    const endedAt = new Date();
+    const answeredAt = active.answeredAt || null;
+    const durationSec = answeredAt ? Math.max(0, Math.floor((endedAt - answeredAt) / 1000)) : 0;
+
+    await Call.findOneAndUpdate(
+        { callId },
+        {
+            status,
+            answeredAt,
+            endedAt,
+            durationSec,
+            endedBy,
+            endReason,
+        },
+        { new: true }
+    );
+
+    io.to(`user_${active.callerId}`).emit("call:ended", { callId, status, endReason, endedAt, durationSec });
+    io.to(`user_${active.receiverId}`).emit("call:ended", { callId, status, endReason, endedAt, durationSec });
+
+    activeCalls.delete(callId);
+}
+
 
 export const initializeSocket = (httpServer) => {
     io = new Server(httpServer, {
@@ -112,9 +155,13 @@ export const initializeSocket = (httpServer) => {
             try {
                 const { messageIds, conversationPartnerId } = data;
 
+                if (!messageIds || Array.isArray(messageIds) && messageIds.length === 0) return;
+
+                const objectIds = messageIds.map(id => new mongoose.Types.ObjectId(id));
+
                 await Message.updateMany(
-                    { _id: { $in: messageIds } },
-                    { status: "read", readAt: new Date() }
+                    { _id: { $in: objectIds } },
+                    { $set: { status: "read", readAt: new Date() } }
                 );
 
                 // Notify the sender that their messages were read
@@ -128,8 +175,149 @@ export const initializeSocket = (httpServer) => {
             }
         });
 
+        // ── WebRTC Calling ──────────────────────────────────
+        socket.on("call:invite", async (payload, ack) => {
+            try {
+                const { toUserId, callType } = payload;
+                const fromUserId = socket.userId;
+
+                if (!fromUserId || !toUserId) {
+                    return ack?.({ ok: false, error: "Invalid participants" });
+                }
+                if (String(fromUserId) === String(toUserId)) {
+                    return ack?.({ ok: false, error: "Cannot call yourself" });
+                }
+                if (!["voice", "video"].includes(callType)) {
+                    return ack?.({ ok: false, error: "Invalid callType" });
+                }
+
+                const receiverSocketId = activeUsers.get(String(toUserId));
+                if (!receiverSocketId) {
+                    await Call.create({
+                        callId: crypto.randomUUID(),
+                        callerId: fromUserId,
+                        receiverId: toUserId,
+                        callType,
+                        status: "missed",
+                        startedAt: new Date(),
+                    });
+                    return ack?.({ ok: false, error: "User is offline" });
+                }
+
+                const callId = crypto.randomUUID();
+                const startedAt = new Date();
+
+                const timeoutId = setTimeout(async () => {
+                    const callInfo = activeCalls.get(callId);
+                    if (callInfo && callInfo.status === "ringing") {
+                        await finalizeCall(io, { callId, endedBy: null, status: "missed", endReason: "timeout" });
+                    }
+                }, 30000);
+
+                activeCalls.set(callId, {
+                    callerId: String(fromUserId),
+                    receiverId: String(toUserId),
+                    callType,
+                    status: "ringing",
+                    startedAt,
+                    timeoutId,
+                });
+
+                await Call.create({
+                    callId,
+                    callerId: fromUserId,
+                    receiverId: toUserId,
+                    callType,
+                    status: "ringing",
+                    startedAt,
+                });
+
+                const caller = await User.findById(fromUserId).select("-password");
+
+                io.to(`user_${toUserId}`).emit("call:incoming", {
+                    callId,
+                    fromUserId,
+                    fromUserName: caller?.fullName || "Unknown",
+                    fromUserPic: caller?.profilePic || null,
+                    callType,
+                    startedAt,
+                });
+
+                socket.emit("call:ringing", { callId, toUserId, callType, startedAt });
+
+                return ack?.({ ok: true, callId });
+            } catch (error) {
+                console.error("Error in call:invite:", error);
+                return ack?.({ ok: false, error: "Failed to invite" });
+            }
+        });
+
+        socket.on("call:accept", async (payload, ack) => {
+            const { callId } = payload;
+            const callInfo = activeCalls.get(callId);
+            if (!callInfo) return ack?.({ ok: false, error: "Invalid call" });
+
+            callInfo.status = "answered";
+            callInfo.answeredAt = new Date();
+
+            await Call.findOneAndUpdate({ callId }, { status: "answered", answeredAt: callInfo.answeredAt });
+
+            io.to(`user_${callInfo.callerId}`).emit("call:accepted", { callId, answeredAt: callInfo.answeredAt });
+            ack?.({ ok: true });
+        });
+
+        socket.on("call:reject", async (payload, ack) => {
+            const { callId } = payload;
+            await finalizeCall(io, { callId, endedBy: socket.userId, status: "rejected", endReason: "reject" });
+            ack?.({ ok: true });
+        });
+
+        socket.on("call:end", async (payload, ack) => {
+            const { callId } = payload;
+            const callInfo = activeCalls.get(callId);
+            let status = "ended";
+            if (callInfo && callInfo.status === "ringing") {
+                status = "missed";
+            }
+            await finalizeCall(io, { callId, endedBy: socket.userId, status, endReason: "hangup" });
+            ack?.({ ok: true });
+        });
+
+        socket.on("call:offer", (payload, ack) => {
+            const { callId, sdp } = payload;
+            const callInfo = activeCalls.get(callId);
+            const toUserId = getOtherParticipant(callInfo, socket.userId);
+            if (!callInfo || !toUserId) return ack?.({ ok: false, error: "Invalid call" });
+
+            io.to(`user_${toUserId}`).emit("call:offer", { callId, fromUserId: socket.userId, sdp });
+            ack?.({ ok: true });
+        });
+
+        socket.on("call:answer", (payload, ack) => {
+            const { callId, sdp } = payload;
+            const callInfo = activeCalls.get(callId);
+            const toUserId = getOtherParticipant(callInfo, socket.userId);
+            if (!callInfo || !toUserId) return ack?.({ ok: false, error: "Invalid call" });
+
+            io.to(`user_${toUserId}`).emit("call:answer", { callId, fromUserId: socket.userId, sdp });
+            ack?.({ ok: true });
+        });
+
+        socket.on("call:ice-candidate", (payload) => {
+            const { callId, candidate } = payload;
+            const callInfo = activeCalls.get(callId);
+            const toUserId = getOtherParticipant(callInfo, socket.userId);
+            if (!callInfo || !toUserId) return;
+
+            io.to(`user_${toUserId}`).emit("call:ice-candidate", {
+                callId,
+                fromUserId: socket.userId,
+                candidate,
+            });
+        });
+
         // ── Disconnect ──────────────────────────────────────
-        socket.on("disconnect", () => {
+        socket.on("disconnect", async () => {
             if (socket.userId) {
                 activeUsers.delete(socket.userId);
 
@@ -141,6 +329,15 @@ export const initializeSocket = (httpServer) => {
 
                 // Broadcast updated active users list to all remaining sockets
                 io.emit("active_users", Array.from(activeUsers.keys()));
+
+                // End any active calls the user is part of
+                for (const [callId, callInfo] of activeCalls.entries()) {
+                    if (String(callInfo.callerId) === String(socket.userId) || String(callInfo.receiverId) === String(socket.userId)) {
+                        const status = callInfo.status === "ringing" ? "missed" : "failed";
+                        const endReason = callInfo.status === "ringing" ? "network" : "error";
+                        await finalizeCall(io, { callId, endedBy: socket.userId, status, endReason });
+                    }
+                }
 
                 console.log(`User ${socket.userId} disconnected. Active users: ${activeUsers.size}`);
             }
@@ -165,6 +362,7 @@ async function getUnreadMessageCounts(userId) {
             $match: {
                 receiverId: new mongoose.Types.ObjectId(userId),
                 status: { $ne: "read" },
+                deletedBy: { $ne: new mongoose.Types.ObjectId(userId) }
             },
         },
         {

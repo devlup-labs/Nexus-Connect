@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer } from 'http';
 import dotenv from 'dotenv';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -18,7 +19,9 @@ dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);
-const _dirname = path.resolve();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
 
 const PORT = process.env.PORT || 3000;
 
@@ -45,10 +48,10 @@ app.use("/api/calls", callRoutes);
 
 //This is for deploying the frontend
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(_dirname, '../frontend/dist')));
+  app.use(express.static(frontendDistPath));
 
   app.get('*', (req, res) => {
-    res.sendFile(path.join(_dirname, '../frontend/dist/index.html'));
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
 }
 
