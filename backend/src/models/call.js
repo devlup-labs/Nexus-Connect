@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const callSchema = new mongoose.Schema(
     {
+        callId: {
+            type: String,
+            required: true,
+            unique: true,
+        },
         callerId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
@@ -12,21 +17,40 @@ const callSchema = new mongoose.Schema(
             ref: "User",
             required: true,
         },
-        startTime: {
-            type: Date,
+        callType: {
+            type: String,
+            enum: ["voice", "video"],
             required: true,
         },
-        endTime: {
+        status: {
+            type: String,
+            enum: ["ringing", "answered", "rejected", "missed", "ended", "failed"],
+            default: "ringing",
+        },
+        startedAt: {
             type: Date,
             required: true,
+            default: Date.now,
         },
-        type: {
+        answeredAt: {
+            type: Date,
+        },
+        endedAt: {
+            type: Date,
+        },
+        durationSec: {
             type: Number,
-            required: true,
-            enum: [0, 1], //0 = voice, 1 = video
+            default: 0,
+        },
+        endedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+        },
+        endReason: {
+            type: String,
         },
     },
-
+    { timestamps: true }
 );
 
 const Call = mongoose.model("Call", callSchema);
