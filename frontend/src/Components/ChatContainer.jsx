@@ -298,7 +298,7 @@ const CustomVideoPlayer = ({ src }) => {
     );
 };
 
-const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
+const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => {
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
     const [loadingMsgs, setLoadingMsgs] = useState(false);
@@ -469,7 +469,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                     setMessages(res.data);
                     // Mark unread messages as read
                     const unreadMsgIds = res.data
-                        .filter(m => m.receiverId === authUser._id && m.status !== 'read')
+                        .filter(m => String(m.receiverId) === String(authUser._id) && m.status !== 'read')
                         .map(m => m._id);
                     if (unreadMsgIds.length > 0) {
                         emitMarkAsRead(unreadMsgIds, selectedContact._id);
@@ -1042,10 +1042,10 @@ const ChatContainer = ({ selectedContact, authUser, onLogout }) => {
                             </div>
 
                             <div className="flex items-center gap-4 relative mt-[-60px]" ref={menuRef}>
-                                <button className="text-gray-300/70 hover:text-white/95 transition-colors">
+                                <button className="text-gray-300/70 hover:text-white/95 transition-colors" onClick={() => onStartCall?.('voice')}>
                                     <Phone size={18} strokeWidth={1.5} />
                                 </button>
-                                <button className="text-gray-300/70 hover:text-white/95 transition-colors">
+                                <button className="text-gray-300/70 hover:text-white/95 transition-colors" onClick={() => onStartCall?.('video')}>
                                     <Video size={18} strokeWidth={1.5} />
                                 </button>
                                 <button

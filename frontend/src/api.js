@@ -43,3 +43,7 @@ export const toggleArchiveUser = (userId) =>
   API.patch(`/users/archive/${userId}`);
 
 export const getArchivedUsers = () => API.get("/users/archived");
+
+// ─── Calls ───────────────────────────────────────────
+export const getCallLogs = () => API.get("/calls");
+
