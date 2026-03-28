@@ -14,7 +14,7 @@ function Dock({ onNavigate, activeView, onLogout }) {
 
   return (
     <div
-      className="flex flex-col gap-2 backdrop-blur-2xl rounded-2xl shadow-2xl z-50"
+      className="dock flex flex-col gap-2 backdrop-blur-2xl rounded-2xl shadow-2xl z-50"
       style={{
         background: 'var(--dock-bg)',
         border: '1px solid var(--dock-border)',
@@ -25,7 +25,7 @@ function Dock({ onNavigate, activeView, onLogout }) {
         const isHovered = hoveredIndex === index;
 
         return (
-          <div key={index} className="relative">
+          <div key={index} className="dock-item relative">
             <div
               onClick={() => {
                 if (item.action && item.label === 'Logout') {
@@ -36,7 +36,7 @@ function Dock({ onNavigate, activeView, onLogout }) {
               }}
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
-              className="w-12 h-12 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-300 ease-out relative"
+              className="dock-item-btn w-12 h-12 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-300 ease-out relative"
               style={{
                 background: isActive
                   ? 'var(--dock-active-bg)'
@@ -59,10 +59,12 @@ function Dock({ onNavigate, activeView, onLogout }) {
                 }}
                 strokeWidth={2}
               />
+              {/* Mobile label - hidden on desktop, shown on mobile via CSS */}
+              <span className="dock-item-label">{item.label}</span>
             </div>
             {isActive && (
               <div
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 w-1 h-7 rounded-full"
+                className="dock-active-indicator absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 w-1 h-7 rounded-full"
                 style={{ background: 'var(--dock-indicator)' }}
               ></div>
             )}

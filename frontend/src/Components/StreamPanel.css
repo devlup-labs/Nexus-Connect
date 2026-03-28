@@ -512,16 +512,4 @@
     border-radius: 50%;
     cursor: pointer;
     box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.4);
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .stream-panel {
-        width: 98%;
-        height: 95vh;
-    }
-
-    .stream-feed-masonry {
-        flex-direction: column;
-    }
-}
+}

@@ -936,7 +936,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
     // No contact selected placeholder
     if (!selectedContact) {
         return (
-            <div className="flex flex-col flex-1 h-full mr-12 min-w-[840px] mb-2">
+            <div className="canvas-panel flex flex-col flex-1 h-full mr-12 min-w-[840px] mb-2">
                 <div className="pt-[60px] pb-0 pl-2 flex justify-between items-end mb-[-30px] relative z-20">
                     <h2 style={{ fontSize: '24px', fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '0.5px', fontFamily: 'var(--font-main)', lineHeight: 1 }}>Canvas</h2>
                 </div>
@@ -962,7 +962,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
     }));
 
     return (
-        <div className="flex flex-col flex-1 h-full mr-12 min-w-[840px] mb-2">
+        <div className="canvas-panel flex flex-col flex-1 h-full mr-12 min-w-[840px] mb-2">
             <div className="pt-[60px] pb-0 pl-2 flex justify-between items-end mb-[-30px] relative z-20">
                 <h2 style={{ fontSize: '24px', fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '0.5px', fontFamily: 'var(--font-main)', lineHeight: 1 }}>Canvas</h2>
             </div>
@@ -1030,7 +1030,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                         </div>
                     ) : (
                         /* Normal Contact header */
-                        <div className="flex items-center justify-between mt-4 pt-0 px-8">
+                        <div className="mobile-canvas-header flex items-center justify-between mt-4 pt-0 px-8">
                             <div className="">
                                 <h2 style={{ fontSize: '36px', lineHeight: 1, fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '-0.025em', marginTop: '8px', fontFamily: 'var(--font-main)' }}>
                                     {selectedContact.fullName}

@@ -93,7 +93,7 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
   };
 
   return (
-    <div className="flex flex-col flex-1 h-full mr-12 min-w-[840px] mb-2">
+    <div className="settings-panel flex flex-col flex-1 h-full mr-12 min-w-[840px] mb-2">
       {/* Title */}
       <div className="pt-[60px] pb-0 pl-2 flex justify-between items-end mb-[-30px] relative z-20">
         <h2 style={{ fontSize: '24px', fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '0.5px', fontFamily: 'var(--font-main)', lineHeight: 1 }}>Settings</h2>

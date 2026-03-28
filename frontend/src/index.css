@@ -1,5 +1,6 @@
 @import "./themes.css";
 @import "tailwindcss";
+@import "./mobile.css";
 
 /* Custom Scrollbar Styles */
 ::-webkit-scrollbar {
@@ -41,6 +42,7 @@ body {
         opacity: 0;
         transform: translateY(-8px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -52,6 +54,7 @@ body {
         opacity: 0;
         transform: translateX(100%);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -62,6 +65,7 @@ body {
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -74,11 +78,13 @@ body {
 }
 
 @keyframes chatPulse {
+
     0%,
     100% {
         opacity: 1;
         transform: scale(1);
     }
+
     50% {
         opacity: 0.5;
         transform: scale(1.2);
@@ -89,43 +95,107 @@ body {
 
 /* Blob Mesh Gradient Drift */
 @keyframes blob-drift-1 {
-    0% { transform: translate3d(0px, 0px, 0) scale(1); }
-    33% { transform: translate3d(10vw, 15vh, 0) scale(1.1); }
-    66% { transform: translate3d(-10vw, 5vh, 0) scale(0.95); }
-    100% { transform: translate3d(0px, 0px, 0) scale(1); }
-}
-@keyframes blob-drift-2 {
-    0% { transform: translate3d(0px, 0px, 0) scale(1); }
-    33% { transform: translate3d(-15vw, -10vh, 0) scale(0.9); }
-    66% { transform: translate3d(10vw, -15vh, 0) scale(1.05); }
-    100% { transform: translate3d(0px, 0px, 0) scale(1); }
-}
-@keyframes blob-drift-3 {
-    0% { transform: translate3d(0px, 0px, 0) scale(1); }
-    33% { transform: translate3d(5vw, -15vh, 0) scale(1.15); }
-    66% { transform: translate3d(-15vw, 10vh, 0) scale(0.9); }
-    100% { transform: translate3d(0px, 0px, 0) scale(1); }
+    0% {
+        transform: translate3d(0px, 0px, 0) scale(1);
+    }
+
+    33% {
+        transform: translate3d(10vw, 15vh, 0) scale(1.1);
+    }
+
+    66% {
+        transform: translate3d(-10vw, 5vh, 0) scale(0.95);
+    }
+
+    100% {
+        transform: translate3d(0px, 0px, 0) scale(1);
+    }
 }
 
-.blob-1, .blob-2, .blob-3, .blob-4 {
+@keyframes blob-drift-2 {
+    0% {
+        transform: translate3d(0px, 0px, 0) scale(1);
+    }
+
+    33% {
+        transform: translate3d(-15vw, -10vh, 0) scale(0.9);
+    }
+
+    66% {
+        transform: translate3d(10vw, -15vh, 0) scale(1.05);
+    }
+
+    100% {
+        transform: translate3d(0px, 0px, 0) scale(1);
+    }
+}
+
+@keyframes blob-drift-3 {
+    0% {
+        transform: translate3d(0px, 0px, 0) scale(1);
+    }
+
+    33% {
+        transform: translate3d(5vw, -15vh, 0) scale(1.15);
+    }
+
+    66% {
+        transform: translate3d(-15vw, 10vh, 0) scale(0.9);
+    }
+
+    100% {
+        transform: translate3d(0px, 0px, 0) scale(1);
+    }
+}
+
+.blob-1,
+.blob-2,
+.blob-3,
+.blob-4 {
     will-change: transform;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     perspective: 1000px;
     transform-style: preserve-3d;
 }
-.blob-1 { animation: blob-drift-1 22s ease-in-out infinite; }
-.blob-2 { animation: blob-drift-2 26s ease-in-out infinite; }
-.blob-3 { animation: blob-drift-3 30s ease-in-out infinite; }
-.blob-4 { animation: blob-drift-1 28s ease-in-out infinite reverse; }
+
+.blob-1 {
+    animation: blob-drift-1 22s ease-in-out infinite;
+}
+
+.blob-2 {
+    animation: blob-drift-2 26s ease-in-out infinite;
+}
+
+.blob-3 {
+    animation: blob-drift-3 30s ease-in-out infinite;
+}
+
+.blob-4 {
+    animation: blob-drift-1 28s ease-in-out infinite reverse;
+}
 
 /* Sakura Falling Petals */
 @keyframes fall {
-    0% { transform: translate3d(0, -10px, 0) rotate(0deg); opacity: 0; }
-    10% { opacity: 0.8; }
-    90% { opacity: 0.8; }
-    100% { transform: translate3d(150px, 100vh, 0) rotate(360deg); opacity: 0; }
+    0% {
+        transform: translate3d(0, -10px, 0) rotate(0deg);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 0.8;
+    }
+
+    90% {
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: translate3d(150px, 100vh, 0) rotate(360deg);
+        opacity: 0;
+    }
 }
+
 .petal {
     position: absolute;
     border-radius: 15px 0 15px 0;
@@ -135,10 +205,21 @@ body {
 
 /* Celestia Floating Dust */
 @keyframes float-dust {
-    0% { transform: translate3d(0, 0, 0); opacity: 0; }
-    50% { opacity: 0.6; }
-    100% { transform: translate3d(50px, -100px, 0); opacity: 0; }
+    0% {
+        transform: translate3d(0, 0, 0);
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+
+    100% {
+        transform: translate3d(50px, -100px, 0);
+        opacity: 0;
+    }
 }
+
 .dust {
     position: absolute;
     border-radius: 50%;
@@ -150,17 +231,39 @@ body {
 
 /* Nexus Starfield */
 @keyframes twinkle {
-    0%, 100% { opacity: 0.2; transform: scale(0.8); }
-    50% { opacity: 1; transform: scale(1.2); }
+
+    0%,
+    100% {
+        opacity: 0.2;
+        transform: scale(0.8);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
 }
+
 @keyframes orbit {
-    from { transform: rotate(0deg) translateX(200px) rotate(0deg); }
-    to { transform: rotate(360deg) translateX(200px) rotate(-360deg); }
+    from {
+        transform: rotate(0deg) translateX(200px) rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg) translateX(200px) rotate(-360deg);
+    }
 }
+
 @keyframes orbit-reverse {
-    from { transform: rotate(360deg) translateX(300px) rotate(-360deg); }
-    to { transform: rotate(0deg) translateX(300px) rotate(0deg); }
+    from {
+        transform: rotate(360deg) translateX(300px) rotate(-360deg);
+    }
+
+    to {
+        transform: rotate(0deg) translateX(300px) rotate(0deg);
+    }
 }
+
 .star {
     position: absolute;
     background: #ffffff;

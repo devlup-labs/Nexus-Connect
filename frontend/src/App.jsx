@@ -292,8 +292,8 @@ function App() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: `linear-gradient(135deg, var(--bg-gradient-from), var(--bg-gradient-via), var(--bg-gradient-to))` }}>
       {/* Blob Mesh Gradient Background */}
-      <div 
-        className="absolute inset-[-50%] pointer-events-none z-0" 
+      <div
+        className="absolute inset-[-50%] pointer-events-none z-0"
         style={{ filter: 'blur(100px)', WebkitFilter: 'blur(100px)', transform: 'translate3d(0,0,0)' }}
       >
         <div className="absolute top-[30%] left-[20%] w-[50vw] h-[50vh] rounded-full blob-1 opacity-80" style={{ background: 'var(--glow-1)' }}></div>
@@ -313,14 +313,50 @@ function App() {
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E")`
         }}>
       </div>
-      <div className="relative z-10 flex items-center gap-6 h-screen pl-5">
-        <Dock onNavigate={setActiveView} activeView={activeView} onLogout={handleLogout} />
+      <div className="app-layout relative z-10 flex items-center gap-6 h-screen pl-5">
+        <Dock
+          onNavigate={(view) => {
+            setActiveView(view);
+            if (window.innerWidth <= 767) {
+              setTimeout(() => {
+                const container = document.querySelector('.panels-container');
+                if (!container) return;
+                // Scroll right to show the panel for settings/call-log
+                // Scroll left to show stream for home/messages/contacts
+                const scrollRight = view === 'call-log' || view === 'settings';
+                container.scrollTo({ left: scrollRight ? container.scrollWidth : 0, behavior: 'smooth' });
+              }, 50);
+            }
+          }}
+          activeView={activeView}
+          onLogout={handleLogout}
+        />
 
-        <div className="flex items-center gap-3 h-full">
-          {activeView === 'contacts' ? <ContactsPanel onSendMessage={(contact) => { setSelectedContact(contact); setActiveView('messages'); }} /> : <StreamPanel
+        <div className="panels-container flex items-center gap-3 h-full">
+          {activeView === 'contacts' ? <ContactsPanel onSendMessage={(contact) => {
+            setSelectedContact(contact);
+            setActiveView('messages');
+            // On mobile: scroll panels-container to show the canvas (second panel)
+            if (window.innerWidth <= 767) {
+              setTimeout(() => {
+                const container = document.querySelector('.panels-container');
+                if (container) container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
+              }, 50);
+            }
+          }} /> : <StreamPanel
             authUser={authUser}
             selectedContactId={selectedContact?._id}
-            onSelectContact={(contact) => { setSelectedContact(contact); setActiveView('messages'); }}
+            onSelectContact={(contact) => {
+              setSelectedContact(contact);
+              setActiveView('messages');
+              // On mobile: scroll panels-container to show the canvas (second panel)
+              if (window.innerWidth <= 767) {
+                setTimeout(() => {
+                  const container = document.querySelector('.panels-container');
+                  if (container) container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
+                }, 50);
+              }
+            }}
           />}
           {renderView()}
         </div>
