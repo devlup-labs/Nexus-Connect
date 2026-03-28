@@ -1,6 +1,9 @@
 import { io } from "socket.io-client";
 
 let socket = null;
+let activeUsers = [];
+
+export const getActiveUsers = () => activeUsers;
 
 export const initializeSocket = (userId) => {
     if (socket) return socket;
@@ -20,6 +23,20 @@ export const initializeSocket = (userId) => {
     socket.on("connect", () => {
         console.log("Connected to WebSocket server");
         socket.emit("user_connected", userId);
+    });
+
+    socket.on("active_users", (users) => {
+        activeUsers = users;
+    });
+
+    socket.on("user_status_update", (data) => {
+        if (data.status === "online") {
+            if (!activeUsers.includes(data.userId)) {
+                activeUsers.push(data.userId);
+            }
+        } else {
+            activeUsers = activeUsers.filter((id) => id !== data.userId);
+        }
     });
 
     socket.on("disconnect", (reason) => {
@@ -44,6 +61,7 @@ export const disconnectSocket = () => {
     if (socket) {
         socket.disconnect();
         socket = null;
+        activeUsers = [];
     }
 };
 
