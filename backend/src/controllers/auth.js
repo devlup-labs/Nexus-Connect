@@ -12,6 +12,13 @@ export const signup = async (req, res) => {
       return res.status(400).json({ message: "All fields required" });
     }
 
+    const normalizedFullName = fullName.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedFullName) {
+      return res.status(400).json({ message: "Full name is required" });
+    }
+
     if (password.length < 6) {
       return res
         .status(400)
@@ -19,19 +26,19 @@ export const signup = async (req, res) => {
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(normalizedEmail)) {
       return res.status(400).json({ message: "Invalid email format" });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
     if (user) return res.status(400).json({ message: "Email already exists" });
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const newUser = new User({
-      fullName,
-      email,
+      fullName: normalizedFullName,
+      email: normalizedEmail,
       password: hashedPassword,
     });
 
@@ -57,6 +64,18 @@ export const signup = async (req, res) => {
     }
   } catch (error) {
     console.log("Error in signup controller:", error);
+
+    if (error?.code === 11000) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+
+    if (error?.name === "ValidationError") {
+      const firstError = Object.values(error.errors || {})[0];
+      return res
+        .status(400)
+        .json({ message: firstError?.message || "Invalid signup data" });
+    }
+
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -69,7 +88,9 @@ export const login = async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
@@ -92,7 +113,14 @@ export const login = async (req, res) => {
 };
 
 export const logout = (_, res) => {
-  res.cookie("jwt", "", { maxAge: 0 });
+  const isProduction = ENV.NODE_ENV === "production";
+
+  res.cookie("jwt", "", {
+    maxAge: 0,
+    httpOnly: true,
+    sameSite: isProduction ? "none" : "lax",
+    secure: isProduction,
+  });
   res.status(200).json({ message: "Logged out successfully" });
 };
 

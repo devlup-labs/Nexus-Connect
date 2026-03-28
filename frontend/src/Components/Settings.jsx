@@ -1,6 +1,8 @@
 import React, { useState, useRef } from "react";
 import { Edit2, ChevronDown, Check, X, Camera } from "lucide-react";
 import { updateProfile } from "../api";
+import Cropper from "react-easy-crop";
+import getCroppedImg, { convertBlobToBase64 } from "../utils/cropImage";
 
 function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
   const fileInputRef = useRef(null);
@@ -13,6 +15,13 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
   const languages = ["English", "Hindi", "Spanish", "French"];
   const [uploadingPic, setUploadingPic] = useState(false);
 
+  // Cropping State
+  const [activeImage, setActiveImage] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [showCropModal, setShowCropModal] = useState(false);
+
   // Edit profile state
   const [editMode, setEditMode] = useState(false);
   const [editName, setEditName] = useState(authUser?.fullName || "");
@@ -24,24 +33,39 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
     return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
   };
 
-  const handleProfilePicUpload = async (e) => {
+  const handleProfilePicSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    reader.onload = async () => {
-      const base64 = reader.result;
-      setUploadingPic(true);
-      try {
-        const res = await updateProfile({ profilePic: base64 });
-        if (onProfileUpdate) onProfileUpdate(res.data);
-      } catch (err) {
-        console.error("Failed to update profile pic:", err);
-      } finally {
-        setUploadingPic(false);
-      }
+    reader.onload = () => {
+      setActiveImage(reader.result);
+      setShowCropModal(true);
+      setZoom(1);
+      setCrop({ x: 0, y: 0 });
     };
+    e.target.value = null; // reset input
+  };
+
+  const handleCropComplete = async () => {
+    if (!activeImage || !croppedAreaPixels) return;
+    try {
+      setUploadingPic(true);
+
+      const croppedImageBlobUrl = await getCroppedImg(activeImage, croppedAreaPixels);
+      const base64Image = await convertBlobToBase64(croppedImageBlobUrl);
+
+      const res = await updateProfile({ profilePic: base64Image });
+      if (onProfileUpdate) onProfileUpdate(res.data);
+
+      setShowCropModal(false);
+      setActiveImage(null);
+    } catch (err) {
+      console.error("Failed to update profile pic:", err);
+    } finally {
+      setUploadingPic(false);
+    }
   };
 
   const handleEditSave = async () => {
@@ -172,7 +196,7 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
-                  onChange={handleProfilePicUpload}
+                  onChange={handleProfilePicSelect}
                   style={{ display: "none" }}
                 />
               </div>
@@ -500,6 +524,60 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
           </button>
         </div>
       </div>
+
+      {/* Crop Modal */}
+      {showCropModal && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)" }}>
+          <div style={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", width: "100%", maxWidth: "400px", padding: "24px", display: "flex", flexDirection: "column", alignItems: "center", boxShadow: "0 20px 40px rgba(0,0,0,0.5)" }}>
+            <h3 style={{ color: "white", fontWeight: 500, marginBottom: "20px", width: "100%", textAlign: "center", fontFamily: "'Inter', sans-serif" }}>Adjust Profile Picture</h3>
+
+            <div style={{ position: "relative", width: "100%", height: "260px", background: "rgba(0,0,0,0.5)", borderRadius: "12px", overflow: "hidden", marginBottom: "24px" }}>
+              <Cropper
+                image={activeImage}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape="round"
+                showGrid={false}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={(_, croppedPixels) => setCroppedAreaPixels(croppedPixels)}
+              />
+            </div>
+
+            <div style={{ width: "100%", marginBottom: "24px", display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", fontFamily: "'Inter', sans-serif" }}>Zoom</span>
+              <input
+                type="range"
+                value={zoom}
+                min={1}
+                max={3}
+                step={0.1}
+                onChange={(e) => setZoom(e.target.value)}
+                style={{ flex: 1, accentColor: "#30FBE6", background: "rgba(255,255,255,0.1)", borderRadius: "999px", height: "4px", outline: "none", cursor: "pointer" }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: "12px", width: "100%", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => { setShowCropModal(false); setActiveImage(null); }}
+                disabled={uploadingPic}
+                style={{ padding: "10px 16px", borderRadius: "10px", color: "rgba(255,255,255,0.7)", background: "transparent", cursor: "pointer", fontSize: "13px", fontFamily: "'Inter', sans-serif", border: "none" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCropComplete}
+                disabled={uploadingPic}
+                style={{ padding: "10px 20px", background: "rgba(48, 251, 230, 0.15)", color: "#30FBE6", border: "1px solid rgba(48, 251, 230, 0.3)", borderRadius: "10px", cursor: "pointer", fontSize: "13px", fontWeight: 500, fontFamily: "'Inter', sans-serif", display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                {uploadingPic ? "Saving..." : "Apply"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
