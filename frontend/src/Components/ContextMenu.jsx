@@ -52,10 +52,10 @@ const ContextMenu = ({ x, y, items, onClose }) => {
                 minWidth: '180px',
                 padding: '6px',
                 borderRadius: '12px',
-                background: 'rgba(15, 23, 42, 0.95)',
+                background: 'var(--surface-input)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(48, 251, 230, 0.05)',
+                border: '1px solid var(--border-hover)',
+                boxShadow: '0 10px 40px var(--shadow), 0 0 20px var(--shadow-glow)',
                 animation: 'contextMenuFadeIn 0.12s ease-out'
             }}
         >
@@ -66,7 +66,7 @@ const ContextMenu = ({ x, y, items, onClose }) => {
                             key={`divider-${index}`}
                             style={{
                                 height: '1px',
-                                background: 'linear-gradient(to right, transparent, rgba(255, 255, 255, 0.1), transparent)',
+                                background: 'linear-gradient(to right, transparent, var(--border), transparent)',
                                 margin: '4px 8px'
                             }}
                         />
@@ -89,17 +89,17 @@ const ContextMenu = ({ x, y, items, onClose }) => {
                             borderRadius: '8px',
                             border: 'none',
                             background: 'transparent',
-                            color: item.color || 'rgba(255, 255, 255, 0.85)',
+                            color: item.color || 'var(--text-primary)',
                             fontSize: '13px',
                             cursor: 'pointer',
                             transition: 'background 0.12s',
                             textAlign: 'left',
-                            fontFamily: "'Inter', sans-serif"
+                            fontFamily: 'var(--font-main)'
                         }}
                         onMouseEnter={(e) => {
                             e.currentTarget.style.background = item.color
                                 ? `${item.color}15`
-                                : 'rgba(255, 255, 255, 0.08)';
+                                : 'var(--surface-hover)';
                         }}
                         onMouseLeave={(e) => {
                             e.currentTarget.style.background = 'transparent';

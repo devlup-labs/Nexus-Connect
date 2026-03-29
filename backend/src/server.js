@@ -13,9 +13,13 @@ import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import userRoutes from "./routes/user.route.js";
 import callRoutes from "./routes/call.route.js";
+import dns from "node:dns";
 
 
 dotenv.config();
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
+
+
 
 const app = express();
 const httpServer = createServer(app);
@@ -57,5 +61,6 @@ if (process.env.NODE_ENV === 'production') {
 
 httpServer.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+
   connectDB();
 });

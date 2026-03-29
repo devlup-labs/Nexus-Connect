@@ -262,9 +262,9 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                             width: '10px',
                             height: '10px',
                             borderRadius: '50%',
-                            background: '#22c55e',
-                            border: '2px solid rgba(15, 23, 42, 0.9)',
-                            boxShadow: '0 0 8px rgba(34, 197, 94, 0.5)'
+                            background: 'var(--status-online)',
+                            border: '2px solid var(--bg-base)',
+                            boxShadow: '0 0 8px var(--status-online-shadow)'
                         }} />
                     )}
                 </div>
@@ -277,8 +277,8 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                         height: '20px',
                         padding: '0 6px',
                         borderRadius: '10px',
-                        background: '#30FBE6',
-                        color: '#0a0f1e',
+                        background: 'var(--accent)',
+                        color: 'var(--text-on-accent)',
                         fontSize: '11px',
                         fontWeight: 700,
                         display: 'flex',
@@ -293,8 +293,8 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
         );
 
         const cardStyle = isSelected ? {
-            border: '1px solid rgba(48, 251, 230, 0.35)',
-            boxShadow: '0 0 15px rgba(48, 251, 230, 0.1)',
+            border: '1px solid var(--border-accent-strong)',
+            boxShadow: '0 0 15px rgba(var(--accent-rgb), 0.1)',
         } : {};
 
         switch (type) {
@@ -316,7 +316,7 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                                 <FileIcon size={22} />
                             </div>
                             <div className="doc-info" style={{ justifyContent: 'center' }}>
-                                <span style={{ fontSize: '15px', color: 'rgba(255,255,255,0.95)' }}>Document</span>
+                                <span style={{ fontSize: '15px', color: 'var(--text-primary)' }}>Document</span>
                             </div>
                         </div>
                         <div className="card-content">
@@ -488,11 +488,11 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                                 right: 0,
                                 top: '110%',
                                 minWidth: '180px',
-                                background: 'rgba(15, 23, 42, 0.95)',
+                                background: 'var(--surface-input)',
                                 backdropFilter: 'blur(20px)',
-                                border: '1px solid rgba(255, 255, 255, 0.12)',
+                                border: '1px solid var(--border-hover)',
                                 borderRadius: '12px',
-                                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5)',
+                                boxShadow: '0 10px 40px var(--shadow)',
                                 padding: '6px',
                                 zIndex: 30
                             }}>
@@ -507,16 +507,16 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                                         borderRadius: '8px',
                                         border: 'none',
                                         background: 'transparent',
-                                        color: 'rgba(255, 255, 255, 0.85)',
+                                        color: 'var(--text-primary)',
                                         fontSize: '13px',
                                         cursor: 'pointer',
                                         transition: 'background 0.15s',
                                         fontFamily: "'Inter', sans-serif"
                                     }}
-                                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-hover)'}
                                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                                 >
-                                    <Archive size={15} style={{ color: '#30FBE6', flexShrink: 0 }} />
+                                    <Archive size={15} style={{ color: 'var(--accent)', flexShrink: 0 }} />
                                     <span>Archived Chats</span>
                                 </button>
                                 <button
@@ -530,13 +530,13 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                                         borderRadius: '8px',
                                         border: 'none',
                                         background: 'transparent',
-                                        color: 'rgba(255, 255, 255, 0.85)',
+                                        color: 'var(--text-primary)',
                                         fontSize: '13px',
                                         cursor: 'pointer',
                                         transition: 'background 0.15s',
                                         fontFamily: "'Inter', sans-serif"
                                     }}
-                                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-hover)'}
                                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                                 >
                                     <RefreshCw size={15} style={{ color: '#a855f7', flexShrink: 0 }} />
@@ -558,14 +558,14 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                     right: 0,
                     bottom: 0,
                     zIndex: 1000,
-                    background: 'rgba(7, 12, 35, 0.96)',
+                    background: 'var(--surface-panel)',
                     backdropFilter: 'blur(25px) saturate(180%)',
                     display: 'flex',
                     flexDirection: 'column',
                     borderRadius: '14px',
                     overflow: 'hidden',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                    border: '1px solid var(--border)',
+                    boxShadow: '0 20px 50px var(--shadow)',
                     animation: 'fadeIn 0.3s ease-out'
                 }}>
                     {/* Header */}
@@ -574,11 +574,11 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: '14px 16px',
-                        borderBottom: '1px solid rgba(255,255,255,0.08)'
+                        borderBottom: '1px solid var(--border)'
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <Archive size={18} style={{ color: '#30FBE6' }} />
-                            <span style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.9)' }}>
+                            <Archive size={18} style={{ color: 'var(--accent)' }} />
+                            <span style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text-primary)' }}>
                                 Archived Chats
                             </span>
                         </div>
@@ -587,7 +587,7 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                             style={{
                                 background: 'transparent',
                                 border: 'none',
-                                color: 'rgba(255,255,255,0.5)',
+                                color: 'var(--text-secondary)',
                                 cursor: 'pointer',
                                 padding: '4px',
                                 display: 'flex',
@@ -604,16 +604,16 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                             <div style={{ display: 'flex', justifyContent: 'center', padding: '30px 0' }}>
                                 <div style={{
                                     width: '24px', height: '24px',
-                                    border: '2px solid rgba(48, 251, 230, 0.15)',
-                                    borderTopColor: '#30FBE6',
+                                    border: '2px solid var(--border-accent)',
+                                    borderTopColor: 'var(--accent)',
                                     borderRadius: '50%',
                                     animation: 'spin 0.8s linear infinite'
                                 }} />
                                 <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                             </div>
                         ) : archivedUsers.length === 0 ? (
-                            <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '13px', padding: '30px 16px' }}>
-                                <Archive size={28} style={{ color: 'rgba(48, 251, 230, 0.15)', margin: '0 auto 10px', display: 'block' }} />
+                            <div style={{ textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '13px', padding: '30px 16px' }}>
+                                <Archive size={28} style={{ color: 'var(--text-tertiary)', margin: '0 auto 10px', display: 'block' }} />
                                 No archived chats
                             </div>
                         ) : (
@@ -628,23 +628,23 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                                         borderRadius: '10px',
                                         transition: 'background 0.15s'
                                     }}
-                                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-hover)'}
                                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                                 >
                                     <div style={{
                                         width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
-                                        background: user.profilePic ? `url(${user.profilePic}) center/cover` : 'linear-gradient(135deg, rgba(48,251,230,0.3), rgba(168,85,247,0.3))',
+                                        background: user.profilePic ? `url(${user.profilePic}) center/cover` : 'linear-gradient(135deg, var(--shadow-glow), rgba(168,85,247,0.3))',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        border: '1px solid rgba(255,255,255,0.15)',
-                                        fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.7)'
+                                        border: '1px solid var(--border)',
+                                        fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)'
                                     }}>
                                         {!user.profilePic && getInitials(user.fullName)}
                                     </div>
                                     <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div style={{ fontSize: '13px', fontWeight: 500, color: 'rgba(255,255,255,0.85)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                             {user.fullName}
                                         </div>
-                                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>
+                                        <div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
                                             {user.email}
                                         </div>
                                     </div>
@@ -652,21 +652,21 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                                         onClick={() => handleUnarchive(user._id)}
                                         title="Unarchive"
                                         style={{
-                                            background: 'rgba(48, 251, 230, 0.1)',
-                                            border: '1px solid rgba(48, 251, 230, 0.25)',
+                                            background: 'rgba(var(--accent-rgb), 0.1)',
+                                            border: '1px solid var(--border-accent)',
                                             borderRadius: '8px',
                                             padding: '6px 10px',
                                             cursor: 'pointer',
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: '6px',
-                                            color: '#30FBE6',
+                                            color: 'var(--accent)',
                                             fontSize: '11px',
                                             fontWeight: 500,
                                             transition: 'all 0.15s'
                                         }}
-                                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(48, 251, 230, 0.2)'; }}
-                                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(48, 251, 230, 0.1)'; }}
+                                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(var(--accent-rgb), 0.2)'; }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(var(--accent-rgb), 0.1)'; }}
                                     >
                                         <RotateCcw size={12} />
                                         Unarchive
@@ -687,7 +687,7 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                     right: 0,
                     bottom: 0,
                     zIndex: 20,
-                    background: 'rgba(5, 10, 31, 0.92)',
+                    background: 'var(--surface-panel)',
                     backdropFilter: 'blur(12px)',
                     display: 'flex',
                     flexDirection: 'column',
@@ -700,9 +700,9 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: '14px 16px',
-                        borderBottom: '1px solid rgba(255,255,255,0.08)'
+                        borderBottom: '1px solid var(--border)'
                     }}>
-                        <span style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.9)' }}>
+                        <span style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text-primary)' }}>
                             New Chat
                         </span>
                         <button
@@ -710,7 +710,7 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                             style={{
                                 background: 'transparent',
                                 border: 'none',
-                                color: 'rgba(255,255,255,0.5)',
+                                color: 'var(--text-secondary)',
                                 cursor: 'pointer',
                                 padding: '4px',
                                 display: 'flex',
@@ -729,10 +729,10 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                             gap: '8px',
                             padding: '10px 14px',
                             borderRadius: '10px',
-                            background: 'rgba(255,255,255,0.05)',
-                            border: '1px solid rgba(255,255,255,0.1)'
+                            background: 'var(--surface-input)',
+                            border: '1px solid var(--border)'
                         }}>
-                            <Search size={14} style={{ color: '#30FBE6', flexShrink: 0 }} />
+                            <Search size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
                             <input
                                 type="text"
                                 autoFocus
@@ -744,7 +744,7 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                                     background: 'transparent',
                                     border: 'none',
                                     outline: 'none',
-                                    color: 'rgba(255,255,255,0.9)',
+                                    color: 'var(--text-primary)',
                                     fontSize: '13px',
                                     fontFamily: "'Inter', sans-serif"
                                 }}
@@ -758,15 +758,15 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                             <div style={{ display: 'flex', justifyContent: 'center', padding: '30px 0' }}>
                                 <div style={{
                                     width: '24px', height: '24px',
-                                    border: '2px solid rgba(48, 251, 230, 0.15)',
-                                    borderTopColor: '#30FBE6',
+                                    border: '2px solid var(--border-accent)',
+                                    borderTopColor: 'var(--accent)',
                                     borderRadius: '50%',
                                     animation: 'spin 0.8s linear infinite'
                                 }} />
                                 <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                             </div>
                         ) : filteredNewChatContacts.length === 0 ? (
-                            <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '13px', padding: '30px 16px' }}>
+                            <div style={{ textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '13px', padding: '30px 16px' }}>
                                 {newChatSearch ? 'No users found' : 'No other users yet'}
                             </div>
                         ) : (
@@ -783,23 +783,23 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                                         cursor: 'pointer',
                                         transition: 'background 0.15s'
                                     }}
-                                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-hover)'}
                                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                                 >
                                     <div style={{
                                         width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
-                                        background: contact.profilePic ? `url(${contact.profilePic}) center/cover` : 'linear-gradient(135deg, rgba(48,251,230,0.3), rgba(168,85,247,0.3))',
+                                        background: contact.profilePic ? `url(${contact.profilePic}) center/cover` : 'linear-gradient(135deg, var(--shadow-glow), rgba(168,85,247,0.3))',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        border: '1px solid rgba(255,255,255,0.15)',
-                                        fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.7)'
+                                        border: '1px solid var(--border)',
+                                        fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)'
                                     }}>
                                         {!contact.profilePic && getInitials(contact.fullName)}
                                     </div>
                                     <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div style={{ fontSize: '13px', fontWeight: 500, color: 'rgba(255,255,255,0.85)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                             {contact.fullName}
                                         </div>
-                                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>
+                                        <div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
                                             {contact.email}
                                         </div>
                                     </div>
@@ -820,18 +820,18 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                     <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0', width: '100%' }}>
                         <div style={{
                             width: '28px', height: '28px',
-                            border: '2px solid rgba(48, 251, 230, 0.15)',
-                            borderTopColor: '#30FBE6',
+                            border: '2px solid var(--border-accent)',
+                            borderTopColor: 'var(--accent)',
                             borderRadius: '50%',
                             animation: 'spin 0.8s linear infinite'
                         }} />
                         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                     </div>
                 ) : chatPartners.length === 0 ? (
-                    <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '13px', padding: '40px 16px', width: '100%' }}>
-                        <UserPlus size={32} style={{ color: 'rgba(48, 251, 230, 0.2)', margin: '0 auto 12px' }} />
+                    <div style={{ textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '13px', padding: '40px 16px', width: '100%' }}>
+                        <UserPlus size={32} style={{ color: 'var(--text-tertiary)', margin: '0 auto 12px' }} />
                         <p>No chats yet.</p>
-                        <p style={{ marginTop: '4px' }}>Click <strong style={{ color: '#30FBE6' }}>+</strong> above to start a conversation!</p>
+                        <p style={{ marginTop: '4px' }}>Click <strong style={{ color: 'var(--accent)' }}>+</strong> above to start a conversation!</p>
                     </div>
                 ) : (
                     <>

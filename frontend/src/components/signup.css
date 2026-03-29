@@ -15,7 +15,7 @@
     width: 100%;
     max-width: 400px;
     padding: 40px;
-    background: rgba(255, 255, 255, 0.03); 
+    background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -28,7 +28,8 @@
 
 /* TEXT: All switched to Off-White for clarity */
 .nexus-title {
-    color: #f5f5f5; /* Sharp Off-White */
+    color: #f5f5f5;
+    /* Sharp Off-White */
     font-size: 26px;
     font-weight: 500;
     letter-spacing: 2px;
@@ -44,21 +45,25 @@
 .input-group-nexus input {
     width: 100%;
     padding: 14px 15px;
-    background: rgba(0, 0, 0, 0.2); /* Darker internal fill for contrast */
+    background: rgba(0, 0, 0, 0.2);
+    /* Darker internal fill for contrast */
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 10px;
-    color: #f5f5f5; /* Off-white typing text */
+    color: #f5f5f5;
+    /* Off-white typing text */
     font-size: 14px;
     outline: none;
     transition: border-color 0.3s ease;
 }
 
 .input-group-nexus input::placeholder {
-    color: rgba(245, 245, 245, 0.4); /* Faded off-white placeholder */
+    color: rgba(245, 245, 245, 0.4);
+    /* Faded off-white placeholder */
 }
 
 .input-group-nexus input:focus {
-    border-color: #30FBE6; /* Keeping your teal accent for the glow */
+    border-color: #30FBE6;
+    /* Keeping your teal accent for the glow */
 }
 
 /* ICON: Off-white icons */
@@ -67,7 +72,7 @@
     right: 15px;
     top: 50%;
     transform: translateY(-50%);
-    color: rgba(245, 245, 245, 0.6); 
+    color: rgba(245, 245, 245, 0.6);
 }
 
 /* BUTTON: Transparent with Off-White border and text */

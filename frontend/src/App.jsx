@@ -10,6 +10,10 @@ import ContactsPanel from './Components/ContactsPanel.jsx'
 import { checkAuth, logout as logoutApi } from './api'
 import { initializeSocket, disconnectSocket, getSocket } from './services/socket'
 import CallOverlay from './Components/CallOverlay.jsx'
+import { ThemeProvider } from './contexts/ThemeContext.jsx'
+import NexusBackground from './components/backgrounds/NexusBackground.jsx'
+import SakuraBackground from './components/backgrounds/SakuraBackground.jsx'
+import CelestiaBackground from './components/backgrounds/CelestiaBackground.jsx'
 import { createPeerConnection, startLocalMedia, addLocalTracks, createOffer, applyRemoteOffer, createAnswer, applyRemoteAnswer, addIceCandidate, cleanupWebRTC } from './services/webrtc.js'
 
 
@@ -162,8 +166,10 @@ function App() {
 
     socket.emit('call:invite', { toUserId: contactToCall._id, callType: type }, (res) => {
       if (!res?.ok) {
-        alert(res?.error || 'Failed to start call');
-        setCallState({ status: 'idle', callId: null, otherUserId: null, otherUserName: '', otherUserPic: '', callType: null, isCaller: false, remoteStreamUpdated: 0 });
+        setCallState(prev => ({ ...prev, status: 'failed', errorMessage: res?.error || 'User is offline' }));
+        setTimeout(() => {
+          setCallState({ status: 'idle', callId: null, otherUserId: null, otherUserName: '', otherUserPic: '', callType: null, isCaller: false, remoteStreamUpdated: 0 });
+        }, 2000);
       }
     });
   };
@@ -198,7 +204,7 @@ function App() {
     setCallState({ status: 'idle', callId: null, otherUserId: null, otherUserName: '', otherUserPic: '', callType: null, isCaller: false, remoteStreamUpdated: 0 });
   };
 
-  const handleEndCall = () => {
+  function handleEndCall() {
     const socket = getSocket();
     if (socket && callState.callId) {
       socket.emit('call:end', { callId: callState.callId });
@@ -225,12 +231,12 @@ function App() {
   // Loading state while checking auth
   if (authLoading) {
     return (
-      <div className="w-screen h-screen bg-linear-to-br from-[#050A1F] via-[#0A1535] to-[#02040A] flex items-center justify-center">
+      <div className="w-screen h-screen flex items-center justify-center" style={{ background: 'var(--bg-base, #050A1F)' }}>
         <div style={{
           width: '40px',
           height: '40px',
-          border: '3px solid rgba(48, 251, 230, 0.2)',
-          borderTopColor: '#30FBE6',
+          border: '3px solid rgba(var(--accent-rgb, 48, 251, 230), 0.2)',
+          borderTopColor: 'var(--accent, #30FBE6)',
           borderRadius: '50%',
           animation: 'spin 0.8s linear infinite'
         }} />
@@ -284,32 +290,73 @@ function App() {
   };
 
   return (
-    <div className="relative w-screen h-screen bg-linear-to-br from-[#050A1F] via-[#0F2550] to-[#02040A] overflow-hidden">
-      {/* Glow Effects */}
-      <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-pulse-slow pointer-events-none opacity-100"
-        style={{
-          background: `
-            radial-gradient(circle at 20% 30%, rgba(30, 64, 175, 0.25) 0%, transparent 40%),
-            radial-gradient(circle at 80% 70%, rgba(0, 191, 255, 0.2) 0%, transparent 40%),
-            radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-            radial-gradient(circle at 70% 20%, rgba(14, 165, 233, 0.15) 0%, transparent 35%)
-          `
-        }}>
+    <div className="relative w-screen h-screen overflow-hidden" style={{ background: `linear-gradient(135deg, var(--bg-gradient-from), var(--bg-gradient-via), var(--bg-gradient-to))` }}>
+      {/* Blob Mesh Gradient Background */}
+      <div
+        className="absolute inset-[-50%] pointer-events-none z-0"
+        style={{ filter: 'blur(100px)', WebkitFilter: 'blur(100px)', transform: 'translate3d(0,0,0)' }}
+      >
+        <div className="absolute top-[30%] left-[20%] w-[50vw] h-[50vh] rounded-full blob-1 opacity-80" style={{ background: 'var(--glow-1)' }}></div>
+        <div className="absolute bottom-[30%] right-[20%] w-[60vw] h-[60vh] rounded-full blob-2 opacity-80" style={{ background: 'var(--glow-2)' }}></div>
+        <div className="absolute top-[20%] left-[40%] w-[70vw] h-[70vh] rounded-full blob-3 opacity-60" style={{ background: 'var(--glow-3)' }}></div>
+        <div className="absolute bottom-[20%] left-[30%] w-[50vw] h-[50vh] rounded-full blob-4 opacity-50" style={{ background: 'var(--glow-1)' }}></div>
       </div>
+
+      {/* Theme-specific animated backgrounds */}
+      <NexusBackground />
+      <SakuraBackground />
+      <CelestiaBackground />
+
       {/* Noise Texture */}
       <div className="absolute inset-0 opacity-25 pointer-events-none"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E")`
         }}>
       </div>
-      <div className="relative z-10 flex items-center gap-6 h-screen pl-5">
-        <Dock onNavigate={setActiveView} activeView={activeView} onLogout={handleLogout} />
+      <div className="app-layout relative z-10 flex items-center gap-6 h-screen pl-5">
+        <Dock
+          onNavigate={(view) => {
+            setActiveView(view);
+            if (window.innerWidth <= 767) {
+              setTimeout(() => {
+                const container = document.querySelector('.panels-container');
+                if (!container) return;
+                // Scroll right to show the panel for settings/call-log
+                // Scroll left to show stream for home/messages/contacts
+                const scrollRight = view === 'call-log' || view === 'settings';
+                container.scrollTo({ left: scrollRight ? container.scrollWidth : 0, behavior: 'smooth' });
+              }, 50);
+            }
+          }}
+          activeView={activeView}
+          onLogout={handleLogout}
+        />
 
-        <div className="flex items-center gap-3 h-full">
-          {activeView === 'contacts' ? <ContactsPanel onSendMessage={(contact) => { setSelectedContact(contact); setActiveView('messages'); }} /> : <StreamPanel
+        <div className="panels-container flex items-center gap-3 h-full">
+          {activeView === 'contacts' ? <ContactsPanel onSendMessage={(contact) => {
+            setSelectedContact(contact);
+            setActiveView('messages');
+            // On mobile: scroll panels-container to show the canvas (second panel)
+            if (window.innerWidth <= 767) {
+              setTimeout(() => {
+                const container = document.querySelector('.panels-container');
+                if (container) container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
+              }, 50);
+            }
+          }} /> : <StreamPanel
             authUser={authUser}
             selectedContactId={selectedContact?._id}
-            onSelectContact={(contact) => { setSelectedContact(contact); setActiveView('messages'); }}
+            onSelectContact={(contact) => {
+              setSelectedContact(contact);
+              setActiveView('messages');
+              // On mobile: scroll panels-container to show the canvas (second panel)
+              if (window.innerWidth <= 767) {
+                setTimeout(() => {
+                  const container = document.querySelector('.panels-container');
+                  if (container) container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
+                }, 50);
+              }
+            }}
           />}
           {renderView()}
         </div>
@@ -328,4 +375,13 @@ function App() {
   );
 }
 
-export default App;
+// Wrap App with ThemeProvider
+function AppWithTheme() {
+  return (
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
+  );
+}
+
+export default AppWithTheme;

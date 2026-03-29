@@ -3,10 +3,11 @@ import { Edit2, ChevronDown, Check, X, Camera } from "lucide-react";
 import { updateProfile } from "../api";
 import Cropper from "react-easy-crop";
 import getCroppedImg, { convertBlobToBase64 } from "../utils/cropImage";
+import { useTheme, THEME_LIST } from "../contexts/ThemeContext.jsx";
 
 function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
   const fileInputRef = useRef(null);
-  const [theme, setTheme] = useState("dark");
+  const { theme, setTheme } = useTheme();
   const [sounds, setSounds] = useState(true);
   const [banners, setBanners] = useState(true);
   const [language, setLanguage] = useState("English");
@@ -92,14 +93,14 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
   };
 
   return (
-    <div className="flex flex-col flex-1 h-full mr-12 min-w-[840px] mb-2">
+    <div className="settings-panel flex flex-col flex-1 h-full mr-12 min-w-[840px] mb-2">
       {/* Title */}
       <div className="pt-[60px] pb-0 pl-2 flex justify-between items-end mb-[-30px] relative z-20">
-        <h2 className="text-[24px] font-medium text-white/90 tracking-[0.5px] font-sans leading-none pb-0">Settings</h2>
+        <h2 style={{ fontSize: '24px', fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '0.5px', fontFamily: 'var(--font-main)', lineHeight: 1 }}>Settings</h2>
       </div>
 
       {/* Main Glass Panel */}
-      <div className="relative flex-1 rounded-[14px] border border-white/8 overflow-hidden backdrop-blur-3xl bg-gradient-to-br from-[#0b1220]/40 via-[#2b1b3a]/20 to-[#091021]/40 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+      <div className="relative flex-1 rounded-[14px] border border-[var(--border)] overflow-hidden backdrop-blur-3xl bg-[var(--surface-panel)] shadow-[0_8px_32px_var(--shadow)]">
         {/* Noise texture */}
         <div
           className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
@@ -116,14 +117,14 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
           <div style={{
             padding: "16px",
             borderRadius: "12px",
-            background: "rgba(255, 255, 255, 0.04)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
           }}>
             <h3 style={{
               fontSize: "12px",
               fontWeight: 600,
-              color: "rgba(255, 255, 255, 0.5)",
-              fontFamily: "'Inter', sans-serif",
+              color: "var(--text-secondary)",
+              fontFamily: "var(--font-main)",
               letterSpacing: "0.06em",
               textTransform: "uppercase",
               marginBottom: "16px",
@@ -139,8 +140,8 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
                   height: "56px",
                   borderRadius: "50%",
                   padding: "2px",
-                  background: "linear-gradient(135deg, #30FBE6, #a855f7)",
-                  boxShadow: "0 0 20px rgba(48, 251, 230, 0.25)",
+                  background: "linear-gradient(135deg, var(--accent), var(--accent-secondary))",
+                  boxShadow: "0 0 20px var(--shadow-glow)",
                   opacity: uploadingPic ? 0.5 : 1,
                   transition: "opacity 0.2s",
                 }}>
@@ -160,14 +161,14 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
                       width: "100%",
                       height: "100%",
                       borderRadius: "50%",
-                      background: "rgba(15, 23, 42, 0.95)",
+                      background: "var(--surface-input)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       fontSize: "18px",
                       fontWeight: 600,
-                      color: "rgba(255, 255, 255, 0.7)",
-                      fontFamily: "'Inter', sans-serif",
+                      color: "var(--text-secondary)",
+                      fontFamily: "var(--font-main)",
                     }}>
                       {getInitials(authUser?.fullName)}
                     </div>
@@ -182,13 +183,13 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
                     width: "22px",
                     height: "22px",
                     borderRadius: "50%",
-                    background: "rgba(48, 251, 230, 0.2)",
-                    border: "2px solid rgba(11, 18, 32, 0.95)",
+                    background: "rgba(var(--accent-rgb), 0.2)",
+                    border: "2px solid var(--bg-base)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     cursor: "pointer",
-                    color: "#30FBE6",
+                    color: "var(--accent)",
                   }}>
                   <Camera size={10} />
                 </button>
@@ -209,10 +210,10 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
                     <div style={{
                       padding: "8px 12px",
                       borderRadius: "10px",
-                      background: "rgba(15, 23, 42, 0.6)",
-                      border: "1px solid rgba(48, 251, 230, 0.25)",
+                      background: "var(--surface-input)",
+                      border: "1px solid var(--border-accent)",
                     }}>
-                      <label style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", fontFamily: "'Inter', sans-serif", textTransform: "uppercase", letterSpacing: "0.05em" }}>Name</label>
+                      <label style={{ fontSize: "10px", color: "var(--text-tertiary)", fontFamily: "var(--font-main)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Name</label>
                       <input
                         type="text"
                         value={editName}
@@ -223,10 +224,10 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
                           background: "transparent",
                           border: "none",
                           outline: "none",
-                          color: "rgba(255, 255, 255, 0.9)",
+                          color: "var(--text-primary)",
                           fontSize: "13px",
-                          fontFamily: "'Inter', sans-serif",
-                          caretColor: "#30FBE6",
+                          fontFamily: "var(--font-main)",
+                          caretColor: "var(--accent)",
                           marginTop: "2px",
                         }}
                       />
@@ -236,10 +237,10 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
                     <div style={{
                       padding: "8px 12px",
                       borderRadius: "10px",
-                      background: "rgba(15, 23, 42, 0.6)",
-                      border: "1px solid rgba(48, 251, 230, 0.25)",
+                      background: "var(--surface-input)",
+                      border: "1px solid var(--border-accent)",
                     }}>
-                      <label style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", fontFamily: "'Inter', sans-serif", textTransform: "uppercase", letterSpacing: "0.05em" }}>Bio</label>
+                      <label style={{ fontSize: "10px", color: "var(--text-tertiary)", fontFamily: "var(--font-main)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Bio</label>
                       <textarea
                         value={editAbout}
                         onChange={(e) => setEditAbout(e.target.value)}
@@ -251,16 +252,16 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
                           background: "transparent",
                           border: "none",
                           outline: "none",
-                          color: "rgba(255, 255, 255, 0.9)",
+                          color: "var(--text-primary)",
                           fontSize: "12px",
-                          fontFamily: "'Inter', sans-serif",
-                          caretColor: "#30FBE6",
+                          fontFamily: "var(--font-main)",
+                          caretColor: "var(--accent)",
                           resize: "none",
                           lineHeight: "1.5",
                           marginTop: "2px",
                         }}
                       />
-                      <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.25)", textAlign: "right" }}>
+                      <div style={{ fontSize: "10px", color: "var(--text-tertiary)", textAlign: "right" }}>
                         {editAbout.length}/200
                       </div>
                     </div>
@@ -273,13 +274,13 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
                         style={{
                           padding: "8px 16px",
                           borderRadius: "10px",
-                          background: saving ? "rgba(48, 251, 230, 0.05)" : "rgba(48, 251, 230, 0.15)",
-                          border: "1px solid rgba(48, 251, 230, 0.3)",
+                          background: saving ? "rgba(var(--accent-rgb), 0.05)" : "rgba(var(--accent-rgb), 0.15)",
+                          border: "1px solid var(--border-accent-strong)",
                           cursor: saving ? "wait" : "pointer",
                           fontWeight: 500,
                           fontSize: "12px",
-                          color: "#30FBE6",
-                          fontFamily: "'Inter', sans-serif",
+                          color: "var(--accent)",
+                          fontFamily: "var(--font-main)",
                           transition: "all 0.15s ease",
                           display: "flex",
                           alignItems: "center",
@@ -296,13 +297,13 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
                         style={{
                           padding: "8px 16px",
                           borderRadius: "10px",
-                          background: "rgba(255, 255, 255, 0.05)",
-                          border: "1px solid rgba(255, 255, 255, 0.1)",
+                          background: "var(--surface)",
+                          border: "1px solid var(--border)",
                           cursor: "pointer",
                           fontWeight: 500,
                           fontSize: "12px",
-                          color: "rgba(255, 255, 255, 0.6)",
-                          fontFamily: "'Inter', sans-serif",
+                          color: "var(--text-secondary)",
+                          fontFamily: "var(--font-main)",
                           transition: "all 0.15s ease",
                           display: "flex",
                           alignItems: "center",
@@ -331,21 +332,21 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
                         marginTop: "4px",
                         padding: "8px 14px",
                         borderRadius: "10px",
-                        background: "rgba(48, 251, 230, 0.1)",
-                        border: "1px solid rgba(48, 251, 230, 0.2)",
+                        background: "rgba(var(--accent-rgb), 0.1)",
+                        border: "1px solid var(--border-accent)",
                         cursor: "pointer",
                         fontWeight: 500,
                         fontSize: "12px",
-                        color: "#30FBE6",
-                        fontFamily: "'Inter', sans-serif",
+                        color: "var(--accent)",
+                        fontFamily: "var(--font-main)",
                         transition: "all 0.15s ease",
                         alignSelf: "flex-start",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(48, 251, 230, 0.18)";
+                        e.currentTarget.style.background = "rgba(var(--accent-rgb), 0.18)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "rgba(48, 251, 230, 0.1)";
+                        e.currentTarget.style.background = "rgba(var(--accent-rgb), 0.1)";
                       }}
                     >
                       Edit Profile
@@ -360,8 +361,8 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
           <div style={{
             padding: "16px",
             borderRadius: "12px",
-            background: "rgba(255, 255, 255, 0.04)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
             display: "flex",
             flexDirection: "column",
             gap: "8px",
@@ -369,8 +370,8 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
             <h3 style={{
               fontSize: "12px",
               fontWeight: 600,
-              color: "rgba(255, 255, 255, 0.5)",
-              fontFamily: "'Inter', sans-serif",
+              color: "var(--text-secondary)",
+              fontFamily: "var(--font-main)",
               letterSpacing: "0.06em",
               textTransform: "uppercase",
               marginBottom: "8px",
@@ -380,34 +381,7 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
 
             {/* Theme */}
             <SettingRow label="Theme">
-              <div style={{
-                display: "flex",
-                background: "rgba(15, 23, 42, 0.6)",
-                borderRadius: "8px",
-                padding: "3px",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-              }}>
-                {["Dark", "Light"].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setTheme(t.toLowerCase())}
-                    style={{
-                      padding: "5px 12px",
-                      borderRadius: "6px",
-                      background: theme === t.toLowerCase() ? "rgba(48, 251, 230, 0.15)" : "transparent",
-                      color: theme === t.toLowerCase() ? "#30FBE6" : "rgba(255, 255, 255, 0.5)",
-                      border: theme === t.toLowerCase() ? "1px solid rgba(48, 251, 230, 0.2)" : "1px solid transparent",
-                      cursor: "pointer",
-                      fontSize: "12px",
-                      fontWeight: 500,
-                      fontFamily: "'Inter', sans-serif",
-                      transition: "all 0.15s ease",
-                    }}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
+              <ThemeDropdown theme={theme} setTheme={setTheme} />
             </SettingRow>
 
             {/* Notifications */}
@@ -429,13 +403,13 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
                     gap: "6px",
                     padding: "5px 10px",
                     borderRadius: "8px",
-                    background: "rgba(15, 23, 42, 0.6)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    background: "var(--surface-input)",
+                    border: "1px solid var(--border)",
                     cursor: "pointer",
-                    color: "rgba(255, 255, 255, 0.8)",
+                    color: "var(--text-primary)",
                     fontSize: "12px",
                     fontWeight: 500,
-                    fontFamily: "'Inter', sans-serif",
+                    fontFamily: "var(--font-main)",
                     transition: "all 0.15s ease",
                   }}
                 >
@@ -449,9 +423,9 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
                     right: 0,
                     top: "110%",
                     minWidth: "120px",
-                    background: "rgba(15, 23, 42, 0.95)",
+                    background: "var(--surface-input)",
                     backdropFilter: "blur(20px)",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    border: "1px solid var(--border-hover)",
                     borderRadius: "10px",
                     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.4)",
                     overflow: "hidden",
@@ -466,15 +440,15 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
                           padding: "8px 12px",
                           cursor: "pointer",
                           fontSize: "12px",
-                          fontFamily: "'Inter', sans-serif",
+                          fontFamily: "var(--font-main)",
                           borderRadius: "8px",
-                          background: language === l ? "rgba(48, 251, 230, 0.12)" : "transparent",
-                          color: language === l ? "#30FBE6" : "rgba(255, 255, 255, 0.8)",
+                          background: language === l ? "rgba(var(--accent-rgb), 0.12)" : "transparent",
+                          color: language === l ? "var(--accent)" : "var(--text-primary)",
                           transition: "all 0.15s ease",
                         }}
                         onMouseEnter={(e) => {
                           if (language !== l) {
-                            e.target.style.background = "rgba(255, 255, 255, 0.06)";
+                            e.target.style.background = "var(--surface)";
                           }
                         }}
                         onMouseLeave={(e) => {
@@ -502,22 +476,22 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
               width: "100%",
               padding: "12px",
               borderRadius: "12px",
-              border: "1px solid rgba(239, 68, 68, 0.2)",
-              background: "rgba(239, 68, 68, 0.08)",
-              color: "rgba(239, 68, 68, 0.9)",
+              border: "1px solid var(--status-danger-border)",
+              background: "var(--status-danger-bg)",
+              color: "var(--status-danger)",
               fontSize: "13px",
               fontWeight: 500,
               cursor: "pointer",
               transition: "all 0.15s ease",
-              fontFamily: "'Inter', sans-serif",
+              fontFamily: "var(--font-main)",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "rgba(239, 68, 68, 0.15)";
-              e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.3)";
+              e.currentTarget.style.borderColor = "var(--status-danger-border)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(239, 68, 68, 0.08)";
-              e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.2)";
+              e.currentTarget.style.background = "var(--status-danger-bg)";
+              e.currentTarget.style.borderColor = "var(--status-danger-border)";
             }}
           >
             Logout
@@ -528,8 +502,8 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
       {/* Crop Modal */}
       {showCropModal && (
         <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)" }}>
-          <div style={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", width: "100%", maxWidth: "400px", padding: "24px", display: "flex", flexDirection: "column", alignItems: "center", boxShadow: "0 20px 40px rgba(0,0,0,0.5)" }}>
-            <h3 style={{ color: "white", fontWeight: 500, marginBottom: "20px", width: "100%", textAlign: "center", fontFamily: "'Inter', sans-serif" }}>Adjust Profile Picture</h3>
+          <div style={{ background: "var(--bg-base)", border: "1px solid var(--border)", borderRadius: "16px", width: "100%", maxWidth: "400px", padding: "24px", display: "flex", flexDirection: "column", alignItems: "center", boxShadow: "0 20px 40px rgba(0,0,0,0.5)" }}>
+            <h3 style={{ color: "var(--text-primary)", fontWeight: 500, marginBottom: "20px", width: "100%", textAlign: "center", fontFamily: "var(--font-main)" }}>Adjust Profile Picture</h3>
 
             <div style={{ position: "relative", width: "100%", height: "260px", background: "rgba(0,0,0,0.5)", borderRadius: "12px", overflow: "hidden", marginBottom: "24px" }}>
               <Cropper
@@ -546,7 +520,7 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
             </div>
 
             <div style={{ width: "100%", marginBottom: "24px", display: "flex", alignItems: "center", gap: "10px" }}>
-              <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", fontFamily: "'Inter', sans-serif" }}>Zoom</span>
+              <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontFamily: "var(--font-main)" }}>Zoom</span>
               <input
                 type="range"
                 value={zoom}
@@ -554,7 +528,7 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
                 max={3}
                 step={0.1}
                 onChange={(e) => setZoom(e.target.value)}
-                style={{ flex: 1, accentColor: "#30FBE6", background: "rgba(255,255,255,0.1)", borderRadius: "999px", height: "4px", outline: "none", cursor: "pointer" }}
+                style={{ flex: 1, accentColor: "var(--accent)", background: "var(--surface-hover)", borderRadius: "999px", height: "4px", outline: "none", cursor: "pointer" }}
               />
             </div>
 
@@ -562,14 +536,14 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
               <button
                 onClick={() => { setShowCropModal(false); setActiveImage(null); }}
                 disabled={uploadingPic}
-                style={{ padding: "10px 16px", borderRadius: "10px", color: "rgba(255,255,255,0.7)", background: "transparent", cursor: "pointer", fontSize: "13px", fontFamily: "'Inter', sans-serif", border: "none" }}
+                style={{ padding: "10px 16px", borderRadius: "10px", color: "var(--text-secondary)", background: "transparent", cursor: "pointer", fontSize: "13px", fontFamily: "var(--font-main)", border: "none" }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleCropComplete}
                 disabled={uploadingPic}
-                style={{ padding: "10px 20px", background: "rgba(48, 251, 230, 0.15)", color: "#30FBE6", border: "1px solid rgba(48, 251, 230, 0.3)", borderRadius: "10px", cursor: "pointer", fontSize: "13px", fontWeight: 500, fontFamily: "'Inter', sans-serif", display: "flex", alignItems: "center", gap: "8px" }}
+                style={{ padding: "10px 20px", background: "rgba(var(--accent-rgb), 0.15)", color: "var(--accent)", border: "1px solid var(--border-accent-strong)", borderRadius: "10px", cursor: "pointer", fontSize: "13px", fontWeight: 500, fontFamily: "var(--font-main)", display: "flex", alignItems: "center", gap: "8px" }}
               >
                 {uploadingPic ? "Saving..." : "Apply"}
               </button>
@@ -589,12 +563,12 @@ export function Field({ text, small }) {
     <div style={{
       padding: small ? "8px 12px" : "10px 14px",
       borderRadius: "10px",
-      background: "rgba(15, 23, 42, 0.6)",
-      border: "1px solid rgba(255, 255, 255, 0.08)",
+      background: "var(--surface-input)",
+      border: "1px solid var(--border)",
       fontSize: small ? "11px" : "13px",
       lineHeight: "1.5",
-      color: "rgba(255, 255, 255, 0.75)",
-      fontFamily: "'Inter', sans-serif",
+      color: "var(--text-primary)",
+      fontFamily: "var(--font-main)",
     }}>
       {text}
     </div>
@@ -606,8 +580,8 @@ function SettingRow({ label, children, right }) {
     <div style={{
       padding: "12px 14px",
       borderRadius: "10px",
-      background: "rgba(15, 23, 42, 0.4)",
-      border: "1px solid rgba(255, 255, 255, 0.06)",
+      background: "var(--surface-input)",
+      border: "1px solid var(--border)",
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
@@ -616,28 +590,28 @@ function SettingRow({ label, children, right }) {
     }}
       onMouseEnter={(e) => {
         if (right) {
-          e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
+          e.currentTarget.style.background = "var(--surface)";
         }
       }}
       onMouseLeave={(e) => {
         if (right) {
-          e.currentTarget.style.background = "rgba(15, 23, 42, 0.4)";
+          e.currentTarget.style.background = "var(--surface-input)";
         }
       }}
     >
       <span style={{
         fontSize: "13px",
-        color: "rgba(255, 255, 255, 0.8)",
+        color: "var(--text-primary)",
         fontWeight: 500,
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: "var(--font-main)",
       }}>
         {label}
       </span>
       {children ?? (
         <span style={{
-          color: "rgba(255, 255, 255, 0.4)",
+          color: "var(--text-tertiary)",
           fontSize: "13px",
-          fontFamily: "'Inter', sans-serif",
+          fontFamily: "var(--font-main)",
         }}>
           {right}
         </span>
@@ -651,8 +625,8 @@ function Toggle({ label, value, onChange }) {
     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
       <span style={{
         fontSize: "12px",
-        color: "rgba(255, 255, 255, 0.7)",
-        fontFamily: "'Inter', sans-serif",
+        color: "var(--text-secondary)",
+        fontFamily: "var(--font-main)",
       }}>
         {label}
       </span>
@@ -662,8 +636,8 @@ function Toggle({ label, value, onChange }) {
           width: "34px",
           height: "18px",
           borderRadius: "999px",
-          background: value ? "rgba(48, 251, 230, 0.25)" : "rgba(255, 255, 255, 0.1)",
-          border: value ? "1px solid rgba(48, 251, 230, 0.35)" : "1px solid rgba(255, 255, 255, 0.15)",
+          background: value ? "rgba(var(--accent-rgb), 0.25)" : "var(--surface-hover)",
+          border: value ? "1px solid var(--border-accent-strong)" : "1px solid var(--border-hover)",
           position: "relative",
           cursor: "pointer",
           transition: "all 0.2s ease",
@@ -672,16 +646,124 @@ function Toggle({ label, value, onChange }) {
         <div style={{
           width: "14px",
           height: "14px",
-          background: value ? "#30FBE6" : "rgba(255, 255, 255, 0.7)",
+          background: value ? "var(--accent)" : "var(--text-secondary)",
           borderRadius: "50%",
           position: "absolute",
           top: "1px",
           left: "1px",
           transform: value ? "translateX(16px)" : "translateX(0)",
           transition: "transform 0.2s ease",
-          boxShadow: value ? "0 0 8px rgba(48, 251, 230, 0.4)" : "0 1px 3px rgba(0, 0, 0, 0.2)",
+          boxShadow: value ? "0 0 8px var(--shadow-glow)" : "0 1px 3px rgba(0, 0, 0, 0.2)",
         }} />
       </button>
+    </div>
+  );
+}
+
+function ThemeDropdown({ theme, setTheme }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div style={{ position: "relative" }}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "6px 14px",
+          borderRadius: "10px",
+          background: "var(--surface-hover)",
+          color: "var(--text-primary)",
+          border: "1px solid var(--border-hover)",
+          cursor: "pointer",
+          fontSize: "13px",
+          fontWeight: 600,
+          fontFamily: "var(--font-main)",
+          textTransform: "capitalize",
+          transition: "all 0.2s ease",
+          boxShadow: "0 2px 8px var(--shadow)",
+        }}
+      >
+        {theme}
+        <ChevronDown
+          size={16}
+          style={{
+            transition: "transform 0.3s ease",
+            transform: isOpen ? "rotate(180deg)" : "rotate(0)",
+          }}
+        />
+      </button>
+
+      {isOpen && (
+        <>
+          {/* Click-away overlay */}
+          <div
+            style={{ position: "fixed", inset: 0, zIndex: 40 }}
+            onClick={() => setIsOpen(false)}
+          />
+          <div
+            style={{
+              position: "absolute",
+              right: 0,
+              top: "calc(100% + 6px)",
+              width: "160px",
+              background: "var(--surface-input)",
+              backdropFilter: "blur(40px) saturate(180%)",
+              border: "1px solid var(--border-hover)",
+              borderRadius: "12px",
+              boxShadow: "0 12px 40px var(--shadow)",
+              overflow: "hidden",
+              zIndex: 50,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {THEME_LIST.map((t) => (
+              <button
+                key={t}
+                onClick={() => {
+                  setTheme(t);
+                  setIsOpen(false);
+                }}
+                style={{
+                  padding: "10px 16px",
+                  textAlign: "left",
+                  fontWeight: 600,
+                  textTransform: "capitalize",
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  border: "none",
+                  transition: "all 0.2s ease",
+                  fontFamily: "var(--font-main)",
+                  background:
+                    theme === t
+                      ? "linear-gradient(90deg, var(--accent), var(--accent-secondary))"
+                      : "transparent",
+                  color:
+                    theme === t
+                      ? "var(--text-on-accent)"
+                      : "var(--text-secondary)",
+                }}
+                onMouseEnter={(e) => {
+                  if (theme !== t) {
+                    e.currentTarget.style.background = "var(--surface-hover)";
+                    e.currentTarget.style.color = "var(--text-primary)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (theme !== t) {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "var(--text-secondary)";
+                  }
+                }}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
