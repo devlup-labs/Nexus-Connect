@@ -19,8 +19,8 @@ import { getSocket, getActiveUsers } from "../services/socket";
 // Mock data removed. Fetching from backend instead.
 
 const statusColors = {
-  online: "#22c55e",
-  offline: "#6b7280",
+  online: "var(--status-online)",
+  offline: "var(--text-tertiary)",
 };
 
 const statusLabels = {
@@ -118,13 +118,13 @@ const ContactsPanel = ({ onSendMessage }) => {
     {
       label: "Block",
       icon: <UserX size={16} />,
-      color: "#f59e0b",
+      color: "var(--text-primary)",
       onClick: () => { },
     },
     {
       label: "Delete Contact",
       icon: <Trash2 size={16} />,
-      color: "#ef4444",
+      color: "var(--status-danger)",
       onClick: () => { },
     },
   ];
@@ -134,14 +134,14 @@ const ContactsPanel = ({ onSendMessage }) => {
       {/* Title */}
       <div style={{ padding: "10px 10px 0px 10px", marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <h2
-          style={{ fontSize: "24px", fontWeight: 500, paddingTop: "50px", paddingBottom: "0px", marginBottom: "0px", color: "rgba(255, 255, 255, 0.9)", letterSpacing: "0.5px", fontFamily: "'Inter', sans-serif", lineHeight: 1 }}
+          style={{ fontSize: "24px", fontWeight: 500, paddingTop: "50px", paddingBottom: "0px", marginBottom: "0px", color: "var(--text-primary)", letterSpacing: "0.5px", fontFamily: "var(--font-main)", lineHeight: 1 }}
         >
           Contacts
         </h2>
       </div>
 
       {/* Main Glass Panel */}
-      <div className="relative flex-1 rounded-[14px] border border-white/8 overflow-hidden backdrop-blur-3xl bg-gradient-to-br from-[#0b1220]/40 via-[#2b1b3a]/20 to-[#091021]/40 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+      <div className="relative flex-1 rounded-[14px] border border-[var(--border)] overflow-hidden backdrop-blur-3xl bg-[var(--surface-panel)] shadow-[0_8px_32px_var(--shadow)]">
         {/* Noise texture */}
         <div
           className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
@@ -160,14 +160,14 @@ const ContactsPanel = ({ onSendMessage }) => {
               margin: "4px 0 8px 0",
               padding: "8px 12px",
               borderRadius: "10px",
-              background: "rgba(15, 23, 42, 0.6)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
+              background: "var(--surface-input)",
+              border: "1px solid var(--border)",
               transition: "border-color 0.2s",
             }}
           >
             <Search
               size={15}
-              style={{ color: "rgba(255, 255, 255, 0.4)", flexShrink: 0 }}
+              style={{ color: "var(--text-tertiary)", flexShrink: 0 }}
             />
             <input
               ref={searchInputRef}
@@ -180,10 +180,10 @@ const ContactsPanel = ({ onSendMessage }) => {
                 background: "transparent",
                 border: "none",
                 outline: "none",
-                color: "rgba(255, 255, 255, 0.9)",
+                color: "var(--text-primary)",
                 fontSize: "13px",
-                fontFamily: "'Inter', sans-serif",
-                caretColor: "#30FBE6",
+                fontFamily: "var(--font-main)",
+                caretColor: "var(--accent)",
               }}
             />
             {searchQuery && (
@@ -194,7 +194,7 @@ const ContactsPanel = ({ onSendMessage }) => {
                   borderRadius: "6px",
                   border: "none",
                   background: "transparent",
-                  color: "rgba(255, 255, 255, 0.5)",
+                  color: "var(--text-secondary)",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
@@ -202,10 +202,10 @@ const ContactsPanel = ({ onSendMessage }) => {
                   flexShrink: 0,
                 }}
                 onMouseEnter={(e) =>
-                  (e.currentTarget.style.color = "rgba(255, 255, 255, 0.9)")
+                  (e.currentTarget.style.color = "var(--text-primary)")
                 }
                 onMouseLeave={(e) =>
-                  (e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)")
+                  (e.currentTarget.style.color = "var(--text-secondary)")
                 }
               >
                 <X size={14} />
@@ -218,8 +218,8 @@ const ContactsPanel = ({ onSendMessage }) => {
             <span
               style={{
                 fontSize: "11px",
-                color: "rgba(255, 255, 255, 0.4)",
-                fontFamily: "'Inter', sans-serif",
+                color: "var(--text-tertiary)",
+                fontFamily: "var(--font-main)",
                 letterSpacing: "0.04em",
               }}
             >
@@ -259,17 +259,17 @@ const ContactsPanel = ({ onSendMessage }) => {
                     transition: "all 0.15s ease",
                     background:
                       selectedContact?._id === contact._id
-                        ? "rgba(48, 251, 230, 0.06)"
+                        ? "var(--surface-hover)"
                         : "transparent",
                     border:
                       selectedContact?._id === contact._id
-                        ? "1px solid rgba(48, 251, 230, 0.12)"
+                        ? "1px solid var(--border-accent)"
                         : "1px solid transparent",
                   }}
                   onMouseEnter={(e) => {
                     if (selectedContact?._id !== contact._id) {
                       e.currentTarget.style.background =
-                        "rgba(255, 255, 255, 0.04)";
+                        "var(--surface)";
                     }
                   }}
                   onMouseLeave={(e) => {
@@ -285,15 +285,15 @@ const ContactsPanel = ({ onSendMessage }) => {
                         width: "40px",
                         height: "40px",
                         borderRadius: "50%",
-                        background: "linear-gradient(135deg, #30FBE6, #a855f7)",
+                        background: "linear-gradient(135deg, var(--accent), var(--accent-secondary))",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         fontSize: "13px",
                         fontWeight: 600,
-                        color: "rgba(255, 255, 255, 0.95)",
-                        boxShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
-                        fontFamily: "'Inter', sans-serif",
+                        color: "var(--text-primary)",
+                        boxShadow: "0 2px 10px var(--shadow)",
+                        fontFamily: "var(--font-main)",
                         overflow: "hidden",
                       }}
                     >
@@ -313,9 +313,9 @@ const ContactsPanel = ({ onSendMessage }) => {
                           width: "10px",
                           height: "10px",
                           borderRadius: "50%",
-                          background: "#22c55e",
-                          border: "2px solid rgba(15, 23, 42, 0.9)",
-                          boxShadow: "0 0 8px rgba(34, 197, 94, 0.5)",
+                          background: "var(--status-online)",
+                          border: "2px solid var(--bg-base)",
+                          boxShadow: "0 0 8px var(--status-online-shadow)",
                         }}
                       />
                     )}
@@ -327,8 +327,8 @@ const ContactsPanel = ({ onSendMessage }) => {
                       style={{
                         fontSize: "13px",
                         fontWeight: 500,
-                        color: "rgba(255, 255, 255, 0.92)",
-                        fontFamily: "'Inter', sans-serif",
+                        color: "var(--text-primary)",
+                        fontFamily: "var(--font-main)",
                         marginBottom: "2px",
                       }}
                     >
@@ -337,8 +337,8 @@ const ContactsPanel = ({ onSendMessage }) => {
                     <div
                       style={{
                         fontSize: "11px",
-                        color: "rgba(255, 255, 255, 0.45)",
-                        fontFamily: "'Inter', sans-serif",
+                        color: "var(--text-tertiary)",
+                        fontFamily: "var(--font-main)",
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
@@ -363,13 +363,13 @@ const ContactsPanel = ({ onSendMessage }) => {
                 >
                   <Search
                     size={32}
-                    style={{ color: "rgba(255, 255, 255, 0.15)" }}
+                    style={{ color: "var(--text-tertiary)" }}
                   />
                   <span
                     style={{
                       fontSize: "14px",
-                      color: "rgba(255, 255, 255, 0.35)",
-                      fontFamily: "'Inter', sans-serif",
+                      color: "var(--text-tertiary)",
+                      fontFamily: "var(--font-main)",
                     }}
                   >
                     No contacts found
@@ -390,7 +390,7 @@ const ContactsPanel = ({ onSendMessage }) => {
             style={{
               position: "fixed",
               inset: 0,
-              background: "rgba(0, 0, 0, 0.3)",
+              background: "var(--shadow)",
               zIndex: 99,
               animation: "fadeIn 0.2s ease-out",
             }}
@@ -403,10 +403,10 @@ const ContactsPanel = ({ onSendMessage }) => {
               right: 0,
               width: "380px",
               height: "100%",
-              background: "rgba(10, 15, 30, 0.97)",
+              background: "var(--bg-base)",
               backdropFilter: "blur(40px) saturate(180%)",
-              borderLeft: "1px solid rgba(255, 255, 255, 0.1)",
-              boxShadow: "-10px 0 40px rgba(0, 0, 0, 0.4)",
+              borderLeft: "1px solid var(--border)",
+              boxShadow: "-10px 0 40px var(--shadow)",
               zIndex: 100,
               display: "flex",
               flexDirection: "column",
@@ -428,7 +428,7 @@ const ContactsPanel = ({ onSendMessage }) => {
                 style={{
                   fontSize: "16px",
                   fontWeight: 500,
-                  color: "rgba(255, 255, 255, 0.9)",
+                  color: "var(--text-primary)",
                 }}
               >
                 Profile
@@ -440,7 +440,7 @@ const ContactsPanel = ({ onSendMessage }) => {
                   borderRadius: "8px",
                   border: "none",
                   background: "transparent",
-                  color: "rgba(255, 255, 255, 0.6)",
+                  color: "var(--text-secondary)",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
@@ -448,12 +448,12 @@ const ContactsPanel = ({ onSendMessage }) => {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background =
-                    "rgba(255, 255, 255, 0.08)";
-                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.9)";
+                    "var(--surface-hover)";
+                  e.currentTarget.style.color = "var(--text-primary)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.6)";
+                  e.currentTarget.style.color = "var(--text-secondary)";
                 }}
               >
                 <X size={20} />
@@ -477,8 +477,8 @@ const ContactsPanel = ({ onSendMessage }) => {
                     height: "90px",
                     borderRadius: "50%",
                     padding: "3px",
-                    background: "linear-gradient(135deg, #30FBE6, #a855f7)",
-                    boxShadow: "0 0 25px rgba(48, 251, 230, 0.3)",
+                    background: "linear-gradient(135deg, var(--accent), var(--accent-secondary))",
+                    boxShadow: "0 0 25px var(--shadow-glow)",
                     overflow: "hidden",
                     cursor: selectedContact.profilePic ? "pointer" : "default",
                     transition: "transform 0.2s",
@@ -494,14 +494,14 @@ const ContactsPanel = ({ onSendMessage }) => {
                         width: "100%",
                         height: "100%",
                         borderRadius: "50%",
-                        background: "rgba(15, 23, 42, 0.95)",
+                        background: "var(--surface-input)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         fontSize: "28px",
                         fontWeight: 600,
-                        color: "rgba(255, 255, 255, 0.7)",
-                        fontFamily: "'Inter', sans-serif",
+                        color: "var(--text-secondary)",
+                        fontFamily: "var(--font-main)",
                       }}
                     >
                       {getInitials(selectedContact.fullName)}
@@ -517,9 +517,9 @@ const ContactsPanel = ({ onSendMessage }) => {
                     width: "14px",
                     height: "14px",
                     borderRadius: "50%",
-                    background: onlineUsers[selectedContact._id] === "online" ? "#22c55e" : "#6b7280",
-                    border: "3px solid rgba(10, 15, 30, 0.97)",
-                    boxShadow: onlineUsers[selectedContact._id] === "online" ? "0 0 8px rgba(34, 197, 94, 0.5)" : "none",
+                    background: onlineUsers[selectedContact._id] === "online" ? "var(--status-online)" : "var(--text-tertiary)",
+                    border: "3px solid var(--bg-base)",
+                    boxShadow: onlineUsers[selectedContact._id] === "online" ? "0 0 8px var(--status-online-shadow)" : "none",
                   }}
                 />
               </div>
@@ -527,7 +527,7 @@ const ContactsPanel = ({ onSendMessage }) => {
                 style={{
                   fontSize: "22px",
                   fontWeight: 400,
-                  color: "rgba(255, 255, 255, 0.95)",
+                  color: "var(--text-primary)",
                   marginBottom: "6px",
                   textAlign: "center",
                 }}
@@ -560,7 +560,7 @@ const ContactsPanel = ({ onSendMessage }) => {
               style={{
                 height: "1px",
                 background:
-                  "linear-gradient(to right, transparent, rgba(255, 255, 255, 0.1), transparent)",
+                  "linear-gradient(to right, transparent, var(--border), transparent)",
                 marginBottom: "20px",
               }}
             />
@@ -576,14 +576,14 @@ const ContactsPanel = ({ onSendMessage }) => {
             >
               {/* About */}
               <ProfileField
-                icon={<Info size={14} style={{ color: "#a855f7" }} />}
+                icon={<Info size={14} style={{ color: "var(--accent-secondary)" }} />}
                 label="About"
                 value={selectedContact.about}
               />
 
               {/* Email */}
               <ProfileField
-                icon={<Mail size={14} style={{ color: "#30FBE6" }} />}
+                icon={<Mail size={14} style={{ color: "var(--accent)" }} />}
                 label="Email"
                 value={selectedContact.email}
                 interactive
@@ -591,7 +591,7 @@ const ContactsPanel = ({ onSendMessage }) => {
 
               {/* Phone */}
               <ProfileField
-                icon={<Phone size={14} style={{ color: "#22c55e" }} />}
+                icon={<Phone size={14} style={{ color: "var(--status-online)" }} />}
                 label="Phone"
                 value={selectedContact.phone}
                 interactive
@@ -599,7 +599,7 @@ const ContactsPanel = ({ onSendMessage }) => {
 
               {/* Member Since */}
               <ProfileField
-                icon={<User size={14} style={{ color: "#a855f7" }} />}
+                icon={<User size={14} style={{ color: "var(--accent-secondary)" }} />}
                 label="Member Since"
                 value={selectedContact.createdAt ? new Date(selectedContact.createdAt).toLocaleDateString() : "Unknown"}
                 interactive
@@ -626,21 +626,21 @@ const ContactsPanel = ({ onSendMessage }) => {
                   width: "100%",
                   padding: "12px",
                   borderRadius: "10px",
-                  border: "1px solid rgba(48, 251, 230, 0.3)",
-                  background: "rgba(48, 251, 230, 0.1)",
-                  color: "#30FBE6",
+                  border: "1px solid var(--border-accent-strong)",
+                  background: "var(--surface-input)",
+                  color: "var(--accent)",
                   fontSize: "13px",
                   fontWeight: 500,
                   cursor: "pointer",
                   transition: "all 0.15s",
-                  fontFamily: "'Inter', sans-serif",
+                  fontFamily: "var(--font-main)",
                 }}
                 onMouseEnter={(e) =>
                 (e.currentTarget.style.background =
-                  "rgba(48, 251, 230, 0.18)")
+                  "var(--surface-selected)")
                 }
                 onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "rgba(48, 251, 230, 0.1)")
+                  (e.currentTarget.style.background = "var(--surface-input)")
                 }
               >
                 Send Message
@@ -650,23 +650,23 @@ const ContactsPanel = ({ onSendMessage }) => {
                   width: "100%",
                   padding: "12px",
                   borderRadius: "10px",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  background: "rgba(255, 255, 255, 0.04)",
-                  color: "rgba(255, 255, 255, 0.6)",
+                  border: "1px solid var(--border)",
+                  background: "var(--surface)",
+                  color: "var(--text-secondary)",
                   fontSize: "13px",
                   cursor: "pointer",
                   transition: "all 0.15s",
-                  fontFamily: "'Inter', sans-serif",
+                  fontFamily: "var(--font-main)",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background =
-                    "rgba(255, 255, 255, 0.08)";
-                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
+                    "var(--surface-hover)";
+                  e.currentTarget.style.color = "var(--text-primary)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background =
-                    "rgba(255, 255, 255, 0.04)";
-                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.6)";
+                    "var(--surface)";
+                  e.currentTarget.style.color = "var(--text-secondary)";
                 }}
               >
                 Block User
@@ -706,7 +706,7 @@ const ContactsPanel = ({ onSendMessage }) => {
             position: "fixed",
             inset: 0,
             zIndex: 200,
-            background: "rgba(0, 0, 0, 0.85)",
+            background: "var(--shadow)",
             backdropFilter: "blur(20px)",
             display: "flex",
             alignItems: "center",
@@ -725,17 +725,17 @@ const ContactsPanel = ({ onSendMessage }) => {
               width: "40px",
               height: "40px",
               borderRadius: "50%",
-              background: "rgba(255, 255, 255, 0.1)",
-              border: "1px solid rgba(255, 255, 255, 0.2)",
+              background: "var(--surface-hover)",
+              border: "1px solid var(--border-hover)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
-              color: "rgba(255, 255, 255, 0.8)",
+              color: "var(--text-primary)",
               transition: "background 0.15s",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-hover)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--surface-hover)")}
           >
             <X size={20} />
           </button>
@@ -748,7 +748,7 @@ const ContactsPanel = ({ onSendMessage }) => {
               maxHeight: "90vh",
               objectFit: "contain",
               borderRadius: "12px",
-              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.6)",
+              boxShadow: "0 20px 60px var(--shadow)",
               cursor: "default",
               animation: "fadeIn 0.25s ease-out",
             }}
@@ -766,21 +766,21 @@ const ProfileField = ({ icon, label, value, interactive }) => (
     style={{
       padding: "14px 16px",
       borderRadius: "12px",
-      background: "rgba(255, 255, 255, 0.04)",
-      border: "1px solid rgba(255, 255, 255, 0.08)",
+      background: "var(--surface)",
+      border: "1px solid var(--border)",
       cursor: interactive ? "pointer" : "default",
       transition: "all 0.15s",
     }}
     onMouseEnter={(e) => {
       if (interactive) {
-        e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
-        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
+        e.currentTarget.style.background = "var(--surface-hover)";
+        e.currentTarget.style.borderColor = "var(--border-hover)";
       }
     }}
     onMouseLeave={(e) => {
       if (interactive) {
-        e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
-        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+        e.currentTarget.style.background = "var(--surface)";
+        e.currentTarget.style.borderColor = "var(--border)";
       }
     }}
   >
@@ -800,7 +800,7 @@ const ProfileField = ({ icon, label, value, interactive }) => (
           fontSize: "11px",
           textTransform: "uppercase",
           letterSpacing: "0.05em",
-          color: "rgba(255, 255, 255, 0.5)",
+          color: "var(--text-secondary)",
         }}
       >
         {label}
@@ -809,7 +809,7 @@ const ProfileField = ({ icon, label, value, interactive }) => (
     <p
       style={{
         fontSize: "13px",
-        color: "rgba(255, 255, 255, 0.8)",
+        color: "var(--text-primary)",
         lineHeight: 1.5,
         marginLeft: "24px",
       }}

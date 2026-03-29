@@ -16,7 +16,7 @@ function CallLogPanel({ authUser, onStartCall }) {
 
   const getGradient = (name) => {
     const colors = [
-      ["#30FBE6", "#a855f7"],
+      ["var(--accent)", "var(--accent-secondary)"],
       ["#f472b6", "#a855f7"],
       ["#3b82f6", "#8b5cf6"],
       ["#10b981", "#3b82f6"],
@@ -106,14 +106,14 @@ function CallLogPanel({ authUser, onStartCall }) {
   ];
 
   return (
-    <div className="flex flex-col flex-1 h-full mr-12 min-w-[840px] mb-2">
+    <div className="calllog-panel flex flex-col flex-1 h-full mr-12 min-w-[840px] mb-2">
       {/* Title */}
       <div className="pt-[60px] pb-0 pl-2 flex justify-between items-end mb-[-30px] relative z-20">
-        <h2 className="text-[24px] font-medium text-white/90 tracking-[0.5px] font-sans leading-none pb-0">Call Log</h2>
+        <h2 style={{ fontSize: '24px', fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '0.5px', fontFamily: 'var(--font-main)', lineHeight: 1 }}>Call Log</h2>
       </div>
 
       {/* Main Glass Panel */}
-      <div className="relative flex-1 rounded-[14px] border border-white/8 overflow-hidden backdrop-blur-3xl bg-linear-to-br from-[#0b1220]/40 via-[#2b1b3a]/20 to-[#091021]/40 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+      <div className="relative flex-1 rounded-[14px] border border-[var(--border)] overflow-hidden backdrop-blur-3xl bg-[var(--surface-panel)] shadow-[0_8px_32px_var(--shadow)]">
         {/* Noise texture */}
         <div
           className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
@@ -132,12 +132,12 @@ function CallLogPanel({ authUser, onStartCall }) {
               margin: "4px 0 8px 0",
               padding: "8px 12px",
               borderRadius: "10px",
-              background: "rgba(15, 23, 42, 0.6)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
+              background: "var(--surface-input)",
+              border: "1px solid var(--border)",
               transition: "border-color 0.2s",
             }}
           >
-            <Search size={15} style={{ color: "rgba(255, 255, 255, 0.4)", flexShrink: 0 }} />
+            <Search size={15} style={{ color: "var(--text-tertiary)", flexShrink: 0 }} />
             <input
               ref={searchInputRef}
               type="text"
@@ -149,10 +149,10 @@ function CallLogPanel({ authUser, onStartCall }) {
                 background: "transparent",
                 border: "none",
                 outline: "none",
-                color: "rgba(255, 255, 255, 0.9)",
+                color: "var(--text-primary)",
                 fontSize: "13px",
-                fontFamily: "'Inter', sans-serif",
-                caretColor: "#30FBE6",
+                fontFamily: "var(--font-main)",
+                caretColor: "var(--accent)",
               }}
             />
             {searchQuery && (
@@ -163,15 +163,15 @@ function CallLogPanel({ authUser, onStartCall }) {
                   borderRadius: "6px",
                   border: "none",
                   background: "transparent",
-                  color: "rgba(255, 255, 255, 0.5)",
+                  color: "var(--text-secondary)",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   flexShrink: 0,
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255, 255, 255, 0.9)")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)")}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
               >
                 <X size={14} />
               </button>
@@ -189,11 +189,11 @@ function CallLogPanel({ authUser, onStartCall }) {
                   borderRadius: "8px",
                   fontSize: "11px",
                   fontWeight: 500,
-                  fontFamily: "'Inter', sans-serif",
+                  fontFamily: "var(--font-main)",
                   cursor: "pointer",
-                  border: activeFilter === f.key ? "1px solid rgba(48, 251, 230, 0.3)" : "1px solid rgba(255, 255, 255, 0.08)",
-                  background: activeFilter === f.key ? "rgba(48, 251, 230, 0.12)" : "rgba(255, 255, 255, 0.04)",
-                  color: activeFilter === f.key ? "#30FBE6" : "rgba(255, 255, 255, 0.5)",
+                  border: activeFilter === f.key ? "1px solid var(--border-accent-strong)" : "1px solid var(--border)",
+                  background: activeFilter === f.key ? "rgba(var(--accent-rgb), 0.12)" : "var(--surface)",
+                  color: activeFilter === f.key ? "var(--accent)" : "var(--text-secondary)",
                   transition: "all 0.15s ease",
                   display: "flex",
                   alignItems: "center",
@@ -201,14 +201,14 @@ function CallLogPanel({ authUser, onStartCall }) {
                 }}
                 onMouseEnter={(e) => {
                   if (activeFilter !== f.key) {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
-                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.7)";
+                    e.currentTarget.style.background = "var(--surface-hover)";
+                    e.currentTarget.style.color = "var(--text-secondary)";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (activeFilter !== f.key) {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
-                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
+                    e.currentTarget.style.background = "var(--surface)";
+                    e.currentTarget.style.color = "var(--text-secondary)";
                   }
                 }}
               >
@@ -221,8 +221,8 @@ function CallLogPanel({ authUser, onStartCall }) {
           <div style={{ padding: "0 8px 4px 8px" }}>
             <span style={{
               fontSize: "11px",
-              color: "rgba(255, 255, 255, 0.4)",
-              fontFamily: "'Inter', sans-serif",
+              color: "var(--text-tertiary)",
+              fontFamily: "var(--font-main)",
               letterSpacing: "0.04em",
             }}>
               {loading ? "Loading..." : `${filteredCalls.length} call${filteredCalls.length !== 1 ? "s" : ""}`}
@@ -250,7 +250,7 @@ function CallLogPanel({ authUser, onStartCall }) {
                     border: "1px solid transparent",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
+                    e.currentTarget.style.background = "var(--surface)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = "transparent";
@@ -282,9 +282,9 @@ function CallLogPanel({ authUser, onStartCall }) {
                           justifyContent: "center",
                           fontSize: "13px",
                           fontWeight: 600,
-                          color: "rgba(255, 255, 255, 0.95)",
+                          color: "var(--text-primary)",
                           boxShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
-                          fontFamily: "'Inter', sans-serif",
+                          fontFamily: "var(--font-main)",
                         }}
                       >
                         {call.initials}
@@ -299,8 +299,8 @@ function CallLogPanel({ authUser, onStartCall }) {
                         width: "18px",
                         height: "18px",
                         borderRadius: "50%",
-                        background: call.status === "missed" ? "rgba(239, 68, 68, 0.9)" : "rgba(34, 197, 94, 0.9)",
-                        border: "2px solid rgba(11, 18, 32, 0.95)",
+                        background: call.status === "missed" ? "var(--status-danger)" : "var(--status-online)",
+                        border: "2px solid var(--bg-base)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -319,16 +319,16 @@ function CallLogPanel({ authUser, onStartCall }) {
                     <div style={{
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: call.status === "missed" ? "rgba(239, 68, 68, 0.9)" : "rgba(255, 255, 255, 0.92)",
-                      fontFamily: "'Inter', sans-serif",
+                      color: call.status === "missed" ? "var(--status-danger)" : "var(--text-primary)",
+                      fontFamily: "var(--font-main)",
                       marginBottom: "2px",
                     }}>
                       {call.name}
                     </div>
                     <div style={{
                       fontSize: "11px",
-                      color: "rgba(255, 255, 255, 0.45)",
-                      fontFamily: "'Inter', sans-serif",
+                      color: "var(--text-tertiary)",
+                      fontFamily: "var(--font-main)",
                       display: "flex",
                       alignItems: "center",
                       gap: "4px",
@@ -342,16 +342,16 @@ function CallLogPanel({ authUser, onStartCall }) {
                   <div style={{ textAlign: "right", flexShrink: 0 }}>
                     <div style={{
                       fontSize: "11px",
-                      color: "rgba(255, 255, 255, 0.5)",
-                      fontFamily: "'Inter', sans-serif",
+                      color: "var(--text-secondary)",
+                      fontFamily: "var(--font-main)",
                       marginBottom: "2px",
                     }}>
                       {call.time}
                     </div>
                     <div style={{
                       fontSize: "10px",
-                      color: call.status === "missed" ? "rgba(239, 68, 68, 0.7)" : "rgba(255, 255, 255, 0.35)",
-                      fontFamily: "'Inter', sans-serif",
+                      color: call.status === "missed" ? "var(--status-danger)" : "var(--text-tertiary)",
+                      fontFamily: "var(--font-main)",
                     }}>
                       {call.date}
                     </div>
@@ -370,24 +370,24 @@ function CallLogPanel({ authUser, onStartCall }) {
                         width: "32px",
                         height: "32px",
                         borderRadius: "8px",
-                        background: "rgba(255, 255, 255, 0.05)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        background: "var(--surface)",
+                        border: "1px solid var(--border)",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        color: "rgba(255, 255, 255, 0.5)",
+                        color: "var(--text-secondary)",
                         transition: "all 0.15s ease",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(48, 251, 230, 0.12)";
-                        e.currentTarget.style.color = "#30FBE6";
-                        e.currentTarget.style.borderColor = "rgba(48, 251, 230, 0.2)";
+                        e.currentTarget.style.background = "rgba(var(--accent-rgb), 0.12)";
+                        e.currentTarget.style.color = "var(--accent)";
+                        e.currentTarget.style.borderColor = "var(--border-accent)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-                        e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
-                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                        e.currentTarget.style.background = "var(--surface)";
+                        e.currentTarget.style.color = "var(--text-secondary)";
+                        e.currentTarget.style.borderColor = "var(--border)";
                       }}
                     >
                       <Phone size={14} />
@@ -403,24 +403,24 @@ function CallLogPanel({ authUser, onStartCall }) {
                         width: "32px",
                         height: "32px",
                         borderRadius: "8px",
-                        background: "rgba(255, 255, 255, 0.05)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        background: "var(--surface)",
+                        border: "1px solid var(--border)",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        color: "rgba(255, 255, 255, 0.5)",
+                        color: "var(--text-secondary)",
                         transition: "all 0.15s ease",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(48, 251, 230, 0.12)";
-                        e.currentTarget.style.color = "#30FBE6";
-                        e.currentTarget.style.borderColor = "rgba(48, 251, 230, 0.2)";
+                        e.currentTarget.style.background = "rgba(var(--accent-rgb), 0.12)";
+                        e.currentTarget.style.color = "var(--accent)";
+                        e.currentTarget.style.borderColor = "var(--border-accent)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-                        e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
-                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                        e.currentTarget.style.background = "var(--surface)";
+                        e.currentTarget.style.color = "var(--text-secondary)";
+                        e.currentTarget.style.borderColor = "var(--border)";
                       }}
                     >
                       <Video size={14} />
@@ -438,11 +438,11 @@ function CallLogPanel({ authUser, onStartCall }) {
                   padding: "60px 20px",
                   gap: "12px",
                 }}>
-                  <Phone size={32} style={{ color: "rgba(255, 255, 255, 0.15)" }} />
+                  <Phone size={32} style={{ color: "var(--text-tertiary)" }} />
                   <span style={{
                     fontSize: "14px",
-                    color: "rgba(255, 255, 255, 0.35)",
-                    fontFamily: "'Inter', sans-serif",
+                    color: "var(--text-tertiary)",
+                    fontFamily: "var(--font-main)",
                   }}>
                     No calls found
                   </span>

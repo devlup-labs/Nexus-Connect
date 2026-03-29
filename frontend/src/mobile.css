@@ -1,0 +1,334 @@
+/* ========================================================
+   NEXUS-CONNECT — MOBILE RESPONSIVE STYLES
+   All rules are scoped to max-width: 767px
+   Desktop layout is completely untouched above this breakpoint
+   ======================================================== */
+
+/* ── 1. DOCK → BOTTOM NAVIGATION BAR ── */
+
+/* Hide mobile label on desktop */
+.dock-item-label {
+    display: none;
+}
+
+@media (max-width: 767px) {
+
+    /* ── OVERALL APP LAYOUT ── */
+
+    /* Remove left padding used for side dock */
+    .app-layout {
+        padding-left: 0 !important;
+        gap: 0 !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        overflow: hidden;
+    }
+
+    /* Panels container: full-width, scrollable horizontally so both panels are reachable */
+    .panels-container {
+        flex: 1;
+        width: 100% !important;
+        gap: 0 !important;
+        align-items: stretch !important;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        /* Remove scroll bar */
+        scrollbar-width: none;
+    }
+
+    .panels-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* ── 2. DOCK → FIXED BOTTOM BAR ── */
+
+    .dock {
+        /* Remove vertical pill styling */
+        border-radius: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        /* Become fixed bottom bar */
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        z-index: 200 !important;
+        /* Horizontal layout */
+        flex-direction: row !important;
+        gap: 0 !important;
+        /* Border */
+        border-top: 1px solid var(--dock-border) !important;
+        /* Safe area for iPhone home indicator */
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+        /* Blur glass effect */
+        backdrop-filter: blur(20px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    }
+
+    /* Each dock item: flex-1 to fill bottom bar evenly */
+    .dock-item {
+        flex: 1;
+    }
+
+    /* Each button: fill full height, flex-col, with label below icon */
+    .dock-item-btn {
+        width: 100% !important;
+        height: auto !important;
+        flex-direction: column !important;
+        border-radius: 0 !important;
+        gap: 3px;
+        padding: 10px 4px 8px !important;
+    }
+
+    /* Show label under icon on mobile */
+    .dock-item-label {
+        display: block;
+        font-size: 10px;
+        font-family: var(--font-main, Inter, sans-serif);
+        color: var(--dock-text);
+        line-height: 1;
+        text-align: center;
+        pointer-events: none;
+    }
+
+    /* Active item label color */
+    .dock-item:has(.dock-item-btn[style*="dock-active"]) .dock-item-label {
+        color: var(--dock-active-text);
+    }
+
+    /* Move the active indicator to top (horizontal line) */
+    .dock-active-indicator {
+        /* Hide left-side indicator */
+        display: none !important;
+    }
+
+    /* Hide hover tooltip on mobile (touch devices don't hover) */
+    .dock-item>div:last-child:not(.dock-item-btn):not(.dock-active-indicator) {
+        display: none !important;
+    }
+
+    /* ── 3. STREAM PANEL ── */
+
+    .stream-panel {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        min-width: 100vw !important;
+        height: calc(100vh - 60px - env(safe-area-inset-bottom, 0px)) !important;
+        flex-shrink: 0;
+        scroll-snap-align: start;
+    }
+
+    /* ── UNIFIED HEADING HEIGHT — all panels align to same top position — */
+    /* StreamPanel title sits at 52px from top */
+    .stream-title {
+        padding-top: 52px !important;
+        font-size: 22px !important;
+    }
+
+    .stream-header {
+        padding: 0 16px 0 16px !important;
+        margin-bottom: 10px !important;
+    }
+
+    /* Keep 2-column masonry on mobile — same as desktop */
+    .stream-feed-masonry {
+        padding: 4px 10px 16px 10px !important;
+        gap: 8px !important;
+    }
+
+    .feed-column {
+        /* Let each column shrink proportionally — keep 2 columns */
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+    }
+
+    /* ── 4. CANVAS / CHAT PANEL ── */
+
+    .canvas-panel {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        min-width: 100vw !important;
+        min-height: 0 !important;
+        height: calc(100vh - 60px - env(safe-area-inset-bottom, 0px)) !important;
+        margin-right: 0 !important;
+        margin-bottom: 0 !important;
+        flex-shrink: 0;
+        scroll-snap-align: start;
+    }
+
+    /* Override Tailwind's min-w-[840px] */
+    .canvas-panel.min-w-\[840px\] {
+        min-width: 100vw !important;
+    }
+
+    /* Show 'Canvas' title on mobile at same height as other panels */
+    .canvas-panel>div:first-child {
+        display: flex !important;
+        padding-top: 52px !important;
+        margin-bottom: -26px !important;
+    }
+
+    /* Mobile canvas contact header: tighter horizontal padding, no extra top space */
+    .mobile-canvas-header {
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+        padding-top: 16px !important;
+        margin-top: 0 !important;
+        align-items: center !important;
+    }
+
+    /* Contact name: zero out the inline marginTop and shrink font on mobile */
+    .mobile-canvas-header h2 {
+        font-size: 18px !important;
+        margin-top: 0px !important;
+        /* overrides inline style marginTop:'8px' */
+        letter-spacing: -0.01em !important;
+        line-height: 1.2 !important;
+        margin-bottom: 30px;
+    }
+
+    /* Status dot row: tighten up top margin */
+    .mobile-canvas-header .mt-1 {
+        margin-top: 2px !important;
+    }
+
+    /* Action icons: zero out the desktop mt-[-60px] negative margin
+       so they sit on the same line as the contact name */
+    .mobile-canvas-header>div:last-child {
+        margin-top: 0 !important;
+        align-self: center !important;
+        position: static !important;
+    }
+
+    /* Message input area: full width, tighter padding */
+    .canvas-panel [class*="px-8"] {
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+    }
+
+
+    /* ── 5. SETTINGS PANEL ── */
+
+    .settings-panel {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        min-width: 100vw !important;
+        min-height: 0 !important;
+        height: calc(100vh - 60px - env(safe-area-inset-bottom, 0px)) !important;
+        margin-right: 0 !important;
+        margin-bottom: 0 !important;
+        flex-shrink: 0;
+        scroll-snap-align: start;
+    }
+
+    /* Unified heading height: Settings title at same 52px as other panels */
+    .settings-panel>div:first-child {
+        padding-top: 52px !important;
+        margin-bottom: -26px !important;
+    }
+
+    /* ── 6. CALLLOG PANEL ── */
+
+    .calllog-panel {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        min-width: 100vw !important;
+        min-height: 0 !important;
+        height: calc(100vh - 60px - env(safe-area-inset-bottom, 0px)) !important;
+        margin-right: 0 !important;
+        margin-bottom: 0 !important;
+        flex-shrink: 0;
+        scroll-snap-align: start;
+    }
+
+    /* Unified heading height: CallLog title at same 52px as other panels */
+    .calllog-panel>div:first-child {
+        padding-top: 52px !important;
+        margin-bottom: -26px !important;
+    }
+
+    /* ── 7. LOGIN PAGE ── */
+
+    .desktop-fullscreen-bg {
+        align-items: center;
+        padding: 16px;
+        overflow-y: auto;
+    }
+
+    .center-login-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 36px 20px !important;
+        border-radius: 16px !important;
+    }
+
+    .center-login-card h2 {
+        font-size: 1.6rem !important;
+        letter-spacing: 3px !important;
+        margin-bottom: 32px !important;
+    }
+
+    .input-container {
+        margin-bottom: 18px !important;
+    }
+
+    .input-container input {
+        font-size: 1rem !important;
+        padding: 14px 46px 14px 18px !important;
+    }
+
+    .login-submit-btn {
+        padding: 14px !important;
+    }
+
+    .bottom-links-container {
+        margin-top: 24px !important;
+        font-size: 0.85rem !important;
+    }
+
+    /* ── 6. SIGNUP PAGE ── */
+
+    .signup-page {
+        padding: 16px;
+        overflow-y: auto;
+        align-items: center;
+    }
+
+    .auth-card-nexus {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 32px 20px !important;
+    }
+
+    .nexus-title {
+        font-size: 22px !important;
+        letter-spacing: 1.5px !important;
+    }
+
+    .nexus-btn {
+        padding: 14px !important;
+    }
+
+    /* ── 7. SETTINGS & CALL LOG PANELS (full width on mobile) ── */
+
+    /* Settings and call log panels that appear in panels-container */
+    .panels-container>* {
+        scroll-snap-align: start;
+        flex-shrink: 0;
+    }
+
+    /* Global: ensure all modals/overlays don't get cut off on mobile */
+
+    /* Audio player min-width adjustment */
+    .canvas-panel .min-w-\[320px\] {
+        min-width: 200px !important;
+    }
+
+    /* Video player max width */
+    .canvas-panel .max-w-\[420px\] {
+        max-width: 100% !important;
+    }
+}
