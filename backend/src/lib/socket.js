@@ -95,36 +95,58 @@ export const initializeSocket = (httpServer) => {
         // ── Send Message ────────────────────────────────────
         socket.on("send_message", async (data) => {
             try {
-                const { senderId, receiverId, text, image, replyTo } = data;
+                const { senderId, receiverId, text, image, replyTo,
+                    ciphertext, nonce, encryptionVersion, messageType,
+                    ratchetHeader, senderIdentityKey, senderEphemeralKey } = data;
 
-                const newMessage = new Message({
+                const isE2EE = encryptionVersion === "e2ee-v1";
+
+                const messageData = {
                     senderId,
                     receiverId,
-                    text,
-                    image,
                     replyTo,
                     isEdited: false,
                     status: "sent",
-                });
+                    encryptionVersion: isE2EE ? "e2ee-v1" : "none",
+                };
 
+                if (isE2EE) {
+                    messageData.ciphertext = ciphertext;
+                    messageData.nonce = nonce;
+                    messageData.messageType = messageType || "text";
+                    messageData.ratchetHeader = ratchetHeader;
+                    messageData.senderIdentityKey = senderIdentityKey || null;
+                    messageData.senderEphemeralKey = senderEphemeralKey || null;
+                } else {
+                    messageData.text = text;
+                    messageData.image = image;
+                }
+
+                const newMessage = new Message(messageData);
                 await newMessage.save();
 
-                const messageData = newMessage.toObject();
+                const socketPayload = newMessage.toObject();
+
+                // Include E2EE metadata for session bootstrap
+                if (isE2EE) {
+                    socketPayload.senderIdentityKey = senderIdentityKey;
+                    socketPayload.senderEphemeralKey = senderEphemeralKey;
+                }
 
                 // If receiver is online, mark as delivered
                 if (activeUsers.has(receiverId)) {
-                    messageData.status = "delivered";
+                    socketPayload.status = "delivered";
                     await Message.findByIdAndUpdate(newMessage._id, { status: "delivered" });
                 }
 
                 // Emit to receiver
-                io.to(`user_${receiverId}`).emit("message_received", messageData);
+                io.to(`user_${receiverId}`).emit("message_received", socketPayload);
 
                 // Confirm back to sender
                 socket.emit("message_sent", {
                     _id: newMessage._id,
                     tempId: data.tempId,
-                    status: messageData.status,
+                    status: socketPayload.status,
                     createdAt: newMessage.createdAt,
                 });
             } catch (error) {

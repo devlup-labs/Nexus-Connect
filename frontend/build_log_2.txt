@@ -1,0 +1,28 @@
+
+> frontend@0.0.0 build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32m✓[39m 1828 modules transformed.
+[31m✗[39m Build failed in 11.03s
+[31merror during build:
+[31msrc/components/ChatContainer.jsx (6:9): "ThemeContext" is not exported by "src/contexts/ThemeContext.jsx", imported by "src/components/ChatContainer.jsx".[31m
+file: [36mC:/Users/Nafees/Desktop/Projects/WebDev/Nexus-Connect/frontend/src/components/ChatContainer.jsx:6:9[31m
+[33m
+4: import { getMessages, sendMessage, deleteForMe, deleteForEveryone, editMessage, getContacts } from '../api';
+5: import { getSocket, emitTyping, emitStoppedTyping, emitMarkAsRead, getActiveUsers } from '../services/socket';
+6: import { ThemeContext } from '../contexts/ThemeContext';
+            ^
+7: import { encryptMessage, decryptMessage, isCryptoReady, hasSession, getOrCreateSession } from '../services/keyManager';
+[31m
+    at getRollupError (file:///C:/Users/Nafees/Desktop/Projects/WebDev/Nexus-Connect/frontend/node_modules/rollup/dist/es/shared/parseAst.js:402:41)
+    at error (file:///C:/Users/Nafees/Desktop/Projects/WebDev/Nexus-Connect/frontend/node_modules/rollup/dist/es/shared/parseAst.js:398:42)
+    at Module.error (file:///C:/Users/Nafees/Desktop/Projects/WebDev/Nexus-Connect/frontend/node_modules/rollup/dist/es/shared/node-entry.js:17040:16)
+    at Module.traceVariable (file:///C:/Users/Nafees/Desktop/Projects/WebDev/Nexus-Connect/frontend/node_modules/rollup/dist/es/shared/node-entry.js:17452:29)
+    at ModuleScope.findVariable (file:///C:/Users/Nafees/Desktop/Projects/WebDev/Nexus-Connect/frontend/node_modules/rollup/dist/es/shared/node-entry.js:15070:39)
+    at ReturnValueScope.findVariable (file:///C:/Users/Nafees/Desktop/Projects/WebDev/Nexus-Connect/frontend/node_modules/rollup/dist/es/shared/node-entry.js:5673:38)
+    at FunctionBodyScope.findVariable (file:///C:/Users/Nafees/Desktop/Projects/WebDev/Nexus-Connect/frontend/node_modules/rollup/dist/es/shared/node-entry.js:5673:38)
+    at Identifier.bind (file:///C:/Users/Nafees/Desktop/Projects/WebDev/Nexus-Connect/frontend/node_modules/rollup/dist/es/shared/node-entry.js:5447:40)
+    at CallExpression.bind (file:///C:/Users/Nafees/Desktop/Projects/WebDev/Nexus-Connect/frontend/node_modules/rollup/dist/es/shared/node-entry.js:2825:28)
+    at CallExpression.bind (file:///C:/Users/Nafees/Desktop/Projects/WebDev/Nexus-Connect/frontend/node_modules/rollup/dist/es/shared/node-entry.js:12179:15)[39m

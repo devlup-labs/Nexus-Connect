@@ -15,6 +15,7 @@ import NexusBackground from './components/backgrounds/NexusBackground.jsx'
 import SakuraBackground from './components/backgrounds/SakuraBackground.jsx'
 import CelestiaBackground from './components/backgrounds/CelestiaBackground.jsx'
 import { createPeerConnection, startLocalMedia, addLocalTracks, createOffer, applyRemoteOffer, createAnswer, applyRemoteAnswer, addIceCandidate, cleanupWebRTC } from './services/webrtc.js'
+import { ensureKeysRegistered, clearSessionCache } from './services/keyManager'
 
 
 
@@ -45,10 +46,14 @@ function App() {
       .finally(() => setAuthLoading(false));
   }, []);
 
-  // Initialize WebSocket when user is authenticated
+  // Initialize WebSocket and E2EE keys when user is authenticated
   useEffect(() => {
     if (authUser?._id) {
       initializeSocket(authUser._id);
+      // Initialize E2EE keys (generates + registers if first time)
+      ensureKeysRegistered(authUser._id).catch(err => {
+        console.error('[E2EE] Key registration failed:', err);
+      });
     }
     return () => {
       // Socket cleanup handled on logout
@@ -219,10 +224,11 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await logoutApi();
     } catch (e) {
       // ignore
     }
+    clearSessionCache();
     disconnectSocket();
     setAuthUser(null);
     setSelectedContact(null);

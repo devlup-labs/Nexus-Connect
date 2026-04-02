@@ -29,8 +29,17 @@ export const getMessages = (userId) => API.get(`/messages/${userId}`);
 export const sendMessage = (receiverId, data) =>
   API.post(`/messages/send/${receiverId}`, data);
 
-export const editMessage = (msgId, text) =>
-  API.put(`/messages/${msgId}`, { text });
+export const editMessage = (msgId, text, encryptedData) => {
+  if (encryptedData) {
+    return API.put(`/messages/${msgId}`, {
+      ciphertext: encryptedData.ciphertext,
+      nonce: encryptedData.nonce,
+      ratchetHeader: encryptedData.ratchetHeader,
+      encryptionVersion: encryptedData.encryptionVersion,
+    });
+  }
+  return API.put(`/messages/${msgId}`, { text });
+};
 
 export const deleteForMe = (msgId) =>
   API.delete(`/messages/delete-me/${msgId}`);
@@ -46,4 +55,18 @@ export const getArchivedUsers = () => API.get("/users/archived");
 
 // ─── Calls ───────────────────────────────────────────
 export const getCallLogs = () => API.get("/calls");
+
+// ─── E2EE Keys ───────────────────────────────────────
+export const registerKeys = (keyBundle) =>
+  API.post("/keys/register", keyBundle);
+
+export const getKeyBundle = (userId) => API.get(`/keys/bundle/${userId}`);
+
+export const rotateSignedPreKey = (data) =>
+  API.post("/keys/rotate-signed-prekey", data);
+
+export const uploadOneTimePreKeys = (keys) =>
+  API.post("/keys/upload-one-time-prekeys", keys);
+
+export const hasKeys = (userId) => API.get(`/keys/has-keys/${userId}`);
 

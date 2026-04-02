@@ -1,8 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, MoreHorizontal, SendHorizontal, X, Mail, Phone as PhoneIcon, User, Info, ArrowLeft, CheckSquare, Trash2, Forward, Copy, Check, Search, ChevronUp, ChevronDown, Reply, MessageSquare, Paperclip, Mic, Image as ImageIcon, FileText as FileIcon, XCircle, Square as StopIcon, Download, Play, Pause, Maximize, Volume2, VolumeX, Minimize } from 'lucide-react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
+import { Phone, Video, MoreHorizontal, SendHorizontal, X, Mail, Phone as PhoneIcon, User, Info, ArrowLeft, CheckSquare, Trash2, Forward, Copy, Check, Search, ChevronUp, ChevronDown, Reply, MessageSquare, Paperclip, Mic, Image as ImageIcon, FileText as FileIcon, XCircle, Square as StopIcon, Download, Play, Pause, Maximize, Volume2, VolumeX, Minimize, Lock, Shield } from 'lucide-react';
 import ContextMenu from './ContextMenu';
 import { getMessages, sendMessage, deleteForMe, deleteForEveryone, editMessage, getContacts } from '../api';
 import { getSocket, emitTyping, emitStoppedTyping, emitMarkAsRead, getActiveUsers } from '../services/socket';
+import { ThemeContext } from '../contexts/ThemeContext';
+import { encryptMessage, decryptMessage, decryptMessagesBatch, isCryptoReady, hasSession, getOrCreateSession, resetSession, isE2EESupported } from '../services/keyManager';
+import { cacheDecryptedMessage } from '../services/sessionStore';
 
 const CustomAudioPlayer = ({ src }) => {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -299,8 +302,10 @@ const CustomVideoPlayer = ({ src }) => {
 };
 
 const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => {
+    const { theme } = useContext(ThemeContext);
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [loadingMsgs, setLoadingMsgs] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const [showProfile, setShowProfile] = useState(false);
@@ -337,6 +342,10 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
     const attachMenuRef = useRef(null);
     const [showAttachMenu, setShowAttachMenu] = useState(false);
     const [replyingTo, setReplyingTo] = useState(null);
+
+    // E2EE state
+    const [isE2EEActive, setIsE2EEActive] = useState(false);
+    const [e2eeStatus, setE2eeStatus] = useState('none'); // 'none', 'supported', 'active'
 
     // New states for Message Info
     const [showInfoModal, setShowInfoModal] = useState(false);
@@ -466,9 +475,20 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
             try {
                 const res = await getMessages(selectedContact._id);
                 if (!cancelled) {
-                    setMessages(res.data);
+                    // Decrypt E2EE messages
+                    let msgs = res.data;
+                    if (isCryptoReady()) {
+                        msgs = await decryptMessagesBatch(authUser._id, selectedContact._id, msgs);
+                        // Check if E2EE is active for this conversation
+                        const hasE2EE = msgs.some(m => m.encryptionVersion === 'e2ee-v1');
+                        const supported = await isE2EESupported(selectedContact._id);
+                        const active = await hasSession(selectedContact._id);
+                        setE2eeStatus(active ? 'active' : (supported ? 'supported' : 'none'));
+                        setIsE2EEActive(hasE2EE || active);
+                    }
+                    setMessages(msgs);
                     // Mark unread messages as read
-                    const unreadMsgIds = res.data
+                    const unreadMsgIds = msgs
                         .filter(m => String(m.receiverId) === String(authUser._id) && m.status !== 'read')
                         .map(m => m._id);
                     if (unreadMsgIds.length > 0) {
@@ -487,7 +507,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
         return () => {
             cancelled = true;
         };
-    }, [selectedContact?._id]);
+    }, [selectedContact?._id, refreshTrigger]);
 
     // ── Set initial online status when contact changes using cached active users ──
     useEffect(() => {
@@ -505,15 +525,32 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
         const socket = getSocket();
         if (!socket) return;
 
-        const handleMessageReceived = (newMessage) => {
+        const handleMessageReceived = async (newMessage) => {
             // Only add if it's for the current conversation
             const isFromSelectedContact = newMessage.senderId === selectedContact?._id;
             const isToSelectedContact = newMessage.receiverId === selectedContact?._id;
             if (isFromSelectedContact || isToSelectedContact) {
+                let processedMsg = newMessage;
+                // Decrypt E2EE messages
+                if (newMessage.encryptionVersion === 'e2ee-v1' && newMessage.ciphertext && isCryptoReady()) {
+                    if (isFromSelectedContact) {
+                        try {
+                            const plaintext = await decryptMessage(authUser._id, selectedContact._id, newMessage);
+                            processedMsg = { ...newMessage, _decryptedText: plaintext, _isEncrypted: true };
+                            if (!isE2EEActive) setIsE2EEActive(true);
+                        } catch (err) {
+                            console.error('[E2EE] Failed to decrypt received message:', err);
+                            processedMsg = { ...newMessage, _decryptedText: '[Decryption failed]', _isEncrypted: true };
+                        }
+                    } else {
+                        // Echo of our own sent message or something else we can't decrypt
+                        processedMsg = { ...newMessage, _decryptedText: '[Sent Encrypted Message]', _isEncrypted: true };
+                    }
+                }
                 setMessages(prev => {
                     // Avoid duplicates (in case REST already added it)
-                    if (prev.some(m => m._id === newMessage._id)) return prev;
-                    return [...prev, newMessage];
+                    if (prev.some(m => m._id === processedMsg._id)) return prev;
+                    return [...prev, processedMsg];
                 });
                 // If incoming, mark as read immediately since we're viewing this chat
                 if (isFromSelectedContact && newMessage.status !== 'read') {
@@ -522,14 +559,41 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
             }
         };
 
-        const handleMessageEdited = (data) => {
-            setMessages(prev =>
-                prev.map(m =>
-                    m._id === data.messageId
-                        ? { ...m, text: data.newText, isEdited: true }
-                        : m
-                )
-            );
+        const handleMessageEdited = async (data) => {
+            const isFromSelectedContact = data.senderId === selectedContact?._id;
+            if (data.encryptionVersion === 'e2ee-v1' && data.ciphertext && isCryptoReady()) {
+                if (isFromSelectedContact) {
+                    try {
+                        const plaintext = await decryptMessage(authUser._id, selectedContact._id, data);
+                        setMessages(prev =>
+                            prev.map(m =>
+                                m._id === data.messageId
+                                    ? { ...m, _decryptedText: plaintext, isEdited: true, _isEncrypted: true }
+                                    : m
+                            )
+                        );
+                    } catch (err) {
+                        console.error('[E2EE] Failed to decrypt edited message:', err);
+                    }
+                } else {
+                    // It's our own edit echo
+                    setMessages(prev =>
+                        prev.map(m =>
+                            m._id === data.messageId
+                                ? { ...m, _decryptedText: '[Sent Encrypted Message]', isEdited: true, _isEncrypted: true }
+                                : m
+                        )
+                    );
+                }
+            } else {
+                setMessages(prev =>
+                    prev.map(m =>
+                        m._id === data.messageId
+                            ? { ...m, text: data.newText, isEdited: true }
+                            : m
+                    )
+                );
+            }
         };
 
         const handleMessageDeleted = (data) => {
@@ -631,7 +695,8 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
 
     const doesMessageMatch = (msg) => {
         if (!searchQuery.trim()) return false;
-        return msg.text?.toLowerCase().includes(searchQuery.toLowerCase());
+        const displayText = msg._decryptedText || msg.text;
+        return displayText?.toLowerCase().includes(searchQuery.toLowerCase());
     };
 
     const isDocumentUrl = (url) => {
@@ -672,8 +737,27 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
         if (!editMessageText.trim() || !editingMessageId) return;
 
         try {
-            const updatedMessage = await editMessage(editingMessageId, editMessageText);
-            setMessages(prev => prev.map(m => m._id === editingMessageId ? { ...m, ...updatedMessage.data } : m));
+            // Check if the message being edited is E2EE
+            const originalMsg = messages.find(m => m._id === editingMessageId);
+            const isE2EE = originalMsg?.encryptionVersion === 'e2ee-v1' || originalMsg?._isEncrypted;
+
+            if (isE2EE && isCryptoReady()) {
+                const encrypted = await encryptMessage(authUser._id, selectedContact._id, editMessageText);
+                if (encrypted) {
+                    const updatedMessage = await editMessage(editingMessageId, null, encrypted);
+                    setMessages(prev => prev.map(m => m._id === editingMessageId
+                        ? { ...m, _decryptedText: editMessageText, isEdited: true }
+                        : m
+                    ));
+                } else {
+                    // Fallback to plaintext edit
+                    const updatedMessage = await editMessage(editingMessageId, editMessageText);
+                    setMessages(prev => prev.map(m => m._id === editingMessageId ? { ...m, ...updatedMessage.data } : m));
+                }
+            } else {
+                const updatedMessage = await editMessage(editingMessageId, editMessageText);
+                setMessages(prev => prev.map(m => m._id === editingMessageId ? { ...m, ...updatedMessage.data } : m));
+            }
             setShowEditModal(false);
             setEditingMessageId(null);
             setEditMessageText('');
@@ -785,7 +869,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
         for (const userId of forwardSelectedUsers) {
             for (const msg of msgsToForward) {
                 const payload = {};
-                if (msg.text) payload.text = msg.text;
+                if (msg.text || msg._decryptedText) payload.text = msg._decryptedText || msg.text;
                 if (msg.image) payload.image = msg.image;
 
                 // Only send if there's text or image
@@ -808,7 +892,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
 
     const handleCopySelected = () => {
         const selectedMsgs = messages.filter(m => selectedMessages.includes(m._id));
-        const text = selectedMsgs.map(m => m.text).join('\n');
+        const text = selectedMsgs.map(m => m._decryptedText || m.text).join('\n');
         navigator.clipboard.writeText(text);
         exitSelectMode();
     };
@@ -883,10 +967,12 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
             senderId: authUser._id,
             receiverId: selectedContact._id,
             text: text || undefined,
+            _decryptedText: text || undefined,
             image: imagePreview || undefined,
             replyTo: currentReplyTo || undefined,
             createdAt: new Date().toISOString(),
             _optimistic: true,
+            _isEncrypted: isCryptoReady(),
         };
         setMessages(prev => [...prev, optimisticMsg]);
         setTimeout(scrollToBottom, 50);
@@ -894,15 +980,47 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
         if (imageToSend) setSendingImage(true);
 
         try {
-            const payload = {};
-            if (text) payload.text = text;
-            if (imageToSend) payload.image = imageToSend;
-            if (imageToSend && attachedFileType === 'audio') payload.text = 'Voice';
-            if (currentReplyTo) payload.replyTo = currentReplyTo._id;
+            let payload = {};
+
+            // Try E2EE encryption for text messages (images stay plaintext in Phase 1)
+            if (text && !imageToSend && isCryptoReady()) {
+                console.log(`[E2EE] Attempting to encrypt message to ${selectedContact._id}`);
+                const encrypted = await encryptMessage(authUser._id, selectedContact._id, text);
+                if (encrypted) {
+                    console.log(`[E2EE] Message encrypted successfully`);
+                    payload = {
+                        ...encrypted,
+                        messageType: 'text',
+                    };
+                    if (currentReplyTo) payload.replyTo = currentReplyTo._id;
+                    if (!isE2EEActive) setIsE2EEActive(true);
+                } else {
+                    // Fallback to plaintext if encryption fails (no keys)
+                    console.warn(`[E2EE] Encryption failed for ${selectedContact._id}, falling back to plaintext`);
+                    if (text) payload.text = text;
+                    if (currentReplyTo) payload.replyTo = currentReplyTo._id;
+                }
+            } else {
+                // Plaintext path (images, or crypto not ready)
+                if (text) payload.text = text;
+                if (imageToSend) payload.image = imageToSend;
+                if (imageToSend && attachedFileType === 'audio') payload.text = 'Voice';
+                if (currentReplyTo) payload.replyTo = currentReplyTo._id;
+            }
+
             const res = await sendMessage(selectedContact._id, payload);
-            // Replace optimistic message with real one
+            // Replace optimistic message with real one, preserving decrypted text
+            const realMsg = res.data;
+            if (realMsg.encryptionVersion === 'e2ee-v1') {
+                realMsg._decryptedText = text;
+                realMsg._isEncrypted = true;
+                // Cache sent message plaintext so it survives chat switching
+                if (realMsg._id && text) {
+                    cacheDecryptedMessage(realMsg._id, text).catch(() => { });
+                }
+            }
             setMessages(prev =>
-                prev.map(m => m._id === optimisticMsg._id ? res.data : m)
+                prev.map(m => m._id === optimisticMsg._id ? realMsg : m)
             );
         } catch (err) {
             console.error('Failed to send message:', err);
@@ -1020,7 +1138,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                     disabled={selectedMessages.length === 0}
                                     className={`p-2.5 rounded-lg border-0 bg-transparent flex items-center justify-center transition-colors ${selectedMessages.length > 0
                                         ? 'text-red-500 cursor-pointer hover:bg-red-500/10'
-                                        : 'text-[var(--text-tertiary)] cursor-not-allowed'
+                                        : 'text-(--text-tertiary) cursor-not-allowed'
                                         }`}
                                     title="Delete"
                                 >
@@ -1032,12 +1150,19 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                         /* Normal Contact header */
                         <div className="mobile-canvas-header flex items-center justify-between mt-4 pt-0 px-8">
                             <div className="">
-                                <h2 style={{ fontSize: '36px', lineHeight: 1, fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '-0.025em', marginTop: '8px', fontFamily: 'var(--font-main)' }}>
-                                    {selectedContact.fullName}
-                                </h2>
+                                <div className="flex items-center gap-2">
+                                    <h2 style={{ fontSize: '36px', lineHeight: 1, fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '-0.025em', marginTop: '8px', fontFamily: 'var(--font-main)' }}>
+                                        {selectedContact.fullName}
+                                    </h2>
+                                    <div className="mt-2">
+                                        {e2eeStatus === 'active' && <Shield size={20} className="text-(--accent)" title="End-to-End Encrypted" />}
+                                        {e2eeStatus === 'supported' && <Shield size={20} className="text-(--text-tertiary) opacity-50" title="E2EE Supported" />}
+                                        {e2eeStatus === 'none' && <Lock size={20} className="text-(--status-danger) opacity-30" title="Encryption Not Supported" />}
+                                    </div>
+                                </div>
                                 <div className="flex items-center gap-3 mt-1 mb-0">
-                                    <div className={`w-2.5 h-2.5 rounded-full ${contactOnlineStatus === 'online' ? 'bg-[var(--status-online)] shadow-[0_0_10px_var(--status-online-shadow)]' : 'bg-[var(--text-tertiary)]'}`} />
-                                    <span className="text-[12px] text-[var(--text-secondary)]">{contactOnlineStatus === 'online' ? 'Online' : 'Offline'}</span>
+                                    <div className={`w-2.5 h-2.5 rounded-full ${contactOnlineStatus === 'online' ? 'bg-green-400 shadow-[0_0_10px_rgba(34,197,94,0.45)]' : 'bg-gray-500'}`} />
+                                    <span className="text-[12px] text-gray-400/80">{contactOnlineStatus === 'online' ? 'Online' : 'Offline'}</span>
                                 </div>
                             </div>
 
@@ -1145,6 +1270,10 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                         }}
                     >
 
+                        {/* large faint watermark behind messages - centered */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none">
+                            <span className="text-[120px] font-bold text-white/[0.03] blur-[1px] whitespace-nowrap">{selectedContact.fullName}</span>
+                        </div>
 
                         {loadingMsgs ? (
                             <div className="flex justify-center py-[20px]">
@@ -1210,7 +1339,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                         y: e.clientY,
                                                         type: 'message',
                                                         msgId: msg._id,
-                                                        msgText: msg.text,
+                                                        msgText: msg._decryptedText || msg.text,
                                                         msgSenderId: msg.senderId,
                                                         fullMsg: msg
                                                     });
@@ -1263,8 +1392,8 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                                 </div>
                                                             </div>
                                                         )}
-                                                        {msg.text?.toLowerCase() !== 'voice' && (
-                                                            <div className="text-[15px] leading-snug text-[var(--text-primary)] max-w-[720px]">{msg.text}</div>
+                                                        {(msg._decryptedText || msg.text)?.toLowerCase() !== 'voice' && (
+                                                            <div className="text-[15px] leading-snug text-white/85 max-w-[720px]">{msg._decryptedText || msg.text}</div>
                                                         )}
                                                         {msg.image && (
                                                             isDocumentUrl(msg.image) ? (
@@ -1282,7 +1411,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                                         <Download size={14} className="text-[var(--text-secondary)]" />
                                                                     </div>
                                                                 </div>
-                                                            ) : (msg.image.toLowerCase().includes('.mp3') || msg.image.toLowerCase().includes('.wav') || msg.image.toLowerCase().includes('.ogg') || msg.image.toLowerCase().includes('.m4a') || msg.image.toLowerCase().includes('audio/') || (msg.image.toLowerCase().includes('base64') && msg.image.toLowerCase().startsWith('data:audio')) || msg.text?.toLowerCase().includes('voice')) ? (
+                                                            ) : (msg.image.toLowerCase().includes('.mp3') || msg.image.toLowerCase().includes('.wav') || msg.image.toLowerCase().includes('.ogg') || msg.image.toLowerCase().includes('.m4a') || msg.image.toLowerCase().includes('audio/') || (msg.image.toLowerCase().includes('base64') && msg.image.toLowerCase().startsWith('data:audio')) || (msg._decryptedText || msg.text)?.toLowerCase().includes('voice')) ? (
                                                                 <CustomAudioPlayer src={msg.image} />
                                                             ) : (msg.image.toLowerCase().includes('.mp4') || msg.image.toLowerCase().includes('.mov') || msg.image.toLowerCase().includes('.webm') || msg.image.toLowerCase().includes('/video/upload/')) ? (
                                                                 <CustomVideoPlayer src={msg.image} />
@@ -1335,7 +1464,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                         y: e.clientY,
                                                         type: 'message',
                                                         msgId: msg._id,
-                                                        msgText: msg.text,
+                                                        msgText: msg._decryptedText || msg.text,
                                                         msgSenderId: msg.senderId,
                                                         fullMsg: msg
                                                     });
@@ -1378,8 +1507,8 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                                 </div>
                                                             </div>
                                                         )}
-                                                        {msg.text?.toLowerCase() !== 'voice' && (
-                                                            <div className="text-[15px] leading-snug text-[var(--text-primary)] text-right">{msg.text}</div>
+                                                        {(msg._decryptedText || msg.text)?.toLowerCase() !== 'voice' && (
+                                                            <div className="text-[15px] leading-snug text-white/85 text-right">{msg._decryptedText || msg.text}</div>
                                                         )}
                                                         {msg.image && (
                                                             isDocumentUrl(msg.image) ? (
@@ -1397,7 +1526,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                                         <Download size={14} className="text-[var(--text-secondary)]" />
                                                                     </div>
                                                                 </div>
-                                                            ) : (msg.image.toLowerCase().includes('.mp3') || msg.image.toLowerCase().includes('.wav') || msg.image.toLowerCase().includes('.ogg') || msg.image.toLowerCase().includes('.m4a') || msg.image.toLowerCase().includes('audio/') || (msg.image.toLowerCase().includes('base64') && msg.image.toLowerCase().startsWith('data:audio')) || msg.text === 'Voice') ? (
+                                                            ) : (msg.image.toLowerCase().includes('.mp3') || msg.image.toLowerCase().includes('.wav') || msg.image.toLowerCase().includes('.ogg') || msg.image.toLowerCase().includes('.m4a') || msg.image.toLowerCase().includes('audio/') || (msg.image.toLowerCase().includes('base64') && msg.image.toLowerCase().startsWith('data:audio')) || (msg._decryptedText || msg.text) === 'Voice') ? (
                                                                 <CustomAudioPlayer src={msg.image} />
                                                             ) : (msg.image.toLowerCase().includes('/video/upload/') || msg.image.toLowerCase().includes('.mp4') || msg.image.toLowerCase().includes('.mov') || msg.image.toLowerCase().includes('.webm')) ? (
                                                                 <CustomVideoPlayer src={msg.image} />
@@ -1801,6 +1930,25 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                     },
                                     { divider: true },
                                     { label: 'Clear Chat', icon: <Trash2 size={16} />, color: 'var(--status-danger)', onClick: () => { } },
+                                    { divider: true },
+                                    {
+                                        label: 'Reset E2EE Session',
+                                        icon: <Shield size={16} />,
+                                        color: 'var(--accent-secondary)',
+                                        onClick: () => {
+                                            if (window.confirm("Reset E2EE session for this contact? This can help fix decryption issues by forcing a fresh key agreement.")) {
+                                                isE2EESupported(selectedContact._id).then(supported => {
+                                                    if (!supported) {
+                                                        alert("Cannot reset E2EE: This partner hasn't registered security keys yet. They need to log in to enable encryption.");
+                                                        return;
+                                                    }
+                                                    resetSession(selectedContact._id).then(() => {
+                                                        setRefreshTrigger(prev => prev + 1);
+                                                    });
+                                                });
+                                            }
+                                        }
+                                    },
                                 ]
                         }
                     />
@@ -2120,7 +2268,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                     <button
                                         onClick={handleEditSubmit}
                                         disabled={!editMessageText.trim() || editMessageText === messages.find(m => m._id === editingMessageId)?.text}
-                                        className="px-8 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent)] disabled:bg-[var(--surface)] disabled:text-[var(--text-tertiary)] text-[var(--text-on-accent)] font-bold rounded-xl text-[14px] transition-all shadow-lg shadow-[var(--shadow-glow)] active:scale-95"
+                                        className="px-8 py-2.5 bg-cyan-500 hover:bg-cyan-400 disabled:bg-white/5 disabled:text-white/20 text-slate-900 font-bold rounded-xl text-[14px] transition-all shadow-lg shadow-cyan-500/10 active:scale-95"
                                     >
                                         Save Changes
                                     </button>
