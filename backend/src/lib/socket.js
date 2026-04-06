@@ -7,7 +7,7 @@ import crypto from "crypto";
 
 let io;
 
-// Store active users: Map<userId, socketId>
+// Store active users: Map<userId, Set<socketId>>
 const activeUsers = new Map();
 
 // activeCalls.set(callId, { callerId, receiverId, callType, status, startedAt, answeredAt });
@@ -67,7 +67,10 @@ export const initializeSocket = (httpServer) => {
 
         // ── User Connected ──────────────────────────────────
         socket.on("user_connected", async (userId) => {
-            activeUsers.set(userId, socket.id);
+            if (!activeUsers.has(userId)) {
+                activeUsers.set(userId, new Set());
+            }
+            activeUsers.get(userId).add(socket.id);
             socket.userId = userId;
             socket.join(`user_${userId}`);
 
@@ -89,7 +92,7 @@ export const initializeSocket = (httpServer) => {
                 console.error("Error fetching unread counts:", err);
             }
 
-            console.log(`User ${userId} connected. Active users: ${activeUsers.size}`);
+            console.log(`User ${userId} connected (${socket.id}). Active users: ${activeUsers.size}`);
         });
 
         // ── Send Message ────────────────────────────────────
@@ -213,8 +216,7 @@ export const initializeSocket = (httpServer) => {
                     return ack?.({ ok: false, error: "Invalid callType" });
                 }
 
-                const receiverSocketId = activeUsers.get(String(toUserId));
-                if (!receiverSocketId) {
+                if (!activeUsers.has(String(toUserId))) {
                     await Call.create({
                         callId: crypto.randomUUID(),
                         callerId: fromUserId,
@@ -341,13 +343,18 @@ export const initializeSocket = (httpServer) => {
         // ── Disconnect ──────────────────────────────────────
         socket.on("disconnect", async () => {
             if (socket.userId) {
-                activeUsers.delete(socket.userId);
-
-                io.emit("user_status_update", {
-                    userId: socket.userId,
-                    status: "offline",
-                    lastSeen: new Date(),
-                });
+                const userSockets = activeUsers.get(socket.userId);
+                if (userSockets) {
+                    userSockets.delete(socket.id);
+                    if (userSockets.size === 0) {
+                        activeUsers.delete(socket.userId);
+                        io.emit("user_status_update", {
+                            userId: socket.userId,
+                            status: "offline",
+                            lastSeen: new Date(),
+                        });
+                    }
+                }
 
                 // Broadcast updated active users list to all remaining sockets
                 io.emit("active_users", Array.from(activeUsers.keys()));
@@ -361,7 +368,7 @@ export const initializeSocket = (httpServer) => {
                     }
                 }
 
-                console.log(`User ${socket.userId} disconnected. Active users: ${activeUsers.size}`);
+                console.log(`User ${socket.userId} socket disconnected (${socket.id}). Active users overall: ${activeUsers.size}`);
             }
         });
     });
