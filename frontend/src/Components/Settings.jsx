@@ -1,9 +1,10 @@
 import React, { useState, useRef } from "react";
-import { Edit2, ChevronDown, Check, X, Camera } from "lucide-react";
+import { Edit2, ChevronDown, Check, X, Camera, Download, Upload } from "lucide-react";
 import { updateProfile } from "../api";
 import Cropper from "react-easy-crop";
 import getCroppedImg, { convertBlobToBase64 } from "../utils/cropImage";
 import { useTheme, THEME_LIST } from "../contexts/ThemeContext.jsx";
+import { exportAllE2EEKeys, importAllE2EEKeys } from "../services/sessionStore.js";
 
 function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
   const fileInputRef = useRef(null);
@@ -15,6 +16,45 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
 
   const languages = ["English", "Hindi", "Spanish", "French"];
   const [uploadingPic, setUploadingPic] = useState(false);
+
+  // Export/Import Keys logic
+  const importInputRef = useRef(null);
+
+  const handleExportKeys = async () => {
+    try {
+      if (!authUser?._id) return;
+      const data = await exportAllE2EEKeys(authUser._id);
+      const blob = new Blob([data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `nexus_e2ee_keys_${authUser._id}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to export keys:", err);
+    }
+  };
+
+  const handleImportKeys = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !authUser?._id) return;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        await importAllE2EEKeys(authUser._id, event.target.result);
+        alert("E2EE keys imported successfully!");
+        window.location.reload(); // Force app state re-initialization
+      } catch (err) {
+        console.error("Failed to import keys:", err);
+        alert("Invalid backup file or mismatched user ID.");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = null;
+  };
 
   // Cropping State
   const [activeImage, setActiveImage] = useState(null);
@@ -466,6 +506,61 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
             </SettingRow>
 
             <SettingRow label="Privacy & Security" right="→" />
+
+            {/* Export/Import E2EE Keys */}
+            <SettingRow label="Export E2EE Backup">
+              <button
+                onClick={handleExportKeys}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "5px 12px",
+                  borderRadius: "8px",
+                  background: "rgba(var(--accent-rgb), 0.15)",
+                  border: "1px solid var(--border-accent-strong)",
+                  cursor: "pointer",
+                  color: "var(--accent)",
+                  fontSize: "12px",
+                  fontWeight: 500,
+                  fontFamily: "var(--font-main)"
+                }}
+              >
+                <Download size={13} />
+                Export
+              </button>
+            </SettingRow>
+
+            <SettingRow label="Import E2EE Backup">
+              <button
+                onClick={() => importInputRef.current?.click()}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "5px 12px",
+                  borderRadius: "8px",
+                  background: "var(--surface)",
+                  border: "1px solid var(--border-hover)",
+                  cursor: "pointer",
+                  color: "var(--text-secondary)",
+                  fontSize: "12px",
+                  fontWeight: 500,
+                  fontFamily: "var(--font-main)"
+                }}
+              >
+                <Upload size={13} />
+                Import
+              </button>
+              <input
+                type="file"
+                ref={importInputRef}
+                accept=".json"
+                onChange={handleImportKeys}
+                style={{ display: "none" }}
+              />
+            </SettingRow>
+
             <SettingRow label="Storage & Data" right="→" />
           </div>
 

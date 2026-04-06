@@ -745,6 +745,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                 const encrypted = await encryptMessage(authUser._id, selectedContact._id, editMessageText);
                 if (encrypted) {
                     const updatedMessage = await editMessage(editingMessageId, null, encrypted);
+                    cacheDecryptedMessage(editingMessageId, editMessageText).catch(() => { });
                     setMessages(prev => prev.map(m => m._id === editingMessageId
                         ? { ...m, _decryptedText: editMessageText, isEdited: true }
                         : m
@@ -1705,7 +1706,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                 clearTimeout(typingTimeoutRef.current);
                                                 typingTimeoutRef.current = setTimeout(() => {
                                                     emitStoppedTyping(selectedContact._id);
-                                                }, 2000);
+                                                }, 900);
                                             } else if (selectedContact) {
                                                 emitStoppedTyping(selectedContact._id);
                                             }

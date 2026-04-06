@@ -179,8 +179,13 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
             setOnlineUsers(onlineMap);
         };
 
+        const handleMessageEdited = () => {
+            fetchChatPartners();
+        };
+
         socket.on('message_received', handleMessageReceived);
         socket.on('message_sent_ack', handleMessageSentAck);
+        socket.on('message_edited', handleMessageEdited);
         socket.on('user_status_update', handleUserStatus);
         socket.on('unread_counts', handleUnreadCounts);
         socket.on('active_users', handleActiveUsers);
@@ -188,6 +193,7 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
         return () => {
             socket.off('message_received', handleMessageReceived);
             socket.off('message_sent_ack', handleMessageSentAck);
+            socket.off('message_edited', handleMessageEdited);
             socket.off('user_status_update', handleUserStatus);
             socket.off('unread_counts', handleUnreadCounts);
             socket.off('active_users', handleActiveUsers);

@@ -211,6 +211,7 @@ export const editMessage = async (req, res) => {
       const receiverId = message.receiverId.toString();
       const editPayload = {
         messageId: id,
+        senderId: message.senderId.toString(),
         isEdited: true,
         editedAt: new Date(),
       };

@@ -25,8 +25,10 @@ import {
 import {
     storeIdentityKeys,
     getIdentityKeys,
+    getArchivedIdentityKeys,
     storeSession,
     getSession,
+    getArchivedSessions,
     deleteSession,
     cacheDecryptedMessages,
     getCachedDecryptedMessages,
@@ -56,23 +58,23 @@ const withLock = async (partnerId, fn) => {
         sessionLocks.set(partnerId, Promise.resolve());
     }
 
-    const previousPromise = sessionLocks.get(partnerId);
-
-    // Create new promise that waits for previous work to finish
-    const newPromise = previousPromise.then(async () => {
-        try {
-            return await fn();
-        } finally {
-            // No-op
-        }
-    }).catch(err => {
-        // Log but don't break the chain for others
-        console.error(`[E2EE] Lock error for ${partnerId}:`, err);
-        throw err;
+    const lock = sessionLocks.get(partnerId);
+    let release;
+    const nextLock = new Promise((resolve) => {
+        release = resolve;
     });
 
-    sessionLocks.set(partnerId, newPromise.catch(() => { })); // Prevent chain breakage on error
-    return newPromise;
+    // Update queue safely to the new unsettled promise, ignoring previous rejections
+    sessionLocks.set(partnerId, nextLock);
+
+    try {
+        // Wait for previous operation, catch any previous errors so we don't crash
+        await lock.catch(() => { });
+        return await fn();
+    } finally {
+        // Resolve the next lock in line
+        release();
+    }
 };
 
 // ── Initialization ──────────────────────────────────────
@@ -232,11 +234,7 @@ export const getOrCreateSession = async (myUserId, theirUserId) => {
     return session;
 };
 
-/**
- * Internal helper: responder side of X3DH (without side effects).
- */
-const prepareFirstSession = async (myUserId, theirUserId, theirIdentityPubB64, theirEphemeralPubB64) => {
-    const myKeys = await getIdentityKeys(myUserId);
+const prepareFirstSessionWithKeys = (myKeys, theirIdentityPubB64, theirEphemeralPubB64) => {
     if (!myKeys) {
         throw new Error("No identity keys found.");
     }
@@ -268,6 +266,43 @@ const prepareFirstSession = async (myUserId, theirUserId, theirIdentityPubB64, t
         aliceEphemeralKey: theirEphemeralPubB64, // Store initiator's key for potential recovery
     };
     return session;
+};
+
+/**
+ * Internal helper: responder side of X3DH (without side effects).
+ */
+const prepareFirstSession = async (myUserId, theirUserId, theirIdentityPubB64, theirEphemeralPubB64) => {
+    const myKeys = await getIdentityKeys(myUserId);
+    return prepareFirstSessionWithKeys(myKeys, theirIdentityPubB64, theirEphemeralPubB64);
+};
+
+/**
+ * Attempt decryption using all archived keys and sessions.
+ * Returns plaintext or null.
+ */
+const tryDecryptWithArchive = async (myUserId, theirUserId, ciphertext, nonce, ratchetHeader, senderIdentityKey, senderEphemeralKey) => {
+    // 1. Try past archived sessions
+    const archivedSessions = await getArchivedSessions(theirUserId) || [];
+    for (const stored of archivedSessions) {
+        let archSession = deserializeSession(stored);
+        try {
+            const { plaintext } = ratchetDecrypt(archSession, ratchetHeader, ciphertext, nonce);
+            return plaintext;
+        } catch (e) { }
+    }
+
+    // 2. Try past archived identity keys
+    if (senderIdentityKey && senderEphemeralKey) {
+        const archivedIdKeys = await getArchivedIdentityKeys(myUserId) || [];
+        for (const archMyKeys of archivedIdKeys) {
+            try {
+                const resetSess = prepareFirstSessionWithKeys(archMyKeys, senderIdentityKey, senderEphemeralKey);
+                const { plaintext } = ratchetDecrypt(resetSess, ratchetHeader, ciphertext, nonce);
+                return plaintext;
+            } catch (e) { }
+        }
+    }
+    return null;
 };
 
 /**
@@ -362,6 +397,14 @@ export const decryptMessagesBatch = async (myUserId, theirUserId, msgs) => {
                                     decryptedMsgs.push({ ...msg, _decryptedText: plaintext, _isEncrypted: true });
                                     if (msg._id) newCacheEntries.push({ messageId: msg._id, plaintext });
                                 } catch (innerErr) {
+                                    // Try Archive
+                                    const archivedPlaintext = await tryDecryptWithArchive(myUserId, theirUserId, msg.ciphertext, msg.nonce, msg.ratchetHeader, msg.senderIdentityKey, msg.senderEphemeralKey);
+                                    if (archivedPlaintext) {
+                                        decryptedMsgs.push({ ...msg, _decryptedText: archivedPlaintext, _isEncrypted: true });
+                                        if (msg._id) newCacheEntries.push({ messageId: msg._id, plaintext: archivedPlaintext });
+                                        continue;
+                                    }
+
                                     // Fall back to cache
                                     const cached = cachedPlaintexts.get(msg._id);
                                     if (cached) {
@@ -371,6 +414,14 @@ export const decryptMessagesBatch = async (myUserId, theirUserId, msgs) => {
                                     }
                                 }
                             } else {
+                                // Try Archive
+                                const archivedPlaintext = await tryDecryptWithArchive(myUserId, theirUserId, msg.ciphertext, msg.nonce, msg.ratchetHeader, msg.senderIdentityKey, msg.senderEphemeralKey);
+                                if (archivedPlaintext) {
+                                    decryptedMsgs.push({ ...msg, _decryptedText: archivedPlaintext, _isEncrypted: true });
+                                    if (msg._id) newCacheEntries.push({ messageId: msg._id, plaintext: archivedPlaintext });
+                                    continue;
+                                }
+
                                 // Fall back to cache
                                 const cached = cachedPlaintexts.get(msg._id);
                                 if (cached) {
@@ -381,7 +432,15 @@ export const decryptMessagesBatch = async (myUserId, theirUserId, msgs) => {
                             }
                         }
                     } else {
-                        // No session — try cache
+                        // No session — try Archive
+                        const archivedPlaintext = await tryDecryptWithArchive(myUserId, theirUserId, msg.ciphertext, msg.nonce, msg.ratchetHeader, msg.senderIdentityKey, msg.senderEphemeralKey);
+                        if (archivedPlaintext) {
+                            decryptedMsgs.push({ ...msg, _decryptedText: archivedPlaintext, _isEncrypted: true });
+                            if (msg._id) newCacheEntries.push({ messageId: msg._id, plaintext: archivedPlaintext });
+                            continue;
+                        }
+
+                        // try cache
                         const cached = cachedPlaintexts.get(msg._id);
                         if (cached) {
                             decryptedMsgs.push({ ...msg, _decryptedText: cached, _isEncrypted: true, _fromCache: true });
@@ -496,8 +555,9 @@ export const decryptMessage = async (myUserId, theirUserId, msgData) => {
             sessionCache.set(theirUserId, state);
             await persistSession(theirUserId, state);
             // Cache the successful decryption
-            if (msgData._id) {
-                cacheDecryptedMessage(msgData._id, plaintext).catch(() => { });
+            const targetId = msgData._id || msgData.messageId;
+            if (targetId) {
+                cacheDecryptedMessage(targetId, plaintext).catch(() => { });
             }
             return plaintext;
         } catch (err) {
@@ -509,8 +569,9 @@ export const decryptMessage = async (myUserId, theirUserId, msgData) => {
                     const { plaintext, state } = ratchetDecrypt(newSession, ratchetHeader, ciphertext, nonce);
                     sessionCache.set(theirUserId, state);
                     await persistSession(theirUserId, state);
-                    if (msgData._id) {
-                        cacheDecryptedMessage(msgData._id, plaintext).catch(() => { });
+                    const targetId = msgData._id || msgData.messageId;
+                    if (targetId) {
+                        cacheDecryptedMessage(targetId, plaintext).catch(() => { });
                     }
                     return plaintext;
                 } catch (resetErr) {
@@ -518,9 +579,20 @@ export const decryptMessage = async (myUserId, theirUserId, msgData) => {
                 }
             }
 
+            // Try Archive Before Fallback Cache
+            const archivedPlaintext = await tryDecryptWithArchive(myUserId, theirUserId, ciphertext, nonce, ratchetHeader, senderIdentityKey, senderEphemeralKey);
+            if (archivedPlaintext) {
+                const targetId = msgData._id || msgData.messageId;
+                if (targetId) {
+                    cacheDecryptedMessage(targetId, archivedPlaintext).catch(() => { });
+                }
+                return archivedPlaintext;
+            }
+
             // Final fallback: check cache
-            if (msgData._id) {
-                const cached = await getCachedDecryptedMessage(msgData._id);
+            const targetId = msgData._id || msgData.messageId;
+            if (targetId) {
+                const cached = await getCachedDecryptedMessage(targetId);
                 if (cached) return cached;
             }
             throw err;

@@ -8,7 +8,7 @@
  */
 
 const DB_NAME = "nexus-e2ee-keys";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 let dbInstance = null;
 
@@ -33,6 +33,12 @@ const openDB = () => {
             }
             if (!db.objectStoreNames.contains("decryptedCache")) {
                 db.createObjectStore("decryptedCache", { keyPath: "messageId" });
+            }
+            if (!db.objectStoreNames.contains("archivedIdentityKeys")) {
+                db.createObjectStore("archivedIdentityKeys", { keyPath: "archiveId" });
+            }
+            if (!db.objectStoreNames.contains("archivedSessions")) {
+                db.createObjectStore("archivedSessions", { keyPath: "archiveId" });
             }
         };
 
@@ -104,11 +110,34 @@ const clearStore = async (storeName) => {
  * }
  */
 export const storeIdentityKeys = async (userId, keyData) => {
+    // Archive existing keys before overwriting
+    const existing = await getIdentityKeys(userId);
+    if (existing) {
+        await putItem("archivedIdentityKeys", {
+            archiveId: `${userId}_${Date.now()}`,
+            ...existing
+        });
+    }
     await putItem("identityKeys", { userId, ...keyData });
 };
 
 export const getIdentityKeys = async (userId) => {
     return getItem("identityKeys", userId);
+};
+
+export const getArchivedIdentityKeys = async (userId) => {
+    const db = await openDB();
+    const tx = db.transaction("archivedIdentityKeys", "readonly");
+    const store = tx.objectStore("archivedIdentityKeys");
+    return new Promise((resolve, reject) => {
+        const req = store.getAll();
+        req.onsuccess = () => {
+            const result = req.result || [];
+            // filter by userId and sort descending
+            resolve(result.filter(k => k.userId === userId).sort((a, b) => b.archiveId.localeCompare(a.archiveId)));
+        };
+        req.onerror = (e) => reject(e.target.error);
+    });
 };
 
 export const deleteIdentityKeys = async (userId) => {
@@ -124,11 +153,33 @@ export const deleteIdentityKeys = async (userId) => {
  * @param {Object} extraMeta - optional metadata (theirIdentityKey, etc.)
  */
 export const storeSession = async (partnerId, sessionData, extraMeta = {}) => {
+    // Archive existing session before overwriting
+    const existing = await getSession(partnerId);
+    if (existing) {
+        await putItem("archivedSessions", {
+            archiveId: `${partnerId}_${Date.now()}`,
+            ...existing
+        });
+    }
     await putItem("sessions", { partnerId, ...sessionData, ...extraMeta, updatedAt: Date.now() });
 };
 
 export const getSession = async (partnerId) => {
     return getItem("sessions", partnerId);
+};
+
+export const getArchivedSessions = async (partnerId) => {
+    const db = await openDB();
+    const tx = db.transaction("archivedSessions", "readonly");
+    const store = tx.objectStore("archivedSessions");
+    return new Promise((resolve, reject) => {
+        const req = store.getAll();
+        req.onsuccess = () => {
+            const result = req.result || [];
+            resolve(result.filter(s => s.partnerId === partnerId).sort((a, b) => b.archiveId.localeCompare(a.archiveId)));
+        };
+        req.onerror = (e) => reject(e.target.error);
+    });
 };
 
 export const deleteSession = async (partnerId) => {
@@ -153,6 +204,8 @@ export const clearAllE2EEData = async () => {
     await clearStore("identityKeys");
     await clearStore("sessions");
     await clearStore("metadata");
+    await clearStore("archivedIdentityKeys");
+    await clearStore("archivedSessions");
 };
 
 /** Clear sessions only (keep identity keys) */
@@ -221,4 +274,73 @@ export const getCachedDecryptedMessages = async (messageIds) => {
 
     await Promise.all(promises);
     return results;
+};
+
+// ── Export / Import Utilities ───────────────────────────────
+
+export const exportAllE2EEKeys = async (userId) => {
+    const db = await openDB();
+
+    const getAll = (storeName) => new Promise((resolve, reject) => {
+        if (!db.objectStoreNames.contains(storeName)) return resolve([]);
+        const tx = db.transaction(storeName, "readonly");
+        const req = tx.objectStore(storeName).getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = (e) => reject(e.target.error);
+    });
+
+    const [identities, archivedIdentities, sessions, archivedSessions] = await Promise.all([
+        getAll("identityKeys"),
+        getAll("archivedIdentityKeys"),
+        getAll("sessions"),
+        getAll("archivedSessions")
+    ]);
+
+    return JSON.stringify({
+        version: DB_VERSION,
+        userId: userId,
+        exportDate: new Date().toISOString(),
+        data: {
+            identityKeys: identities.filter(k => k.userId === userId),
+            archivedIdentityKeys: archivedIdentities.filter(k => k.userId === userId),
+            sessions: sessions, // optionally could filter by conversation if needed
+            archivedSessions: archivedSessions
+        }
+    });
+};
+
+export const importAllE2EEKeys = async (userId, jsonString) => {
+    const parsed = JSON.parse(jsonString);
+    if (!parsed || !parsed.data) throw new Error("Invalid E2EE backup format");
+
+    // Safety check just in case, though they could import another account's keys if they bypass UI
+    if (parsed.userId && parsed.userId !== userId) {
+        throw new Error("Cannot import backup from a different user ID");
+    }
+
+    const { identityKeys = [], archivedIdentityKeys = [], sessions = [], archivedSessions = [] } = parsed.data;
+
+    // We do NOT clear current keys, we append/overwrite what's in the backup.
+    for (const keyData of identityKeys) {
+        // If an active key exists, wait, we might overwrite it. Use putItem carefully.
+        const currentActive = await getIdentityKeys(userId);
+        if (currentActive) {
+            await putItem("archivedIdentityKeys", { archiveId: `${userId}_${Date.now()}`, ...currentActive });
+        }
+        await putItem("identityKeys", keyData);
+    }
+
+    for (const archKey of archivedIdentityKeys) {
+        await putItem("archivedIdentityKeys", archKey);
+    }
+
+    for (const sessionData of sessions) {
+        await putItem("sessions", sessionData);
+    }
+
+    for (const archSess of archivedSessions) {
+        await putItem("archivedSessions", archSess);
+    }
+
+    return true;
 };
