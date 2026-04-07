@@ -4,6 +4,7 @@ import ChatContainer from './Components/ChatContainer.jsx'
 import StreamPanel from './Components/StreamPanel.jsx'
 import SettingsPanel from './Components/Settings.jsx'
 import CallLogPanel from './Components/CallLog.jsx'
+import HomePanel from './Components/HomePanel.jsx'
 import Login from './components/Login.jsx'
 import Signup from './components/signup.jsx'
 import ContactsPanel from './Components/ContactsPanel.jsx'
@@ -272,7 +273,15 @@ function App() {
   // Authenticated → main app
   const renderView = () => {
     switch (activeView) {
-      case 'home': return null;
+      case 'home': return <HomePanel onNavigate={(view) => {
+        setActiveView(view);
+        if (window.innerWidth <= 767) {
+          setTimeout(() => {
+            const container = document.querySelector('.panels-container');
+            if (container) container.scrollTo({ left: 0, behavior: 'smooth' });
+          }, 50);
+        }
+      }} />;
       case 'messages': return (
         <ChatContainer
           selectedContact={selectedContact}
@@ -296,7 +305,7 @@ function App() {
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden" style={{ background: `linear-gradient(135deg, var(--bg-gradient-from), var(--bg-gradient-via), var(--bg-gradient-to))` }}>
+    <div className="relative w-screen h-dvh overflow-hidden" style={{ background: `linear-gradient(135deg, var(--bg-gradient-from), var(--bg-gradient-via), var(--bg-gradient-to))` }}>
       {/* Blob Mesh Gradient Background */}
       <div
         className="absolute inset-[-50%] pointer-events-none z-0"
@@ -319,7 +328,7 @@ function App() {
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E")`
         }}>
       </div>
-      <div className="app-layout relative z-10 flex items-center gap-6 h-screen pl-5">
+      <div className="app-layout relative z-10 flex items-center gap-6 h-full pl-5">
         <Dock
           onNavigate={(view) => {
             setActiveView(view);
@@ -338,7 +347,7 @@ function App() {
           onLogout={handleLogout}
         />
 
-        <div className="panels-container flex items-center gap-3 h-full">
+        <div className="panels-container flex-1 min-w-0 flex items-center gap-3 h-full">
           {activeView === 'contacts' ? <ContactsPanel onSendMessage={(contact) => {
             setSelectedContact(contact);
             setActiveView('messages');
@@ -350,6 +359,7 @@ function App() {
               }, 50);
             }
           }} /> : <StreamPanel
+            className={activeView === 'home' || activeView === 'call-log' || activeView === 'settings' ? '!hidden lg:!flex' : ''}
             authUser={authUser}
             selectedContactId={selectedContact?._id}
             onSelectContact={(contact) => {

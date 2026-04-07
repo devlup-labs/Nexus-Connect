@@ -1055,7 +1055,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
     // No contact selected placeholder
     if (!selectedContact) {
         return (
-            <div className="canvas-panel flex flex-col flex-1 h-full mr-12 min-w-[840px] mb-2">
+            <div className="canvas-panel flex flex-col flex-1 h-full mr-12 xl:min-w-[840px] min-w-0 mb-2">
                 <div className="pt-[60px] pb-0 pl-2 flex justify-between items-end mb-[-30px] relative z-20">
                     <h2 style={{ fontSize: '24px', fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '0.5px', fontFamily: 'var(--font-main)', lineHeight: 1 }}>Canvas</h2>
                 </div>
@@ -1081,7 +1081,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
     }));
 
     return (
-        <div className="canvas-panel flex flex-col flex-1 h-full mr-12 min-w-[840px] mb-2">
+        <div className="canvas-panel flex flex-col flex-1 h-full mr-12 xl:min-w-[840px] min-w-0 mb-2">
             <div className="pt-[60px] pb-0 pl-2 flex justify-between items-end mb-[-30px] relative z-20">
                 <h2 style={{ fontSize: '24px', fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '0.5px', fontFamily: 'var(--font-main)', lineHeight: 1 }}>Canvas</h2>
             </div>
@@ -1273,7 +1273,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
 
                         {/* large faint watermark behind messages - centered */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none">
-                            <span className="text-[120px] font-bold text-white/[0.03] blur-[1px] whitespace-nowrap">{selectedContact.fullName}</span>
+                            <span className="text-[120px] font-bold text-[var(--text-primary)] opacity-5 blur-[1px] whitespace-nowrap">{selectedContact.fullName}</span>
                         </div>
 
                         {loadingMsgs ? (
@@ -1394,7 +1394,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                             </div>
                                                         )}
                                                         {(msg._decryptedText || msg.text)?.toLowerCase() !== 'voice' && (
-                                                            <div className="text-[15px] leading-snug text-white/85 max-w-[720px]">{msg._decryptedText || msg.text}</div>
+                                                            <div className="text-[15px] leading-snug text-[var(--text-primary)] max-w-[720px]">{msg._decryptedText || msg.text}</div>
                                                         )}
                                                         {msg.image && (
                                                             isDocumentUrl(msg.image) ? (
@@ -1509,7 +1509,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                                             </div>
                                                         )}
                                                         {(msg._decryptedText || msg.text)?.toLowerCase() !== 'voice' && (
-                                                            <div className="text-[15px] leading-snug text-white/85 text-right">{msg._decryptedText || msg.text}</div>
+                                                            <div className="text-[15px] leading-snug text-[var(--text-primary)] text-right">{msg._decryptedText || msg.text}</div>
                                                         )}
                                                         {msg.image && (
                                                             isDocumentUrl(msg.image) ? (

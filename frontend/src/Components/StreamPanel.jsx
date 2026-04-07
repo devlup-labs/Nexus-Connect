@@ -6,8 +6,8 @@ import { getSocket, getActiveUsers } from '../services/socket';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { getCachedDecryptedMessages } from '../services/sessionStore';
 import './StreamPanel.css';
-
-const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
+// StreamPanel component
+const StreamPanel = ({ authUser, selectedContactId, onSelectContact, className }) => {
     const { theme } = useContext(ThemeContext);
 
     const [activeCard, setActiveCard] = useState(null);
@@ -520,7 +520,7 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
     const rightColumnContacts = chatPartners.filter((_, i) => i % 2 === 1);
 
     return (
-        <div className="stream-panel">
+        <div className={`stream-panel ${className || ''}`}>
             <div className="stream-header">
                 <h2 className="stream-title">Stream</h2>
                 <div className="header-actions">
