@@ -1,11 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { AppWindow, MoreHorizontal, Play, Eye, Bookmark, Flag, RefreshCw, PlusCircle, UserPlus, X, Search, Archive, RotateCcw, FileText as FileIcon } from 'lucide-react';
 import ContextMenu from './ContextMenu';
 import { getChatPartners, getContacts, toggleArchiveUser, getArchivedUsers } from '../api';
 import { getSocket, getActiveUsers } from '../services/socket';
+import { ThemeContext } from '../contexts/ThemeContext';
+import { getCachedDecryptedMessages } from '../services/sessionStore';
 import './StreamPanel.css';
+// StreamPanel component
+const StreamPanel = ({ authUser, selectedContactId, onSelectContact, className }) => {
+    const { theme } = useContext(ThemeContext);
 
-const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
     const [activeCard, setActiveCard] = useState(null);
     const [contextMenu, setContextMenu] = useState(null);
     const [chatPartners, setChatPartners] = useState([]);
@@ -66,7 +70,34 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
     const fetchChatPartners = async () => {
         try {
             const res = await getChatPartners();
-            setChatPartners(res.data);
+            let partners = res.data;
+
+            // Resolve decrypted previews for E2EE messages from cache
+            const encryptedIds = partners
+                .filter(p => p.lastMessage?.encryptionVersion === 'e2ee-v1' && p.lastMessage?._id)
+                .map(p => p.lastMessage._id);
+
+            if (encryptedIds.length > 0) {
+                try {
+                    const cached = await getCachedDecryptedMessages(encryptedIds);
+                    partners = partners.map(p => {
+                        if (p.lastMessage?.encryptionVersion === 'e2ee-v1' && p.lastMessage?._id) {
+                            const decrypted = cached.get(p.lastMessage._id);
+                            if (decrypted) {
+                                return {
+                                    ...p,
+                                    lastMessage: { ...p.lastMessage, _decryptedPreview: decrypted }
+                                };
+                            }
+                        }
+                        return p;
+                    });
+                } catch (cacheErr) {
+                    console.warn('[E2EE] Failed to resolve preview cache:', cacheErr);
+                }
+            }
+
+            setChatPartners(partners);
         } catch (err) {
             console.error('Failed to fetch chat partners:', err);
         } finally {
@@ -148,8 +179,13 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
             setOnlineUsers(onlineMap);
         };
 
+        const handleMessageEdited = () => {
+            fetchChatPartners();
+        };
+
         socket.on('message_received', handleMessageReceived);
         socket.on('message_sent_ack', handleMessageSentAck);
+        socket.on('message_edited', handleMessageEdited);
         socket.on('user_status_update', handleUserStatus);
         socket.on('unread_counts', handleUnreadCounts);
         socket.on('active_users', handleActiveUsers);
@@ -157,6 +193,7 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
         return () => {
             socket.off('message_received', handleMessageReceived);
             socket.off('message_sent_ack', handleMessageSentAck);
+            socket.off('message_edited', handleMessageEdited);
             socket.off('user_status_update', handleUserStatus);
             socket.off('unread_counts', handleUnreadCounts);
             socket.off('active_users', handleActiveUsers);
@@ -207,6 +244,10 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
             }
             return 'Image';
         }
+        // E2EE message: use resolved cached preview, or show lock indicator
+        if (contact.lastMessage.encryptionVersion === 'e2ee-v1') {
+            return contact.lastMessage._decryptedPreview || '\uD83D\uDD12 Encrypted message';
+        }
         return contact.lastMessage.text || 'Message';
     };
 
@@ -236,72 +277,78 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
         c.email?.toLowerCase().includes(newChatSearch.toLowerCase())
     );
 
-    const renderCard = (contact, index) => {
+    const renderCard = (contact) => {
         const type = getCardType(contact);
-        const isActive = contact._id === activeCard;
-        const isSelected = contact._id === selectedContactId;
+        const isActive = activeCard === contact._id || selectedContactId === contact._id;
 
-        const CardHeader = () => (
-            <div className="card-header">
-                <div className="avatar" style={{
-                    position: 'relative',
-                    ...(contact.profilePic ? {
-                        backgroundImage: `url(${contact.profilePic})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        color: 'transparent'
-                    } : {})
-                }}>
-                    {!contact.profilePic && getInitials(contact.fullName)}
-                    {/* Online indicator dot */}
-                    {onlineUsers[contact._id] === 'online' && (
-                        <div style={{
-                            position: 'absolute',
-                            bottom: '-1px',
-                            right: '-1px',
-                            width: '10px',
-                            height: '10px',
-                            borderRadius: '50%',
-                            background: 'var(--status-online)',
-                            border: '2px solid var(--bg-base)',
-                            boxShadow: '0 0 8px var(--status-online-shadow)'
-                        }} />
-                    )}
-                </div>
-                <span className="user-name">{contact.fullName}</span>
-                {/* Unread badge */}
-                {unreadCounts[contact._id] > 0 && (
-                    <div style={{
-                        marginLeft: 'auto',
-                        minWidth: '20px',
-                        height: '20px',
-                        padding: '0 6px',
-                        borderRadius: '10px',
-                        background: 'var(--accent)',
-                        color: 'var(--text-on-accent)',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
+        const CardHeader = () => {
+            const status = onlineUsers[contact._id] || 'offline';
+            const initials = contact.fullName ? contact.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : '?';
+            const unreadCount = unreadCounts[contact._id] || 0;
+
+            return (
+                <div className="card-header">
+                    <div className="avatar" style={{
+                        position: 'relative',
+                        ...(contact.profilePic ? {
+                            backgroundImage: `url(${contact.profilePic})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            color: 'transparent'
+                        } : {})
                     }}>
-                        {unreadCounts[contact._id]}
+                        {!contact.profilePic && initials}
+                        {status === 'online' && (
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '-1px',
+                                right: '-1px',
+                                width: '10px',
+                                height: '10px',
+                                borderRadius: '50%',
+                                background: 'var(--status-online)',
+                                border: '2px solid var(--bg-base)',
+                                boxShadow: '0 0 8px var(--status-online-shadow)'
+                            }} />
+                        )}
                     </div>
-                )}
-            </div>
-        );
+                    <span className="user-name">{contact.fullName}</span>
+                    <div className="header-actions" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {unreadCount > 0 && (
+                            <div style={{
+                                minWidth: '20px',
+                                height: '20px',
+                                padding: '0 6px',
+                                borderRadius: '10px',
+                                border: '1px solid var(--border-accent)',
+                                background: 'var(--accent)',
+                                color: 'var(--text-on-accent)',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                            }}>
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                            </div>
+                        )}
+                        <button className="icon-button" style={{ padding: '2px' }}>
+                            <MoreHorizontal size={18} />
+                        </button>
+                    </div>
+                </div>
+            );
+        };
 
-        const cardStyle = isSelected ? {
-            border: '1px solid var(--border-accent-strong)',
-            boxShadow: '0 0 15px rgba(var(--accent-rgb), 0.1)',
-        } : {};
+        const cardStyle = {};
+        const cardClasses = `stream-card ${type}-card ${isActive ? 'active' : ''}`;
 
         switch (type) {
             case 'document':
                 return (
                     <div
-                        className={`stream-card doc-card ${isActive ? 'active' : ''}`}
+                        className={cardClasses}
                         onClick={() => { setActiveCard(contact._id); onSelectContact(contact); }}
                         onContextMenu={(e) => {
                             e.preventDefault();
@@ -311,8 +358,8 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                         style={cardStyle}
                     >
                         <CardHeader />
-                        <div className="doc-content">
-                            <div className="doc-icon">
+                        <div className="doc-content" style={{ background: theme.panelInner, borderColor: theme.borderInner }}>
+                            <div className="doc-icon" style={{ background: theme.id === 'light' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.15)', color: theme.id === 'light' ? '#2563eb' : '#60a5fa' }}>
                                 <FileIcon size={22} />
                             </div>
                             <div className="doc-info" style={{ justifyContent: 'center' }}>
@@ -320,7 +367,7 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                             </div>
                         </div>
                         <div className="card-content">
-                            <span className="card-timestamp">{getTimestamp(contact)}</span>
+                            <span className={`card-timestamp ${theme.textMuted}`}>{getTimestamp(contact)}</span>
                         </div>
                     </div>
                 );
@@ -328,7 +375,7 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
             case 'text':
                 return (
                     <div
-                        className={`stream-card text-card ${isActive ? 'active' : ''}`}
+                        className={cardClasses}
                         onClick={() => { setActiveCard(contact._id); onSelectContact(contact); }}
                         onContextMenu={(e) => {
                             e.preventDefault();
@@ -339,8 +386,8 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                     >
                         <CardHeader />
                         <div className="card-content">
-                            <p className="card-text line-clamp-1">{getLastMessagePreview(contact)}</p>
-                            <span className="card-timestamp whitespace-nowrap">{getTimestamp(contact)}</span>
+                            <p className={`card-text line-clamp-1 ${theme.textMain}`}>{getLastMessagePreview(contact)}</p>
+                            <span className={`card-timestamp whitespace-nowrap ${theme.textMuted}`}>{getTimestamp(contact)}</span>
                         </div>
                     </div>
                 );
@@ -348,7 +395,7 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
             case 'small-media':
                 return (
                     <div
-                        className={`stream-card small-media-card ${isActive ? 'active' : ''}`}
+                        className={cardClasses}
                         onClick={() => { setActiveCard(contact._id); onSelectContact(contact); }}
                         onContextMenu={(e) => {
                             e.preventDefault();
@@ -358,9 +405,9 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                         style={cardStyle}
                     >
                         <CardHeader />
-                        <div className="media-preview">
-                            <div className="play-button">
-                                <Play size={20} fill="white" />
+                        <div className="media-preview" style={{ background: `linear-gradient(135deg, ${theme.id === 'light' ? 'rgba(30, 144, 255, 0.1)' : 'rgba(138, 43, 226, 0.2)'}, ${theme.id === 'light' ? 'rgba(0, 0, 0, 0.05)' : 'rgba(30, 144, 255, 0.2)'})` }}>
+                            <div className="play-button" style={{ background: theme.panelInner, borderColor: theme.borderInner }}>
+                                <Play size={20} fill={theme.id === 'light' ? '#475569' : 'white'} className={theme.textMain} />
                             </div>
                             <div className="audio-indicator">
                                 <div className="waveform-mini">
@@ -368,14 +415,17 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                                         <div
                                             key={i}
                                             className="wave-bar-mini"
-                                            style={{ height: `${Math.random() * 60 + 20}%` }}
+                                            style={{
+                                                height: `${Math.random() * 60 + 20}%`,
+                                                background: `linear-gradient(to top, ${theme.id === 'light' ? '#3b82f6' : 'rgba(138, 43, 226, 0.7)'}, ${theme.id === 'light' ? '#60a5fa' : 'rgba(147, 51, 234, 0.4)'})`
+                                            }}
                                         />
                                     ))}
                                 </div>
                             </div>
                         </div>
                         <div className="card-content">
-                            <span className="card-timestamp">{getTimestamp(contact)}</span>
+                            <span className={`card-timestamp ${theme.textMuted}`}>{getTimestamp(contact)}</span>
                         </div>
                     </div>
                 );
@@ -383,7 +433,7 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
             case 'audio':
                 return (
                     <div
-                        className={`stream-card audio-card ${isActive ? 'active' : ''}`}
+                        className={cardClasses}
                         onClick={() => { setActiveCard(contact._id); onSelectContact(contact); }}
                         onContextMenu={(e) => {
                             e.preventDefault();
@@ -399,13 +449,16 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                                     <div
                                         key={i}
                                         className="wave-bar"
-                                        style={{ height: `${Math.random() * 60 + 20}%` }}
+                                        style={{
+                                            height: `${Math.random() * 60 + 20}%`,
+                                            background: `linear-gradient(to top, ${theme.id === 'light' ? '#3b82f6' : 'rgba(138, 43, 226, 0.6)'}, ${theme.id === 'light' ? '#60a5fa' : 'rgba(147, 51, 234, 0.3)'})`
+                                        }}
                                     />
                                 ))}
                             </div>
                         </div>
                         <div className="card-content">
-                            <span className="card-timestamp">{getTimestamp(contact)}</span>
+                            <span className={`card-timestamp ${theme.textMuted}`}>{getTimestamp(contact)}</span>
                         </div>
                     </div>
                 );
@@ -413,7 +466,7 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
             case 'large-media':
                 return (
                     <div
-                        className={`stream-card large-media-card ${isActive ? 'active' : ''}`}
+                        className={cardClasses}
                         onClick={() => { setActiveCard(contact._id); onSelectContact(contact); }}
                         onContextMenu={(e) => {
                             e.preventDefault();
@@ -423,14 +476,14 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                         style={cardStyle}
                     >
                         <CardHeader />
-                        <div className="large-media-preview" style={contact.lastMessage.image.includes('.mp4') || contact.lastMessage.image.includes('/video/') ? { backgroundImage: `url(${contact.lastMessage.image.replace('.mp4', '.jpg')})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>
-                            <div className="play-button large">
-                                <Play size={28} fill="white" />
+                        <div className="large-media-preview" style={contact.lastMessage.image.includes('.mp4') || contact.lastMessage.image.includes('/video/') ? { backgroundImage: `url(${contact.lastMessage.image.replace('.mp4', '.jpg')})`, backgroundSize: 'cover', backgroundPosition: 'center', border: `1px solid ${theme.borderInner}` } : { border: `1px solid ${theme.borderInner}` }}>
+                            <div className="play-button large" style={{ background: theme.panelInner, borderColor: theme.borderInner }}>
+                                <Play size={28} fill={theme.id === 'light' ? '#475569' : 'white'} className={theme.textMain} />
                             </div>
                         </div>
                         <div className="card-content">
-                            <p className="card-text line-clamp-1">{getLastMessagePreview(contact)}</p>
-                            <span className="card-timestamp whitespace-nowrap">{getTimestamp(contact)}</span>
+                            <p className={`card-text line-clamp-1 ${theme.textMain}`}>{getLastMessagePreview(contact)}</p>
+                            <span className={`card-timestamp whitespace-nowrap ${theme.textMuted}`}>{getTimestamp(contact)}</span>
                         </div>
                     </div>
                 );
@@ -438,7 +491,7 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
             case 'image':
                 return (
                     <div
-                        className={`stream-card large-media-card ${isActive ? 'active' : ''}`}
+                        className={cardClasses}
                         onClick={() => { setActiveCard(contact._id); onSelectContact(contact); }}
                         onContextMenu={(e) => {
                             e.preventDefault();
@@ -448,12 +501,12 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
                         style={cardStyle}
                     >
                         <CardHeader />
-                        <div className="large-media-preview" style={{ backgroundImage: `url(${contact.lastMessage.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                        <div className="large-media-preview" style={{ backgroundImage: `url(${contact.lastMessage.image})`, backgroundSize: 'cover', backgroundPosition: 'center', border: `1px solid ${theme.borderInner}` }}>
                             {/* Empty preview - no play button */}
                         </div>
                         <div className="card-content">
-                            <p className="card-text line-clamp-1">{getLastMessagePreview(contact)}</p>
-                            <span className="card-timestamp whitespace-nowrap">{getTimestamp(contact)}</span>
+                            <p className={`card-text line-clamp-1 ${theme.textMain}`}>{getLastMessagePreview(contact)}</p>
+                            <span className={`card-timestamp whitespace-nowrap ${theme.textMuted}`}>{getTimestamp(contact)}</span>
                         </div>
                     </div>
                 );
@@ -467,7 +520,7 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact }) => {
     const rightColumnContacts = chatPartners.filter((_, i) => i % 2 === 1);
 
     return (
-        <div className="stream-panel">
+        <div className={`stream-panel ${className || ''}`}>
             <div className="stream-header">
                 <h2 className="stream-title">Stream</h2>
                 <div className="header-actions">

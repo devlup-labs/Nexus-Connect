@@ -1,6 +1,7 @@
 let pc = null;
 let localStream = null;
 let remoteStream = null;
+let iceCandidateQueue = [];
 
 export function getLocalStream() {
     return localStream;
@@ -11,6 +12,7 @@ export function getRemoteStream() {
 }
 
 export async function createPeerConnection({ iceServers, onIceCandidate, onTrack, onConnectionStateChange }) {
+    iceCandidateQueue = [];
     pc = new RTCPeerConnection({ iceServers });
     remoteStream = new MediaStream();
 
@@ -55,9 +57,22 @@ export async function createOffer() {
     return offer;
 }
 
+async function flushIceCandidateQueue() {
+    if (!pc || !pc.remoteDescription) return;
+    for (const candidate of iceCandidateQueue) {
+        try {
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (err) {
+            console.error("Error adding queued ICE candidate", err);
+        }
+    }
+    iceCandidateQueue = [];
+}
+
 export async function applyRemoteOffer(offer) {
     if (!pc) return;
     await pc.setRemoteDescription(new RTCSessionDescription(offer));
+    await flushIceCandidateQueue();
 }
 
 export async function createAnswer() {
@@ -70,11 +85,20 @@ export async function createAnswer() {
 export async function applyRemoteAnswer(answer) {
     if (!pc) return;
     await pc.setRemoteDescription(new RTCSessionDescription(answer));
+    await flushIceCandidateQueue();
 }
 
 export async function addIceCandidate(candidate) {
     if (!pc) return;
-    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+    if (pc.remoteDescription) {
+        try {
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (err) {
+            console.error("Error adding ICE candidate", err);
+        }
+    } else {
+        iceCandidateQueue.push(candidate);
+    }
 }
 
 export function toggleAudio(enabled) {
@@ -99,6 +123,8 @@ export function cleanupWebRTC() {
         pc.close();
         pc = null;
     }
+
+    iceCandidateQueue = [];
 
     if (localStream) {
         localStream.getTracks().forEach((t) => t.stop());

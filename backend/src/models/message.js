@@ -14,12 +14,43 @@ const messageSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    // Legacy plaintext fields (used when encryptionVersion === "none")
     text: {
       type: String,
       trim: true,
       maxlength: 2000,
     },
     image: {
+      type: String,
+    },
+    // E2EE fields (used when encryptionVersion === "e2ee-v1")
+    ciphertext: {
+      type: String,
+    },
+    nonce: {
+      type: String,
+    },
+    encryptionVersion: {
+      type: String,
+      enum: ["none", "e2ee-v1"],
+      default: "none",
+      index: true,
+    },
+    messageType: {
+      type: String,
+      enum: ["text", "image", "audio", "document", "system"],
+      default: "text",
+    },
+    ratchetHeader: {
+      publicKey: { type: String },
+      previousChainLength: { type: Number },
+      messageNumber: { type: Number },
+    },
+    // Sender bootstrap keys for responder-side initial X3DH on history fetch
+    senderIdentityKey: {
+      type: String,
+    },
+    senderEphemeralKey: {
       type: String,
     },
     replyTo: {

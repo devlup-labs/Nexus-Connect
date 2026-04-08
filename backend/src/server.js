@@ -14,6 +14,7 @@ import messageRoutes from "./routes/message.route.js";
 import userRoutes from "./routes/user.route.js";
 import callRoutes from "./routes/call.route.js";
 import dns from "node:dns";
+import keyRoutes from "./routes/keys.route.js";
 
 
 dotenv.config();
@@ -49,6 +50,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/calls", callRoutes);
+app.use("/api/keys", keyRoutes);
 
 //This is for deploying the frontend
 if (process.env.NODE_ENV === 'production') {

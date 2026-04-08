@@ -130,7 +130,7 @@ const ContactsPanel = ({ onSendMessage }) => {
   ];
 
   return (
-    <div style={{ width: '420px', maxWidth: '420px', height: '100%', background: 'transparent', position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0 }}>
+    <div className="w-[320px] lg:w-[420px] shrink-0 relative z-10 flex flex-col h-full overflow-hidden bg-transparent">
       {/* Title */}
       <div style={{ padding: "10px 10px 0px 10px", marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <h2
