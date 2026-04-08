@@ -5,7 +5,7 @@ import { getMessages, sendMessage, deleteForMe, deleteForEveryone, editMessage, 
 import { getSocket, emitTyping, emitStoppedTyping, emitMarkAsRead, getActiveUsers } from '../services/socket';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { encryptMessage, decryptMessage, decryptMessagesBatch, isCryptoReady, hasSession, getOrCreateSession, resetSession, isE2EESupported } from '../services/keyManager';
-import { cacheDecryptedMessage } from '../services/sessionStore';
+import { cacheDecryptedMessage, cacheDecryptedMessageByKey } from '../services/sessionStore';
 
 const CustomAudioPlayer = ({ src }) => {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -353,18 +353,33 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
 
     // WebSocket states
     const [isContactTyping, setIsContactTyping] = useState(false);
-    const [contactOnlineStatus, setContactOnlineStatus] = useState('offline');
+    const [contactOnlineStatus, setContactOnlineStatus] = useState('checking');
     const typingTimeoutRef = useRef(null);
     const activeUsersRef = useRef(getActiveUsers());
+    const hasPresenceSnapshotRef = useRef(false);
 
+    // Prime presence snapshot from cached activeUsers in socket service.
     useEffect(() => {
-        if (selectedContact?._id) {
-            setContactOnlineStatus(
-                getActiveUsers().includes(selectedContact._id) ? 'online' : 'offline'
-            );
-        } else {
-            setContactOnlineStatus('offline');
+        const cached = getActiveUsers();
+        if (Array.isArray(cached) && cached.length > 0) {
+            activeUsersRef.current = cached;
+            hasPresenceSnapshotRef.current = true;
         }
+    }, []);
+
+    // Avoid flashing "Offline" before we receive an active_users snapshot.
+    useEffect(() => {
+        if (!selectedContact?._id) {
+            setContactOnlineStatus('offline');
+            return;
+        }
+        if (!hasPresenceSnapshotRef.current) {
+            setContactOnlineStatus('checking');
+            return;
+        }
+        setContactOnlineStatus(
+            activeUsersRef.current.includes(selectedContact._id) ? 'online' : 'offline'
+        );
     }, [selectedContact?._id]);
 
     // Recording timer and click outside effects
@@ -512,9 +527,13 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
     // ── Set initial online status when contact changes using cached active users ──
     useEffect(() => {
         if (selectedContact?._id) {
-            setContactOnlineStatus(
-                activeUsersRef.current.includes(selectedContact._id) ? 'online' : 'offline'
-            );
+            if (!hasPresenceSnapshotRef.current) {
+                setContactOnlineStatus('checking');
+            } else {
+                setContactOnlineStatus(
+                    activeUsersRef.current.includes(selectedContact._id) ? 'online' : 'offline'
+                );
+            }
         } else {
             setContactOnlineStatus('offline');
         }
@@ -633,6 +652,7 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
         const handleActiveUsers = (activeUserIds) => {
             // Always update the ref with the latest list
             activeUsersRef.current = activeUserIds;
+            hasPresenceSnapshotRef.current = true;
             if (selectedContact?._id) {
                 setContactOnlineStatus(
                     activeUserIds.includes(selectedContact._id) ? 'online' : 'offline'
@@ -989,6 +1009,10 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                 const encrypted = await encryptMessage(authUser._id, selectedContact._id, text);
                 if (encrypted) {
                     console.log(`[E2EE] Message encrypted successfully`);
+                    // Cache plaintext early using a deterministic fingerprint so a reload/tab close
+                    // before the server returns _id still allows preview/decryption later.
+                    const fpKey = `${encrypted.encryptionVersion || "e2ee"}|${encrypted.nonce}|${encrypted.ciphertext}|${JSON.stringify(encrypted.ratchetHeader)}`;
+                    cacheDecryptedMessageByKey(fpKey, text).catch(() => { });
                     payload = {
                         ...encrypted,
                         messageType: 'text',
@@ -996,8 +1020,13 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                     if (currentReplyTo) payload.replyTo = currentReplyTo._id;
                     if (!isE2EEActive) setIsE2EEActive(true);
                 } else {
-                    // Fallback to plaintext if encryption fails (no keys)
-                    console.warn(`[E2EE] Encryption failed for ${selectedContact._id}, falling back to plaintext`);
+                    // If encryption is expected (session supported/active), do NOT silently downgrade to plaintext.
+                    console.warn(`[E2EE] Encryption failed for ${selectedContact._id}`);
+                    const supported = await isE2EESupported(selectedContact._id);
+                    if (supported || isE2EEActive) {
+                        throw new Error("E2EE_ENCRYPTION_REQUIRED");
+                    }
+                    // Otherwise, allow plaintext for users who have not enabled E2EE.
                     if (text) payload.text = text;
                     if (currentReplyTo) payload.replyTo = currentReplyTo._id;
                 }
@@ -1018,13 +1047,23 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                 // Cache sent message plaintext so it survives chat switching
                 if (realMsg._id && text) {
                     cacheDecryptedMessage(realMsg._id, text).catch(() => { });
+                    // Also cache by fingerprint to support StreamPanel preview without id-based cache.
+                    if (realMsg.ciphertext && realMsg.nonce && realMsg.ratchetHeader) {
+                        const fpKey = `${realMsg.encryptionVersion || "e2ee"}|${realMsg.nonce}|${realMsg.ciphertext}|${JSON.stringify(realMsg.ratchetHeader)}`;
+                        cacheDecryptedMessageByKey(fpKey, text).catch(() => { });
+                    }
                 }
             }
             setMessages(prev =>
                 prev.map(m => m._id === optimisticMsg._id ? realMsg : m)
             );
+            // Nudge StreamPanel to refresh immediately even if backend doesn't emit an ack event.
+            window.dispatchEvent(new CustomEvent('nexus:stream-refresh'));
         } catch (err) {
             console.error('Failed to send message:', err);
+            if (err?.message === "E2EE_ENCRYPTION_REQUIRED") {
+                alert("Couldn’t encrypt this message (E2EE required). Ask the other user to log in/enable E2EE, or try resetting the E2EE session and sending again.");
+            }
             // Remove optimistic message on failure
             setMessages(prev => prev.filter(m => m._id !== optimisticMsg._id));
             if (text) setMessage(text);
@@ -1162,8 +1201,15 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3 mt-1 mb-0">
-                                    <div className={`w-2.5 h-2.5 rounded-full ${contactOnlineStatus === 'online' ? 'bg-green-400 shadow-[0_0_10px_rgba(34,197,94,0.45)]' : 'bg-gray-500'}`} />
-                                    <span className="text-[12px] text-gray-400/80">{contactOnlineStatus === 'online' ? 'Online' : 'Offline'}</span>
+                                    <div className={`w-2.5 h-2.5 rounded-full ${contactOnlineStatus === 'online'
+                                        ? 'bg-green-400 shadow-[0_0_10px_rgba(34,197,94,0.45)]'
+                                        : contactOnlineStatus === 'checking'
+                                            ? 'bg-yellow-400/70'
+                                            : 'bg-gray-500'
+                                        }`} />
+                                    <span className="text-[12px] text-gray-400/80">
+                                        {contactOnlineStatus === 'online' ? 'Online' : contactOnlineStatus === 'checking' ? 'Checking…' : 'Offline'}
+                                    </span>
                                 </div>
                             </div>
 
@@ -1798,9 +1844,19 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
                                     <h2 className="text-[22px] font-normal mb-1.5 text-center" style={{ color: 'var(--text-primary)' }}>
                                         {selectedContact.fullName}
                                     </h2>
-                                    <div className={`flex items-center gap-1.5 text-[12px] ${contactOnlineStatus === 'online' ? 'text-[var(--status-online)]' : 'text-[var(--text-tertiary)]'}`}>
-                                        <div className={`w-1.5 h-1.5 rounded-full ${contactOnlineStatus === 'online' ? 'bg-[var(--status-online)]' : 'bg-[var(--text-tertiary)]'}`} />
-                                        {contactOnlineStatus === 'online' ? 'Online' : 'Offline'}
+                                    <div className={`flex items-center gap-1.5 text-[12px] ${contactOnlineStatus === 'online'
+                                        ? 'text-[var(--status-online)]'
+                                        : contactOnlineStatus === 'checking'
+                                            ? 'text-yellow-400/80'
+                                            : 'text-[var(--text-tertiary)]'
+                                        }`}>
+                                        <div className={`w-1.5 h-1.5 rounded-full ${contactOnlineStatus === 'online'
+                                            ? 'bg-[var(--status-online)]'
+                                            : contactOnlineStatus === 'checking'
+                                                ? 'bg-yellow-400/70'
+                                                : 'bg-[var(--text-tertiary)]'
+                                            }`} />
+                                        {contactOnlineStatus === 'online' ? 'Online' : contactOnlineStatus === 'checking' ? 'Checking…' : 'Offline'}
                                     </div>
                                 </div>
 

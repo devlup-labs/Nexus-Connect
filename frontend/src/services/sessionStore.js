@@ -8,7 +8,8 @@
  */
 
 const DB_NAME = "nexus-e2ee-keys";
-const DB_VERSION = 3;
+// v4: add decryptedCacheV2 keyed by cacheKey (messageId or fingerprint)
+const DB_VERSION = 4;
 
 let dbInstance = null;
 
@@ -33,6 +34,11 @@ const openDB = () => {
             }
             if (!db.objectStoreNames.contains("decryptedCache")) {
                 db.createObjectStore("decryptedCache", { keyPath: "messageId" });
+            }
+            // v4+: new cache store keyed by "cacheKey" so we can cache by messageId *or*
+            // a deterministic fingerprint (ciphertext+nonce+header) to survive send races.
+            if (!db.objectStoreNames.contains("decryptedCacheV2")) {
+                db.createObjectStore("decryptedCacheV2", { keyPath: "cacheKey" });
             }
             if (!db.objectStoreNames.contains("archivedIdentityKeys")) {
                 db.createObjectStore("archivedIdentityKeys", { keyPath: "archiveId" });
@@ -186,6 +192,21 @@ export const deleteSession = async (partnerId) => {
     return deleteItem("sessions", partnerId);
 };
 
+/**
+ * Archive the current session for a partner (if present).
+ * Useful before resetting so late-arriving messages can still decrypt
+ * via archivedSessions fallback.
+ */
+export const archiveSession = async (partnerId) => {
+    const existing = await getSession(partnerId);
+    if (!existing) return false;
+    await putItem("archivedSessions", {
+        archiveId: `${partnerId}_${Date.now()}`,
+        ...existing,
+    });
+    return true;
+};
+
 // ── Metadata ───────────────────────────────────────────
 
 export const setMetadata = async (key, value) => {
@@ -204,6 +225,13 @@ export const clearAllE2EEData = async () => {
     await clearStore("identityKeys");
     await clearStore("sessions");
     await clearStore("metadata");
+    // Best-effort: might not exist for older DBs
+    if ((await openDB()).objectStoreNames.contains("decryptedCacheV2")) {
+        await clearStore("decryptedCacheV2");
+    }
+    if ((await openDB()).objectStoreNames.contains("decryptedCache")) {
+        await clearStore("decryptedCache");
+    }
     await clearStore("archivedIdentityKeys");
     await clearStore("archivedSessions");
 };
@@ -217,11 +245,32 @@ export const clearAllSessions = async () => {
 
 /**
  * Cache decrypted plaintext for a message so it survives session resets.
+ * Prefer caching to decryptedCacheV2 (keyed by cacheKey).
  * @param {string} messageId
  * @param {string} plaintext
  */
 export const cacheDecryptedMessage = async (messageId, plaintext) => {
+    const db = await openDB();
+    if (db.objectStoreNames.contains("decryptedCacheV2")) {
+        await putItem("decryptedCacheV2", { cacheKey: messageId, plaintext, cachedAt: Date.now() });
+        return;
+    }
     await putItem("decryptedCache", { messageId, plaintext, cachedAt: Date.now() });
+};
+
+/**
+ * Cache decrypted plaintext using an arbitrary cacheKey (e.g. messageId or fingerprint).
+ * @param {string} cacheKey
+ * @param {string} plaintext
+ */
+export const cacheDecryptedMessageByKey = async (cacheKey, plaintext) => {
+    const db = await openDB();
+    if (db.objectStoreNames.contains("decryptedCacheV2")) {
+        await putItem("decryptedCacheV2", { cacheKey, plaintext, cachedAt: Date.now() });
+        return;
+    }
+    // Fallback: store in old cache using the cacheKey as messageId.
+    await putItem("decryptedCache", { messageId: cacheKey, plaintext, cachedAt: Date.now() });
 };
 
 /**
@@ -230,11 +279,13 @@ export const cacheDecryptedMessage = async (messageId, plaintext) => {
  */
 export const cacheDecryptedMessages = async (entries) => {
     const db = await openDB();
-    const tx = db.transaction("decryptedCache", "readwrite");
-    const store = tx.objectStore("decryptedCache");
+    const storeName = db.objectStoreNames.contains("decryptedCacheV2") ? "decryptedCacheV2" : "decryptedCache";
+    const tx = db.transaction(storeName, "readwrite");
+    const store = tx.objectStore(storeName);
     const now = Date.now();
     for (const { messageId, plaintext } of entries) {
-        store.put({ messageId, plaintext, cachedAt: now });
+        if (storeName === "decryptedCacheV2") store.put({ cacheKey: messageId, plaintext, cachedAt: now });
+        else store.put({ messageId, plaintext, cachedAt: now });
     }
     return new Promise((resolve, reject) => {
         tx.oncomplete = () => resolve();
@@ -248,8 +299,22 @@ export const cacheDecryptedMessages = async (entries) => {
  * @returns {string|null}
  */
 export const getCachedDecryptedMessage = async (messageId) => {
+    const db = await openDB();
+    if (db.objectStoreNames.contains("decryptedCacheV2")) {
+        const item = await getItem("decryptedCacheV2", messageId);
+        return item ? item.plaintext : null;
+    }
     const item = await getItem("decryptedCache", messageId);
     return item ? item.plaintext : null;
+};
+
+/**
+ * Retrieve cached plaintext for an arbitrary cacheKey (messageId or fingerprint).
+ * @param {string} cacheKey
+ * @returns {string|null}
+ */
+export const getCachedDecryptedMessageByKey = async (cacheKey) => {
+    return getCachedDecryptedMessage(cacheKey);
 };
 
 /**
@@ -259,8 +324,9 @@ export const getCachedDecryptedMessage = async (messageId) => {
  */
 export const getCachedDecryptedMessages = async (messageIds) => {
     const db = await openDB();
-    const tx = db.transaction("decryptedCache", "readonly");
-    const store = tx.objectStore("decryptedCache");
+    const storeName = db.objectStoreNames.contains("decryptedCacheV2") ? "decryptedCacheV2" : "decryptedCache";
+    const tx = db.transaction(storeName, "readonly");
+    const store = tx.objectStore(storeName);
     const results = new Map();
 
     const promises = messageIds.map(id => new Promise((resolve) => {
@@ -289,11 +355,13 @@ export const exportAllE2EEKeys = async (userId) => {
         req.onerror = (e) => reject(e.target.error);
     });
 
-    const [identities, archivedIdentities, sessions, archivedSessions] = await Promise.all([
+    const [identities, archivedIdentities, sessions, archivedSessions, decryptedCacheLegacy, decryptedCacheV2] = await Promise.all([
         getAll("identityKeys"),
         getAll("archivedIdentityKeys"),
         getAll("sessions"),
-        getAll("archivedSessions")
+        getAll("archivedSessions"),
+        getAll("decryptedCache"),
+        getAll("decryptedCacheV2"),
     ]);
 
     return JSON.stringify({
@@ -304,7 +372,10 @@ export const exportAllE2EEKeys = async (userId) => {
             identityKeys: identities.filter(k => k.userId === userId),
             archivedIdentityKeys: archivedIdentities.filter(k => k.userId === userId),
             sessions: sessions, // optionally could filter by conversation if needed
-            archivedSessions: archivedSessions
+            archivedSessions: archivedSessions,
+            // Include decrypted cache so sent E2EE messages can show previews on other devices.
+            decryptedCacheLegacy,
+            decryptedCacheV2,
         }
     });
 };
@@ -318,7 +389,14 @@ export const importAllE2EEKeys = async (userId, jsonString) => {
         throw new Error("Cannot import backup from a different user ID");
     }
 
-    const { identityKeys = [], archivedIdentityKeys = [], sessions = [], archivedSessions = [] } = parsed.data;
+    const {
+        identityKeys = [],
+        archivedIdentityKeys = [],
+        sessions = [],
+        archivedSessions = [],
+        decryptedCacheLegacy = [],
+        decryptedCacheV2 = [],
+    } = parsed.data;
 
     // We do NOT clear current keys, we append/overwrite what's in the backup.
     for (const keyData of identityKeys) {
@@ -340,6 +418,23 @@ export const importAllE2EEKeys = async (userId, jsonString) => {
 
     for (const archSess of archivedSessions) {
         await putItem("archivedSessions", archSess);
+    }
+
+    // Import decrypted caches (best-effort, safe even if stores missing).
+    const db = await openDB();
+    if (db.objectStoreNames.contains("decryptedCacheV2")) {
+        for (const entry of decryptedCacheV2) {
+            if (entry?.cacheKey && typeof entry?.plaintext === "string") {
+                await putItem("decryptedCacheV2", entry);
+            }
+        }
+    }
+    if (db.objectStoreNames.contains("decryptedCache")) {
+        for (const entry of decryptedCacheLegacy) {
+            if (entry?.messageId && typeof entry?.plaintext === "string") {
+                await putItem("decryptedCache", entry);
+            }
+        }
     }
 
     return true;
