@@ -7,7 +7,7 @@ import crypto from "crypto";
 
 let io;
 
-// Store active users: Map<userId, socketId>
+// Store active users: Map<userId, Set<socketId>>
 const activeUsers = new Map();
 
 // activeCalls.set(callId, { callerId, receiverId, callType, status, startedAt, answeredAt });
@@ -67,7 +67,10 @@ export const initializeSocket = (httpServer) => {
 
         // ── User Connected ──────────────────────────────────
         socket.on("user_connected", async (userId) => {
-            activeUsers.set(userId, socket.id);
+            if (!activeUsers.has(userId)) {
+                activeUsers.set(userId, new Set());
+            }
+            activeUsers.get(userId).add(socket.id);
             socket.userId = userId;
             socket.join(`user_${userId}`);
 
@@ -89,42 +92,64 @@ export const initializeSocket = (httpServer) => {
                 console.error("Error fetching unread counts:", err);
             }
 
-            console.log(`User ${userId} connected. Active users: ${activeUsers.size}`);
+            console.log(`User ${userId} connected (${socket.id}). Active users: ${activeUsers.size}`);
         });
 
         // ── Send Message ────────────────────────────────────
         socket.on("send_message", async (data) => {
             try {
-                const { senderId, receiverId, text, image, replyTo } = data;
+                const { senderId, receiverId, text, image, replyTo,
+                    ciphertext, nonce, encryptionVersion, messageType,
+                    ratchetHeader, senderIdentityKey, senderEphemeralKey } = data;
 
-                const newMessage = new Message({
+                const isE2EE = encryptionVersion === "e2ee-v1";
+
+                const messageData = {
                     senderId,
                     receiverId,
-                    text,
-                    image,
                     replyTo,
                     isEdited: false,
                     status: "sent",
-                });
+                    encryptionVersion: isE2EE ? "e2ee-v1" : "none",
+                };
 
+                if (isE2EE) {
+                    messageData.ciphertext = ciphertext;
+                    messageData.nonce = nonce;
+                    messageData.messageType = messageType || "text";
+                    messageData.ratchetHeader = ratchetHeader;
+                    messageData.senderIdentityKey = senderIdentityKey || null;
+                    messageData.senderEphemeralKey = senderEphemeralKey || null;
+                } else {
+                    messageData.text = text;
+                    messageData.image = image;
+                }
+
+                const newMessage = new Message(messageData);
                 await newMessage.save();
 
-                const messageData = newMessage.toObject();
+                const socketPayload = newMessage.toObject();
+
+                // Include E2EE metadata for session bootstrap
+                if (isE2EE) {
+                    socketPayload.senderIdentityKey = senderIdentityKey;
+                    socketPayload.senderEphemeralKey = senderEphemeralKey;
+                }
 
                 // If receiver is online, mark as delivered
                 if (activeUsers.has(receiverId)) {
-                    messageData.status = "delivered";
+                    socketPayload.status = "delivered";
                     await Message.findByIdAndUpdate(newMessage._id, { status: "delivered" });
                 }
 
                 // Emit to receiver
-                io.to(`user_${receiverId}`).emit("message_received", messageData);
+                io.to(`user_${receiverId}`).emit("message_received", socketPayload);
 
                 // Confirm back to sender
                 socket.emit("message_sent", {
                     _id: newMessage._id,
                     tempId: data.tempId,
-                    status: messageData.status,
+                    status: socketPayload.status,
                     createdAt: newMessage.createdAt,
                 });
             } catch (error) {
@@ -191,8 +216,7 @@ export const initializeSocket = (httpServer) => {
                     return ack?.({ ok: false, error: "Invalid callType" });
                 }
 
-                const receiverSocketId = activeUsers.get(String(toUserId));
-                if (!receiverSocketId) {
+                if (!activeUsers.has(String(toUserId))) {
                     await Call.create({
                         callId: crypto.randomUUID(),
                         callerId: fromUserId,
@@ -319,13 +343,18 @@ export const initializeSocket = (httpServer) => {
         // ── Disconnect ──────────────────────────────────────
         socket.on("disconnect", async () => {
             if (socket.userId) {
-                activeUsers.delete(socket.userId);
-
-                io.emit("user_status_update", {
-                    userId: socket.userId,
-                    status: "offline",
-                    lastSeen: new Date(),
-                });
+                const userSockets = activeUsers.get(socket.userId);
+                if (userSockets) {
+                    userSockets.delete(socket.id);
+                    if (userSockets.size === 0) {
+                        activeUsers.delete(socket.userId);
+                        io.emit("user_status_update", {
+                            userId: socket.userId,
+                            status: "offline",
+                            lastSeen: new Date(),
+                        });
+                    }
+                }
 
                 // Broadcast updated active users list to all remaining sockets
                 io.emit("active_users", Array.from(activeUsers.keys()));
@@ -339,7 +368,7 @@ export const initializeSocket = (httpServer) => {
                     }
                 }
 
-                console.log(`User ${socket.userId} disconnected. Active users: ${activeUsers.size}`);
+                console.log(`User ${socket.userId} socket disconnected (${socket.id}). Active users overall: ${activeUsers.size}`);
             }
         });
     });

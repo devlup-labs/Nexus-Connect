@@ -76,8 +76,8 @@
 
 /* Stream Panel - Transparent Container */
 .stream-panel {
-    width: 420px;
-    max-width: 420px;
+    width: 320px;
+    max-width: 320px;
     height: 100%;
     background: transparent;
     backdrop-filter: none;
@@ -90,6 +90,13 @@
     flex-direction: column;
     overflow: hidden;
     flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+    .stream-panel {
+        width: 420px;
+        max-width: 420px;
+    }
 }
 
 /* Stream Header */
@@ -512,4 +519,4 @@
     border-radius: 50%;
     cursor: pointer;
     box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.4);
-}
+}
