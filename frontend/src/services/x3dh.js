@@ -48,10 +48,13 @@ export const performX3DH = (myIdentityKeyPair, theirBundle) => {
     dhConcat.set(dh2, dh1.length);
     dhConcat.set(dh3, dh1.length + dh2.length);
 
-    // Derive shared secret using HKDF
-    // Salt = 32 bytes of 0xFF (as per Signal spec)
+    // Same KDF as responder
     const salt = new Uint8Array(32).fill(0xff);
     const [sharedSecret] = kdfRK(salt, dhConcat);
+
+    console.log("[X3DH-INIT] My identity pub:", toBase64(myIdentityKeyPair.publicKey).slice(0, 12));
+    console.log("[X3DH-INIT] Their identity pub:", toBase64(theirIdentityKey).slice(0, 12));
+    console.log("[X3DH-INIT] Shared secret (prefix):", toBase64(sharedSecret).slice(0, 12));
 
     return {
         sharedSecret,
@@ -112,6 +115,10 @@ export const respondX3DH = (
     // Same KDF as initiator
     const salt = new Uint8Array(32).fill(0xff);
     const [sharedSecret] = kdfRK(salt, dhConcat);
+
+    console.log("[X3DH-RESP] My identity pub:", toBase64(myIdentityKeyPair.publicKey).slice(0, 12));
+    console.log("[X3DH-RESP] Their identity pub:", toBase64(theirIdentityKey).slice(0, 12));
+    console.log("[X3DH-RESP] Shared secret (prefix):", toBase64(sharedSecret).slice(0, 12));
 
     return { sharedSecret };
 };

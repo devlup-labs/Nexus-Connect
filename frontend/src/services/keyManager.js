@@ -35,6 +35,8 @@ import {
     getCachedDecryptedMessages,
     cacheDecryptedMessage,
     getCachedDecryptedMessage,
+    setMetadata,
+    getMetadata,
 } from "./sessionStore.js";
 import {
     registerKeys as apiRegisterKeys,
@@ -110,10 +112,28 @@ export const ensureKeysRegistered = async (userId) => {
     // Check if keys already exist in IndexedDB
     let keys = await getIdentityKeys(userId);
     if (keys) {
-        console.log("[E2EE] Keys already exist for user", userId);
-        // Important: ensure server has the same current key bundle.
-        // If the user reset E2EE on a device (or server lost bundle),
-        // a stale server bundle will cause X3DH secrets to mismatch and decryption to fail.
+        console.log("[E2EE] Keys already exist locally for user", userId);
+
+        // from another device. If so, we SHOULD NOT overwrite the server with our stale keys
+        // UNLESS we just performed an explicit import.
+        try {
+            const importPending = await getMetadata("import_pending_registration");
+            const res = await apiGetKeyBundle(userId).catch(() => null);
+            const serverBundle = res?.data;
+
+            if (serverBundle && serverBundle.identityKeyPublic !== keys.identityKeyPair.publicKey && importPending !== "true") {
+                console.warn("[E2EE] Server has a different identity key (newer registration detected?); bypassing re-registration to avoid corruption.");
+                return keys;
+            }
+
+            if (importPending === "true") {
+                console.log("[E2EE] Import detected; forcing key registration to sync server with restored keys.");
+                await setMetadata("import_pending_registration", "false");
+            }
+        } catch (err) {
+            console.warn("[E2EE] Could not verify server bundle during key check:", err);
+        }
+
         try {
             const signedPreKeySignature = sign(
                 fromBase64(keys.signedPreKeyPair.publicKey),
@@ -214,45 +234,60 @@ export const ensureKeysRegistered = async (userId) => {
  * Returns the Double Ratchet session state.
  */
 export const getOrCreateSession = async (myUserId, theirUserId) => {
-    // Check in-memory cache first
-    if (sessionCache.has(theirUserId)) {
-        return sessionCache.get(theirUserId);
+    // 1. Fetch current key bundle from server to verify partner's identity hasn't changed
+    let bundle;
+    try {
+        const res = await apiGetKeyBundle(theirUserId);
+        bundle = res.data;
+    } catch (err) {
+        console.warn("[E2EE] Failed to fetch key bundle during session check for", theirUserId);
     }
 
-    // Check IndexedDB
-    const stored = await getSession(theirUserId);
-    if (stored) {
-        let session = deserializeSession(stored);
-        // Restore metadata
-        session._meta = {
-            theirIdentityKey: stored.theirIdentityKey,
-            ephemeralPublicKey: stored.ephemeralPublicKey,
-            aliceEphemeralKey: stored.aliceEphemeralKey, // Restore responder's copy
-            isInitiator: stored.isInitiator,
-        };
+    // 2. Check in-memory cache
+    let session = sessionCache.get(theirUserId);
+    if (!session) {
+        const stored = await getSession(theirUserId);
+        if (stored) {
+            session = deserializeSession(stored);
+            session._meta = {
+                theirIdentityKey: stored.theirIdentityKey,
+                ephemeralPublicKey: stored.ephemeralPublicKey,
+                aliceEphemeralKey: stored.aliceEphemeralKey,
+                isInitiator: stored.isInitiator,
+            };
+        }
+    }
+
+    // 3. Verify integrity: if partner rotated keys, discard stale session
+    if (session && bundle && session._meta?.theirIdentityKey !== bundle.identityKeyPublic) {
+        console.warn("[E2EE] Partner identity key changed (reset detected), discarding stale session for", theirUserId);
+        sessionCache.delete(theirUserId);
+        await deleteSession(theirUserId);
+        session = null;
+    }
+
+    if (session) {
         sessionCache.set(theirUserId, session);
         return session;
     }
 
-    // Need to establish a new session via X3DH
+    // 4. Need to establish a new session via X3DH
+    if (!bundle) {
+        console.error("[E2EE] Cannot establish session: bundle missing for", theirUserId);
+        return null;
+    }
+
     console.log("[E2EE] Establishing new session with", theirUserId);
+    if (bundle) {
+        console.log("[E2EE-INIT] Target Identity Key:", bundle.identityKeyPublic.slice(0, 12));
+        console.log("[E2EE-INIT] Target Signed PreKey:", bundle.signedPreKey.publicKey.slice(0, 12));
+    }
 
     const myKeys = await getIdentityKeys(myUserId);
     if (!myKeys) {
         throw new Error("No identity keys found. Cannot establish E2EE session.");
     }
 
-    // Fetch recipient's key bundle from server
-    let bundle;
-    try {
-        const res = await apiGetKeyBundle(theirUserId);
-        bundle = res.data;
-    } catch (err) {
-        console.error("[E2EE] Failed to fetch key bundle for", theirUserId, err);
-        return null; // Can't encrypt without their keys
-    }
-
-    // Perform X3DH as initiator
     const myIdentityKeyPair = {
         publicKey: fromBase64(myKeys.identityKeyPair.publicKey),
         privateKey: fromBase64(myKeys.identityKeyPair.privateKey),
@@ -261,20 +296,18 @@ export const getOrCreateSession = async (myUserId, theirUserId) => {
     const { sharedSecret, ephemeralPublicKey } = performX3DH(myIdentityKeyPair, bundle);
 
     // Initialize Double Ratchet session as initiator
-    const session = initSession(sharedSecret, bundle.signedPreKey.publicKey);
-
-    // Store session metadata (for X3DH response if needed)
-    session._meta = {
+    const freshSession = initSession(sharedSecret, bundle.signedPreKey.publicKey);
+    freshSession._meta = {
         theirIdentityKey: bundle.identityKeyPublic,
         ephemeralPublicKey,
         isInitiator: true,
     };
 
     // Persist
-    await persistSession(theirUserId, session);
-    sessionCache.set(theirUserId, session);
+    await persistSession(theirUserId, freshSession);
+    sessionCache.set(theirUserId, freshSession);
 
-    return session;
+    return freshSession;
 };
 
 const prepareFirstSessionWithKeys = (myKeys, theirIdentityPubB64, theirEphemeralPubB64) => {
@@ -291,6 +324,11 @@ const prepareFirstSessionWithKeys = (myKeys, theirIdentityPubB64, theirEphemeral
         publicKey: fromBase64(myKeys.signedPreKeyPair.publicKey),
         privateKey: fromBase64(myKeys.signedPreKeyPair.privateKey),
     };
+
+    console.log("[E2EE-RESP] My Identity Key:", myKeys.identityKeyPair.publicKey.slice(0, 12));
+    console.log("[E2EE-RESP] My Signed PreKey:", myKeys.signedPreKeyPair.publicKey.slice(0, 12));
+    console.log("[E2EE-RESP] Their Identity Key:", theirIdentityPubB64.slice(0, 12));
+    console.log("[E2EE-RESP] Their Ephemeral Key:", theirEphemeralPubB64.slice(0, 12));
 
     const myOneTimePreKeyPair = null;
 
@@ -361,18 +399,6 @@ export const handleFirstMessage = async (myUserId, theirUserId, theirIdentityPub
     return session;
 };
 
-/**
- * Deep clone session state for safe re-play attempts.
- */
-const cloneSession = (session) => {
-    if (!session) return null;
-    return {
-        ...session,
-        DHs: { ...session.DHs },
-        MKSKIPPED: { ...session.MKSKIPPED },
-        _meta: session._meta ? { ...session._meta } : null,
-    };
-};
 
 /**
  * Decrypt a batch of messages for history view.
@@ -398,7 +424,12 @@ export const decryptMessagesBatch = async (myUserId, theirUserId, msgs) => {
 
         const decryptedMsgs = [];
         const newCacheEntries = []; // Collect successful decryptions to cache
-        let sessionForBatch = currentSession ? cloneSession(currentSession) : null;
+        let sessionForBatch = null;
+        if (currentSession) {
+            // Deep clone via serialization to ensure 100% isolation from live state
+            sessionForBatch = deserializeSession(serializeSession(currentSession));
+            sessionForBatch._meta = { ...currentSession._meta };
+        }
         let sessionModified = false;
 
         for (const msg of msgs) {
@@ -514,7 +545,11 @@ export const decryptMessagesBatch = async (myUserId, theirUserId, msgs) => {
             }
         }
 
-        // Persist session if it advanced
+        // Isolation: We DO NOT persist the session advanced/created during batch decryption
+        // to the global cache or storage. This prevents history-based "recovery" sessions
+        // (which might use old ephemeral keys) from polluting the live session used for 
+        // new outgoing messages.
+        /* 
         if (sessionForBatch && sessionModified) {
             const stored = await getSession(theirUserId);
             const batchProgress = (sessionForBatch.Ns || 0) + (sessionForBatch.Nr || 0);
@@ -525,6 +560,7 @@ export const decryptMessagesBatch = async (myUserId, theirUserId, msgs) => {
                 await persistSession(theirUserId, sessionForBatch);
             }
         }
+        */
 
         // Batch-cache all newly decrypted messages
         if (newCacheEntries.length > 0) {
@@ -551,24 +587,51 @@ export const encryptMessage = async (myUserId, theirUserId, plaintext) => {
             return null; // Can't encrypt, send as plaintext
         }
 
-        const { header, ciphertext, nonce, state } = ratchetEncrypt(session, plaintext);
+        try {
+            const { header, ciphertext, nonce, state } = ratchetEncrypt(session, plaintext);
 
-        // Update the session in cache and storage
-        sessionCache.set(theirUserId, state);
-        await persistSession(theirUserId, state);
+            // Update the session in cache and storage
+            sessionCache.set(theirUserId, state);
+            await persistSession(theirUserId, state);
 
-        const myKeys = await getIdentityKeys(myUserId);
+            const myKeys = await getIdentityKeys(myUserId);
 
-        return {
-            ciphertext,
-            nonce,
-            ratchetHeader: header,
-            encryptionVersion: "e2ee-v1",
-            senderIdentityKey: myKeys?.identityKeyPair.publicKey,
-            senderEphemeralKey: session._meta?.isInitiator
-                ? session._meta?.ephemeralPublicKey
-                : session._meta?.aliceEphemeralKey,
-        };
+            return {
+                ciphertext,
+                nonce,
+                ratchetHeader: header,
+                encryptionVersion: "e2ee-v1",
+                senderIdentityKey: myKeys?.identityKeyPair.publicKey,
+                senderEphemeralKey: state._meta?.isInitiator
+                    ? state._meta?.ephemeralPublicKey
+                    : state._meta?.aliceEphemeralKey,
+            };
+        } catch (encErr) {
+            console.warn("[E2EE] Encryption failed with current session, re-establishing...", encErr);
+            // Session is likely stale/corrupted after a reset — re-establish
+            sessionCache.delete(theirUserId);
+            await deleteSession(theirUserId);
+
+            // Establish a fresh session
+            let freshSession = await getOrCreateSession(myUserId, theirUserId);
+            if (!freshSession) return null;
+
+            const { header, ciphertext, nonce, state } = ratchetEncrypt(freshSession, plaintext);
+            sessionCache.set(theirUserId, state);
+            await persistSession(theirUserId, state);
+
+            const myKeys = await getIdentityKeys(myUserId);
+            return {
+                ciphertext,
+                nonce,
+                ratchetHeader: header,
+                encryptionVersion: "e2ee-v1",
+                senderIdentityKey: myKeys?.identityKeyPair.publicKey,
+                senderEphemeralKey: state._meta?.isInitiator
+                    ? state._meta?.ephemeralPublicKey
+                    : state._meta?.aliceEphemeralKey,
+            };
+        }
     });
 };
 
@@ -615,6 +678,7 @@ export const decryptMessage = async (myUserId, theirUserId, msgData) => {
         } catch (err) {
             console.warn("[E2EE] Decryption failed, checking for session reset...", err);
 
+            // Strategy 1: Try respondX3DH with sender's header keys
             if (senderIdentityKey && senderEphemeralKey) {
                 try {
                     const newSession = await prepareFirstSession(myUserId, theirUserId, senderIdentityKey, senderEphemeralKey);
@@ -627,11 +691,33 @@ export const decryptMessage = async (myUserId, theirUserId, msgData) => {
                     }
                     return plaintext;
                 } catch (resetErr) {
-                    console.error("[E2EE] Session recovery failed:", resetErr);
+                    console.error("[E2EE] Session recovery via respondX3DH failed:", resetErr);
                 }
             }
 
-            // Try Archive Before Fallback Cache
+            // Strategy 2: Handshake Reset (Initiator mode)
+            // If Strategy 1 failed, we establish a brand new session so FUTURE messages work.
+            try {
+                console.warn(`[E2EE] Attempting handshake reset recovery for ${theirUserId}`);
+                const freshSession = await getOrCreateSession(myUserId, theirUserId);
+
+                if (freshSession) {
+                    // This initiator session is primarily for future outgoing messages.
+                    // We try to decrypt the current one too, though it often requires Strategy 1.
+                    try {
+                        const { plaintext: retryPt, state: newState } = ratchetDecrypt(freshSession, ratchetHeader, ciphertext, nonce);
+                        sessionCache.set(theirUserId, newState);
+                        await persistSession(theirUserId, newState);
+                        return retryPt;
+                    } catch (retryErr) {
+                        console.warn("[E2EE] Handshake reset complete for future messages, but current message remains unrecoverable.");
+                    }
+                }
+            } catch (reEstablishErr) {
+                console.error("[E2EE] Re-establish session failed:", reEstablishErr);
+            }
+
+            // Strategy 3: Try Archive
             const archivedPlaintext = await tryDecryptWithArchive(myUserId, theirUserId, ciphertext, nonce, ratchetHeader, senderIdentityKey, senderEphemeralKey);
             if (archivedPlaintext) {
                 const targetId = msgData._id || msgData.messageId;
@@ -641,7 +727,7 @@ export const decryptMessage = async (myUserId, theirUserId, msgData) => {
                 return archivedPlaintext;
             }
 
-            // Final fallback: check cache
+            // Strategy 4: Final fallback — check cache
             const targetId = msgData._id || msgData.messageId;
             if (targetId) {
                 const cached = await getCachedDecryptedMessage(targetId);
@@ -694,9 +780,12 @@ export const hasSession = async (theirUserId) => {
 };
 
 export const isE2EESupported = async (theirUserId) => {
+    // If we already have a session, E2EE is supported
+    if (sessionCache.has(theirUserId)) return true;
     try {
-        const res = await apiGetKeyBundle(theirUserId);
-        return !!res.data;
+        if (await hasSession(theirUserId)) return true;
+        const res = await apiGetKeyBundle(theirUserId).catch(() => null);
+        return !!(res && res.data);
     } catch (err) {
         return false;
     }

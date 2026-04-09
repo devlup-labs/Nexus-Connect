@@ -152,7 +152,7 @@ export const initializeSocket = (httpServer) => {
                 io.to(`user_${receiverId}`).emit("message_received", socketPayload);
 
                 // Confirm back to sender
-                socket.emit("message_sent", {
+                socket.emit("message_sent_ack", {
                     _id: newMessage._id,
                     tempId: data.tempId,
                     status: socketPayload.status,
