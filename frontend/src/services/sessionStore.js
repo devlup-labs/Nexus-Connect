@@ -413,10 +413,39 @@ export const importAllE2EEKeys = async (userId, jsonString) => {
     }
 
     for (const sessionData of sessions) {
-        await putItem("sessions", sessionData);
+        const partnerId = sessionData.partnerId;
+        const existing = await getSession(partnerId);
+
+        if (existing) {
+            // Check if we should ignore the imported session because current is "ahead"
+            const currentTotal = (existing.Ns || 0) + (existing.Nr || 0);
+            const importedTotal = (sessionData.Ns || 0) + (sessionData.Nr || 0);
+
+            // If current is ahead, we keep it but MERGE any skipped keys from the backup
+            // that we might be missing.
+            if (currentTotal > importedTotal) {
+                const mergedSkipped = { ...(sessionData.MKSKIPPED || {}), ...(existing.MKSKIPPED || {}) };
+                await putItem("sessions", { ...existing, MKSKIPPED: mergedSkipped });
+                continue;
+            }
+
+            // If we are replacing, archive the current one first
+            await putItem("archivedSessions", {
+                archiveId: `${partnerId}_pre_import_${Date.now()}`,
+                ...existing
+            });
+
+            // Merge skipped keys: imported session takes precedence for counters,
+            // but we keep our existing skipped keys too.
+            const finalSkipped = { ...(existing.MKSKIPPED || {}), ...(sessionData.MKSKIPPED || {}) };
+            await putItem("sessions", { ...sessionData, MKSKIPPED: finalSkipped });
+        } else {
+            await putItem("sessions", sessionData);
+        }
     }
 
     for (const archSess of archivedSessions) {
+        // Only import if not already archived with same id or similar
         await putItem("archivedSessions", archSess);
     }
 
@@ -436,6 +465,9 @@ export const importAllE2EEKeys = async (userId, jsonString) => {
             }
         }
     }
+
+    // Signal that keys need re-registration with server after import
+    await setMetadata("import_pending_registration", "true");
 
     return true;
 };

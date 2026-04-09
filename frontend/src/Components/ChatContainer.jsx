@@ -529,6 +529,16 @@ const ChatContainer = ({ selectedContact, authUser, onLogout, onStartCall }) => 
         if (selectedContact?._id) {
             if (!hasPresenceSnapshotRef.current) {
                 setContactOnlineStatus('checking');
+                // Proactively request active users from server
+                const socket = getSocket();
+                if (socket) socket.emit("active_users:request");
+                // Fallback: if no snapshot arrives within 3s, assume offline
+                const fallbackTimer = setTimeout(() => {
+                    if (!hasPresenceSnapshotRef.current) {
+                        setContactOnlineStatus('offline');
+                    }
+                }, 3000);
+                return () => clearTimeout(fallbackTimer);
             } else {
                 setContactOnlineStatus(
                     activeUsersRef.current.includes(selectedContact._id) ? 'online' : 'offline'
