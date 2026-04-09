@@ -143,8 +143,12 @@ export const ratchetDecrypt = (state, header, ciphertextB64, nonceB64) => {
     if (state.MKSKIPPED[skippedKey]) {
         const mk = state.MKSKIPPED[skippedKey];
         delete state.MKSKIPPED[skippedKey];
-        const plaintext = decrypt(ciphertext, nonce, mk);
-        return { plaintext, state };
+        try {
+            const plaintext = decrypt(ciphertext, nonce, mk);
+            return { plaintext, state };
+        } catch (err) {
+            console.error("[DR] Decryption with skipped key failed:", skippedKey, err);
+        }
     }
 
     const headerPub = fromBase64(header.publicKey);
