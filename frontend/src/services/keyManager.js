@@ -30,6 +30,7 @@ import {
     getSession,
     getArchivedSessions,
     deleteSession,
+    archiveSession,
     cacheDecryptedMessages,
     getCachedDecryptedMessages,
     cacheDecryptedMessage,
@@ -77,6 +78,23 @@ const withLock = async (partnerId, fn) => {
     }
 };
 
+// ── Decrypted-cache fingerprinting ───────────────────────
+// We cache sent-message plaintext under both:
+// - messageId (when we have it), and
+// - a deterministic fingerprint derived from ciphertext+nonce+header
+// so a reload/tab-close race (before server returns _id) still has a cache hit later.
+const getMsgCacheKey = (msg) => {
+    if (!msg) return null;
+    // Prefer stable server id if present
+    const id = msg._id || msg.messageId;
+    if (id) return String(id);
+    const { encryptionVersion, ciphertext, nonce, ratchetHeader } = msg;
+    if (!ciphertext || !nonce || !ratchetHeader) return null;
+    // Keep it simple + stable across devices (strings from API payload)
+    const headerStr = typeof ratchetHeader === "string" ? ratchetHeader : JSON.stringify(ratchetHeader);
+    return `${encryptionVersion || "e2ee"}|${nonce}|${ciphertext}|${headerStr}`;
+};
+
 // ── Initialization ──────────────────────────────────────
 
 /**
@@ -93,6 +111,31 @@ export const ensureKeysRegistered = async (userId) => {
     let keys = await getIdentityKeys(userId);
     if (keys) {
         console.log("[E2EE] Keys already exist for user", userId);
+        // Important: ensure server has the same current key bundle.
+        // If the user reset E2EE on a device (or server lost bundle),
+        // a stale server bundle will cause X3DH secrets to mismatch and decryption to fail.
+        try {
+            const signedPreKeySignature = sign(
+                fromBase64(keys.signedPreKeyPair.publicKey),
+                fromBase64(keys.signingKeyPair.privateKey)
+            );
+            await apiRegisterKeys({
+                identityKeyPublic: keys.identityKeyPair.publicKey,
+                signedPreKey: {
+                    keyId: keys.signedPreKeyPair.keyId,
+                    publicKey: keys.signedPreKeyPair.publicKey,
+                    signature: toBase64(signedPreKeySignature),
+                    createdAt: new Date().toISOString(),
+                },
+                oneTimePreKeys: (keys.oneTimePreKeys || []).map((k) => ({
+                    keyId: k.keyId,
+                    publicKey: k.publicKey,
+                })),
+            });
+        } catch (err) {
+            // Non-fatal: encryption can still work if server bundle is correct already.
+            console.warn("[E2EE] Failed to re-register existing keys:", err?.message || err);
+        }
         return keys;
     }
 
@@ -362,7 +405,16 @@ export const decryptMessagesBatch = async (myUserId, theirUserId, msgs) => {
             if (msg.encryptionVersion === 'e2ee-v1' && msg.ciphertext) {
                 // Own sent message — check cache for plaintext
                 if (String(msg.senderId) === String(myUserId)) {
-                    const cached = cachedPlaintexts.get(msg._id);
+                    let cached = msg._id ? cachedPlaintexts.get(msg._id) : null;
+                    if (!cached) {
+                        const fpKey = getMsgCacheKey(msg);
+                        if (fpKey) {
+                            try {
+                                const fpCached = await getCachedDecryptedMessage(fpKey);
+                                if (fpCached) cached = fpCached;
+                            } catch { }
+                        }
+                    }
                     decryptedMsgs.push({
                         ...msg,
                         _decryptedText: cached || '[Sent Encrypted Message]',
@@ -595,6 +647,12 @@ export const decryptMessage = async (myUserId, theirUserId, msgData) => {
                 const cached = await getCachedDecryptedMessage(targetId);
                 if (cached) return cached;
             }
+            // Also try fingerprint cache key (covers send races / missing ids)
+            const fpKey = getMsgCacheKey(msgData);
+            if (fpKey) {
+                const cached = await getCachedDecryptedMessage(fpKey);
+                if (cached) return cached;
+            }
             throw err;
         }
     });
@@ -619,6 +677,11 @@ export const clearSessionCache = () => {
 };
 
 export const resetSession = async (theirUserId) => {
+    // Archive current session so any in-flight messages from the old ratchet
+    // can still be decrypted via tryDecryptWithArchive().
+    try {
+        await archiveSession(theirUserId);
+    } catch { }
     sessionCache.delete(theirUserId);
     sessionLocks.delete(theirUserId);
     await deleteSession(theirUserId);

@@ -4,7 +4,7 @@ import { updateProfile } from "../api";
 import Cropper from "react-easy-crop";
 import getCroppedImg, { convertBlobToBase64 } from "../utils/cropImage";
 import { useTheme, THEME_LIST } from "../contexts/ThemeContext.jsx";
-import { exportAllE2EEKeys, importAllE2EEKeys } from "../services/sessionStore.js";
+import { exportAllE2EEKeys, importAllE2EEKeys, clearAllE2EEData } from "../services/sessionStore.js";
 
 function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
   const fileInputRef = useRef(null);
@@ -54,6 +54,22 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
     };
     reader.readAsText(file);
     e.target.value = null;
+  };
+
+  const handleResetE2EE = async () => {
+    if (!authUser?._id) return;
+    const ok = window.confirm(
+      "Reset E2EE on this device?\n\nThis will delete local E2EE keys + sessions and force a brand-new handshake. You should export a backup first if you might need old message previews on this device."
+    );
+    if (!ok) return;
+    try {
+      await clearAllE2EEData();
+      alert("E2EE reset complete. The app will reload and generate new keys.");
+      window.location.reload();
+    } catch (err) {
+      console.error("Failed to reset E2EE:", err);
+      alert("Failed to reset E2EE.");
+    }
   };
 
   // Cropping State
@@ -559,6 +575,29 @@ function SettingsPanel({ authUser, onLogout, onProfileUpdate }) {
                 onChange={handleImportKeys}
                 style={{ display: "none" }}
               />
+            </SettingRow>
+
+            <SettingRow label="Reset E2EE (new handshake)">
+              <button
+                onClick={handleResetE2EE}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "5px 12px",
+                  borderRadius: "8px",
+                  background: "rgba(239, 68, 68, 0.12)",
+                  border: "1px solid rgba(239, 68, 68, 0.35)",
+                  cursor: "pointer",
+                  color: "rgb(239, 68, 68)",
+                  fontSize: "12px",
+                  fontWeight: 500,
+                  fontFamily: "var(--font-main)"
+                }}
+              >
+                <X size={13} />
+                Reset
+              </button>
             </SettingRow>
 
             <SettingRow label="Storage & Data" right="→" />

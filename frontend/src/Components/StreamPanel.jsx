@@ -4,7 +4,7 @@ import ContextMenu from './ContextMenu';
 import { getChatPartners, getContacts, toggleArchiveUser, getArchivedUsers } from '../api';
 import { getSocket, getActiveUsers } from '../services/socket';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { getCachedDecryptedMessages } from '../services/sessionStore';
+import { getCachedDecryptedMessages, getCachedDecryptedMessageByKey } from '../services/sessionStore';
 import './StreamPanel.css';
 // StreamPanel component
 const StreamPanel = ({ authUser, selectedContactId, onSelectContact, className }) => {
@@ -97,6 +97,22 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact, className }
                 }
             }
 
+            // Fallback: if lastMessage is encrypted but not cached by id, try fingerprint cacheKey.
+            partners = await Promise.all(partners.map(async (p) => {
+                const lm = p.lastMessage;
+                if (!lm || lm.encryptionVersion !== 'e2ee-v1') return p;
+                if (lm._decryptedPreview) return p;
+                if (!lm.ciphertext || !lm.nonce || !lm.ratchetHeader) return p;
+                const fpKey = `${lm.encryptionVersion || "e2ee"}|${lm.nonce}|${lm.ciphertext}|${JSON.stringify(lm.ratchetHeader)}`;
+                try {
+                    const decrypted = await getCachedDecryptedMessageByKey(fpKey);
+                    if (decrypted) {
+                        return { ...p, lastMessage: { ...lm, _decryptedPreview: decrypted } };
+                    }
+                } catch { }
+                return p;
+            }));
+
             setChatPartners(partners);
         } catch (err) {
             console.error('Failed to fetch chat partners:', err);
@@ -119,6 +135,13 @@ const StreamPanel = ({ authUser, selectedContactId, onSelectContact, className }
 
     useEffect(() => {
         fetchChatPartners();
+    }, []);
+
+    // Allow other panels (ChatContainer) to trigger an immediate refresh.
+    useEffect(() => {
+        const handler = () => fetchChatPartners();
+        window.addEventListener('nexus:stream-refresh', handler);
+        return () => window.removeEventListener('nexus:stream-refresh', handler);
     }, []);
 
     // ── Clear unread badge when a chat is opened ──
