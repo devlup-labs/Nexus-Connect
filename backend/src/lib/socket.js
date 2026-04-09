@@ -65,6 +65,12 @@ export const initializeSocket = (httpServer) => {
     io.on("connection", (socket) => {
         console.log("New socket connection:", socket.id);
 
+        // Allow clients to request a fresh snapshot at any time (prevents UI from
+        // getting stuck in "checking" if it mounted after the last broadcast).
+        socket.on("active_users:request", () => {
+            socket.emit("active_users", Array.from(activeUsers.keys()));
+        });
+
         // ── User Connected ──────────────────────────────────
         socket.on("user_connected", async (userId) => {
             if (!activeUsers.has(userId)) {

@@ -23,6 +23,9 @@ export const initializeSocket = (userId) => {
     socket.on("connect", () => {
         console.log("Connected to WebSocket server");
         socket.emit("user_connected", userId);
+        // Request an immediate snapshot so UIs mounting after the last broadcast
+        // don't get stuck waiting for someone else to connect/disconnect.
+        socket.emit("active_users:request");
     });
 
     socket.on("active_users", (users) => {
@@ -50,6 +53,7 @@ export const initializeSocket = (userId) => {
     socket.on("reconnect", () => {
         console.log("Reconnected to WebSocket server");
         socket.emit("user_connected", userId);
+        socket.emit("active_users:request");
     });
 
     return socket;
